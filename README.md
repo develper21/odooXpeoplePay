@@ -30,6 +30,8 @@ npm run build
 
 See `SPRINT_STATE.md` for the current implementation boundary and the recommended Sprint 2 starting point.
 
+Sprint 3 adds the employee and contract HR master-data experience: list/kanban views, filters, linked employee records, CRUD forms, contract history, active-contract context, smart buttons, and related placeholders for upcoming attendance and time-off work.
+
 ## Sprint 2 Authentication
 
 The development login exposes five mock accounts for testing `EMPLOYEE`, `HR_MANAGER`, `HR_PAYROLL_USER`, `HR_PAYROLL_MANAGER`, and `ADMIN`. The selected session is persisted through the centralized auth storage abstraction. Route access, sidebar visibility, header identity, and action visibility are all evaluated through the shared permission map. This is frontend RBAC for development UX; production authorization must also be enforced by the backend.
