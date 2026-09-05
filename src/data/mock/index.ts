@@ -8,4 +8,5 @@ export { mockSalaryRules } from "./salary-rules";
 export { mockPayruns } from "./payruns";
 export { mockPayslips } from "./payslips";
 export { mockUsers } from "./users";
+export { mockAuthUsers } from "./auth-users";
 export { mockDashboard } from "./dashboard";
