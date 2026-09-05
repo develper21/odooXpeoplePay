@@ -1,0 +1,1 @@
+export type CrudService<T extends { id: string }> = { list: () => Promise<T[]>; get: (id: string) => Promise<T>; create: (input: Omit<T, "id">) => Promise<T>; update: (id: string, input: Partial<T>) => Promise<T>; remove: (id: string) => Promise<void>; };
