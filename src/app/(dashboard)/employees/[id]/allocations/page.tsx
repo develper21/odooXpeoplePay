@@ -6,7 +6,7 @@ import { useTimeOffAllocations, useEmployee } from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { employeeName } from "@/lib/hr-utils";
-import { formatTimeOffDate } from "@/lib/time-off-utils";
+import { formatTimeOffDate, usableAllocationRemaining } from "@/lib/time-off-utils";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState, ErrorState, EmptyState } from "@/components/shared/states";
 import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
@@ -90,7 +90,7 @@ export default function EmployeeAllocationsPage() {
                         {alloc.usedDays} {unitLabel}
                       </TableCell>
                       <TableCell className="font-bold text-primary">
-                        {alloc.remainingDays} {unitLabel}
+                        {usableAllocationRemaining(alloc)} {unitLabel}
                       </TableCell>
                       <TableCell className="text-xs text-text-secondary">
                         {formatTimeOffDate(alloc.validFrom)} → {formatTimeOffDate(alloc.validTo)}

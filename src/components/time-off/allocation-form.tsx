@@ -13,7 +13,7 @@ const schema = z.object({
   allocatedDays: z.coerce.number().min(1, "Allocated quantity must be at least 1"),
   validFrom: z.string().min(1, "Valid from date is required"),
   validTo: z.string().min(1, "Valid to date is required"),
-  status: z.enum(["ACTIVE", "EXPIRED", "DRAFT", "INACTIVE", "PENDING", "APPROVED"]),
+  status: z.enum(["ACTIVE", "EXPIRED", "DRAFT", "INACTIVE", "PENDING", "APPROVED", "REFUSED"]),
 }).refine((data) => data.validTo >= data.validFrom, {
   message: "Valid To date cannot be before Valid From date",
   path: ["validTo"],
@@ -51,7 +51,7 @@ export function AllocationForm({
       allocatedDays: initialValues?.allocatedDays ?? 24,
       validFrom: initialValues?.validFrom ?? "2026-01-01",
       validTo: initialValues?.validTo ?? "2026-12-31",
-      status: initialValues?.status ?? "ACTIVE",
+      status: initialValues?.status ?? "PENDING",
     },
   });
 
@@ -119,7 +119,10 @@ export function AllocationForm({
         <label className="block text-sm font-medium">
           Status *
           <select className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm" {...register("status")}>
+            <option value="PENDING">Pending Approval</option>
+            <option value="APPROVED">Approved</option>
             <option value="ACTIVE">Active</option>
+            <option value="REFUSED">Refused</option>
             <option value="DRAFT">Draft</option>
             <option value="EXPIRED">Expired</option>
             <option value="INACTIVE">Inactive</option>

@@ -1,6 +1,11 @@
 import { cn } from "@/lib/utils";
 
-type Status = "active" | "paid" | "approved" | "present" | "pending" | "warning" | "processing" | "draft" | "inactive" | "on_leave" | "expired" | "terminated" | "refused" | "cancelled" | "overtime" | "missing_checkout" | "manual_edit" | "absent" | "error" | "late";
+type Status =
+  | "active" | "paid" | "approved" | "present" | "pending" | "warning" | "processing" | "draft"
+  | "inactive" | "on_leave" | "expired" | "terminated" | "refused" | "cancelled" | "overtime"
+  | "missing_checkout" | "manual_edit" | "absent" | "error" | "late"
+  | "computed" | "validated" | "sent" | "info" | "duplicate_warning";
+
 const styles: Record<Status, string> = { 
   active: "bg-green-500/10 text-green-400 border border-green-500/20", 
   paid: "bg-green-500/10 text-green-400 border border-green-500/20", 
@@ -21,7 +26,12 @@ const styles: Record<Status, string> = {
   manual_edit: "bg-blue-500/10 text-blue-400 border border-blue-500/20", 
   absent: "bg-red-500/10 text-red-400 border border-red-500/20", 
   error: "bg-red-500/10 text-red-400 border border-red-500/20",
-  late: "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+  late: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+  computed: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
+  validated: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
+  sent: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  info: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  duplicate_warning: "bg-amber-500/10 text-amber-400 border border-amber-500/20"
 };
 
 const labelMap: Partial<Record<Status, string>> = {
