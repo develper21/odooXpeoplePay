@@ -1,18 +1,102 @@
 "use client";
 
-import { ArrowRight, CalendarClock, CircleAlert, Clock3, UsersRound } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { useDashboard } from "@/hooks/use-data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui/badge";
-import { MetricCard } from "@/components/shared/metric-card";
-import { LoadingState } from "@/components/shared/states";
+import { canAccess } from "@/lib/permissions";
 import { PageHeader } from "@/components/shared/page-header";
+import { MetricCard } from "@/components/shared/metric-card";
+import { LoadingState, ErrorState } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
+import { DashboardFiltersBar } from "@/components/dashboard/dashboard-filters";
 import { SalaryChart } from "@/components/dashboard/salary-chart";
 import { TrendChart } from "@/components/dashboard/trend-chart";
+import { OperationalAlerts } from "@/components/dashboard/operational-alerts";
+import { AttendanceOverview } from "@/components/dashboard/attendance-overview";
+import { TimeOffOverview } from "@/components/dashboard/time-off-overview";
+import { DepartmentBreakdown } from "@/components/dashboard/department-breakdown";
+import { EmployeeWorkspaceDashboard } from "@/components/dashboard/employee-workspace-dashboard";
+import type { DashboardFilters } from "@/types/domain";
 
 export default function DashboardPage() {
-  const { data, isLoading, isError } = useDashboard();
-  if (isLoading) return <LoadingState />;
-  if (isError || !data) return <p className="rounded-md border border-danger/30 bg-danger/10 p-4 text-sm text-danger">Dashboard data could not be loaded.</p>;
-  return <><PageHeader title="Dashboard" description="A current view of your people operations and payroll health." action={{ label: "View payrun" }} /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{data.metrics.map((metric) => <MetricCard key={metric.label} metric={metric} />)}</div><div className="mt-6 grid gap-6 xl:grid-cols-2"><SalaryChart data={data.salaryByDepartment} /><TrendChart data={data.salaryTrend} /></div><div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]"><Card><CardHeader><CardTitle>Payroll alerts</CardTitle><button className="text-xs text-primary">View all</button></CardHeader><CardContent className="space-y-1 p-3">{data.alerts.map((alert) => <div key={alert.label} className="flex items-center gap-3 rounded-md p-3 hover:bg-surface-raised"><span className="rounded-md bg-amber-500/10 p-2 text-warning"><CircleAlert className="size-4" /></span><div className="min-w-0 flex-1"><p className="text-sm font-medium">{alert.label}</p><p className="mt-1 truncate text-xs text-text-muted">{alert.detail}</p></div><StatusBadge status={alert.tone} /></div>)}</CardContent></Card><Card><CardHeader><CardTitle>Today at a glance</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1"><div className="flex items-center gap-3"><UsersRound className="size-4 text-primary" /><div><p className="text-xs text-text-muted">Active employees</p><p className="mt-1 text-lg font-semibold">{data.activeEmployees.toLocaleString()}</p></div></div><div className="flex items-center gap-3"><Clock3 className="size-4 text-success" /><div><p className="text-xs text-text-muted">Present today</p><p className="mt-1 text-lg font-semibold">{data.presentToday.toLocaleString()} <span className="text-xs font-normal text-success">96.7%</span></p></div></div><div className="flex items-center gap-3"><CalendarClock className="size-4 text-warning" /><div><p className="text-xs text-text-muted">Pending requests</p><p className="mt-1 text-lg font-semibold">{data.pendingRequests} <ArrowRight className="ml-1 inline size-3 text-primary" /></p></div></div></CardContent></Card></div></>;
+  const { user, isLoading: authLoading } = useAuth();
+  const role = user?.role;
+
+  const [filters, setFilters] = useState<DashboardFilters>({
+    period: "September 2026",
+    department: "ALL",
+    employeeType: "ALL",
+  });
+
+  const { data, isLoading, isError, error } = useDashboard(filters);
+
+  if (authLoading || isLoading) return <LoadingState />;
+
+  // If logged-in user is an EMPLOYEE, render secure employee portal workspace
+  if (role === "EMPLOYEE" && user) {
+    return <EmployeeWorkspaceDashboard user={user} />;
+  }
+
+  if (isError || !data) {
+    return <ErrorState message={(error as Error)?.message || "Failed to load dashboard data."} />;
+  }
+
+  const canCreatePayrun = role ? canAccess(role, "payrun.create") : false;
+
+  return (
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Payroll Dashboard</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Aggregated operational intelligence for payments, staffing, attendance health, and compliance
+          </p>
+        </div>
+
+        {canCreatePayrun && (
+          <Link href="/payroll/new">
+            <Button size="sm" className="gap-1.5">
+              <Plus className="size-4" /> Create Payrun
+            </Button>
+          </Link>
+        )}
+      </div>
+
+      {/* Centralized Filter Bar */}
+      <DashboardFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        availablePeriods={data.availablePeriods}
+        availableDepartments={data.availableDepartments}
+      />
+
+      {/* Top 5 KPI Metrics Row */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {data.metrics.map((metric) => (
+          <MetricCard key={metric.label} metric={metric} />
+        ))}
+      </div>
+
+      {/* Analytical Charts Grid */}
+      <div className="grid gap-6 xl:grid-cols-2">
+        <SalaryChart data={data.salaryByDepartment} />
+        <TrendChart data={data.salaryTrend} />
+      </div>
+
+      {/* Operational Alerts */}
+      <OperationalAlerts alerts={data.actionableAlerts} />
+
+      {/* Attendance & Time Off Overviews */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AttendanceOverview overview={data.attendanceOverview} />
+        <TimeOffOverview overview={data.timeOffOverview} />
+      </div>
+
+      {/* Department Breakdown Table */}
+      <DepartmentBreakdown breakdown={data.departmentBreakdown} />
+    </div>
+  );
 }

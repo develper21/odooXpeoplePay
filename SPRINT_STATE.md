@@ -60,4 +60,90 @@ Sprint 3 deliberately does not implement attendance or time-off business logic, 
 
 ### Exact Next Task
 
-Sprint 4 should begin with Working Schedules and Attendance: replace the related placeholders with schedule assignment and attendance workflows while consuming the employee/contract relationships established here.
+Sprint 4 completed Working Schedules and Attendance.
+
+## Sprint 5: Time Off
+
+Status: **Complete**
+
+### Completed Work
+
+- Time Off Types: full CRUD, list, details with live metrics, policy configuration (unit, allocationRequired, approvalRequired, payrollIntegration, status), search, unit filter, and safe deletion.
+- Allocations: full CRUD, list, details with visual `LeaveBalanceCard` progress bar, employee relationship, active/expired validity period validation, search, filters, and employee-scoped visibility for privacy.
+- Requests: full CRUD, list, details with balance context (Current Remaining vs Projected Remaining), search, multi-filter, UTC-based calendar duration calculation, allocation balance validation preventing excessive requests.
+- Approval Workflow: atomic approval updating request to `APPROVED`, finding applicable allocation, deducting `usedDays`, recalculating `remainingDays`, with duplicate approval guards preventing double deduction.
+- Refusal Workflow: accessible confirmation dialog, status set to `REFUSED`, guaranteeing no balance deduction.
+- Deletion Reversal: deleting an approved request automatically restores the consumed allocation balance.
+- Employee Contextual Views: functional smart buttons and dynamic counts on `/employees/[id]` linking to `/employees/[id]/time-off` and `/employees/[id]/allocations`.
+- RBAC: Employee role restricted to viewing own balances/requests and creating requests for themselves; HR Manager, HR Payroll User, HR Payroll Manager, and Admin authorized for management and approvals.
+- Navigation: dedicated Time Off navigation section with Requests, Allocations, Types, and Overview tabs.
+- Production Build & Types: `tsc --noEmit` and `next build --webpack` (all 30 routes) succeed with 0 errors.
+
+### Exact Next Task
+
+Sprint 6 completed Salary Structures and Salary Rules.
+
+## Sprint 6: Salary Structures + Salary Rules
+
+Status: **Complete**
+
+### Completed Work
+
+- Domain Models: Centralized `SalaryRuleCategory` ("BASIC", "ALLOWANCE", "GROSS", "DEDUCTION", "NET"), `ComputationType` ("FIXED", "PERCENTAGE", "FORMULA"), `SalaryStructureStatus` ("ACTIVE", "INACTIVE", "DRAFT"), and `SalaryRuleStatus`.
+- Calculation Engine & Safe Formula Parser: Built `src/lib/salary-calculator.ts` with strict recursive descent arithmetic parser without arbitrary JavaScript execution (`eval` and `new Function()` strictly prohibited).
+- Rule Sequencing: Deterministic sorting `sortRulesBySequence()` ensuring lowest to highest sequence execution.
+- Dependency & Cycle Validation: `validateRuleDependencies()` detecting missing references, circular dependencies, and forward-reference sequence violations.
+- Live Simulation Preview: Interactive `SalaryCalculationPreview` component with live base wage input, preset buttons, rule breakdown table, and category totals (Basic, Allowances, Gross, Deductions, Net).
+- Salary Structures Module: List view (`/salary-structures`), Details view (`/salary-structures/[id]`), Create (`/salary-structures/new`), and Edit (`/salary-structures/[id]/edit`) with dynamic employee and rule counts, sequence visualization, and assigned contracts.
+- Salary Rules Module: List view (`/salary-rules`), Details view (`/salary-rules/[id]`), Create (`/salary-rules/new`), and Edit (`/salary-rules/[id]/edit`) with filters for category, computation type, status, search, and configuration summaries.
+- Rule Form & Formula Toolbar: Interactive rule builder with real-time formula syntax validation, clickable tokens, and basis helpers.
+- Contract Integration: Connected contracts to shared salary structures with dynamic resolution in contract details.
+- Mock Data: 15 realistic rules (BASIC, HRA, TRANSPORT, GROSS, PF, TAX, NET, etc.) and 4 realistic structures (Regular, Sales, Part-Time, Contractor).
+- Safe CRUD & Integrity: Prevented duplicate rule codes; blocked deleting rules in use by structures; blocked deleting structures referenced by active contracts.
+- RBAC: Fully aligned permissions. Employee and HR Manager have no access; HR Payroll User has read-only access (inspection allowed, mutation buttons hidden and routes blocked); HR Payroll Manager and Admin have full CRUD.
+- Navigation: Added `SalaryTabs` component for seamless switching between Salary Structures and Salary Rules.
+- Production Build & Quality: TypeScript passed with 0 errors; production build succeeded with all 32 routes compiled.
+
+### Exact Next Task
+
+Sprint 7 completed Payruns, Payslips, and Payroll Processing.
+
+## Sprint 7: Payruns + Payslips + Payroll Processing
+
+Status: **Complete**
+
+### Completed Work
+
+- Payrun Lifecycle Workflow: Full progression through DRAFT -> COMPUTED -> CONFIRMED -> PAID with state validations, automated payslip generation, and re-computation safety.
+- Payroll Calculation Engine: Integrated dynamic rule sequencing, contract wage resolution, attendance worked days computation, and rule breakdown into payslip lines.
+- Warning & Edge Case Detection: Proactive scanning for missing/expired contracts, zero-wage agreements, unassigned salary structures, and missing attendance records with dismissible/actionable alerts.
+- Payrun Management UI (`/payroll` and `/payroll/[id]`): Batch actions, progress bar, interactive employee status table, wage summary metrics, and status badges.
+- Payslips Listing & Detail Views (`/payslips` and `/payslips/[id]`): Filterable by payrun/employee/status, individual line-item inspection, breakdown by category, and full printable payslip view (`PrintablePayslip`) with company branding and print styles.
+- Create Payrun Wizard (`/payroll/new`): Period picker, department/schedule filtering, preview of eligible employees before creation.
+- RBAC & Permissions: Enforced `payruns:create`, `payruns:compute`, `payruns:validate`, `payruns:pay`, and `payslips:view` with employee self-view restrictions.
+- Production Build & Quality: TypeScript passed with 0 errors (`npx tsc --noEmit`); all routes compiled successfully.
+
+### Exact Next Task
+
+Sprint 8 completed Final Dashboard, Reports, Full Integration, and Polish.
+
+## Sprint 8: Final Dashboard + Reports + Full Integration + Polish
+
+Status: **Complete**
+
+### Completed Work
+
+- Dynamic Derived Dashboard: Completely replaced static placeholder metrics with 100% application-record derived KPIs, charts, alerts, and overviews using centralized selectors in `src/lib/services/dashboard-service.ts`.
+- Unified Dashboard Filters: Built `DashboardFiltersBar` with Period, Department, and Employment Type filters, active filter indicator, and instant Reset capability affecting all widgets synchronously.
+- Interactive Recharts Visualizations: Enhanced `SalaryChart` (vertical bar breakdown by department with formatted Rupee tooltips) and `TrendChart` (6-month continuous historical disbursement trend with area gradients) with graceful empty states.
+- Proactive Operational Alerts: Dynamic scanner detecting missing bank accounts, missing employment contracts, unvalidated payruns, duplicate payslips, and pending leave requests with direct deep-links.
+- Attendance & Time Off Overviews: Canonical workforce status distribution (Present, Late, Absent, Overtime, Missing Checkout, Manual Edit) with coverage percentage, quota consumption bar, and leave breakdown by type.
+- Department Breakdown Table: Aggregated active headcount, gross compensation, deductions, net salary disbursement, and average wage per employee with summary footer.
+- Employee Workspace Dashboard: Secure personal portal rendered for `EMPLOYEE` role (`rahul.sharma@northstar.io`), isolating personal wage, recent payslips with direct print action, leave balances, and attendance logs without exposing company-wide financial metrics.
+- Comprehensive Reports Suite (`/reports`): Dedicated reporting tabs for Payroll Summary, Department Salary Analysis, Attendance Analysis, and Time Off Analysis with multi-filter toolbar, search, and one-click CSV export.
+- Full RBAC Alignment: Verified access boundaries across `EMPLOYEE`, `HR_MANAGER`, `HR_PAYROLL_USER`, `HR_PAYROLL_MANAGER`, and `ADMIN`.
+- Production Build & Quality: TypeScript validation (`npx tsc --noEmit`) and production Next.js webpack build (`next build --webpack`) compile with 0 errors across all 33+ App Router routes.
+
+### Final Implementation State
+
+All planned development sprints (Sprints 1 through 8) for PeoplePay360 are **Complete**.
