@@ -3,7 +3,6 @@ export type EmploymentStatus = "ACTIVE" | "INACTIVE" | "ON_LEAVE";
 export type EmployeeType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
 export type ContractStatus = "ACTIVE" | "EXPIRED" | "DRAFT" | "TERMINATED";
 export type RequestStatus = "PENDING" | "APPROVED" | "REFUSED" | "CANCELLED";
-export type PayrunStatus = "DRAFT" | "PROCESSING" | "PENDING_APPROVAL" | "VALIDATED" | "PAID";
 export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "OVERTIME" | "MISSING_CHECKOUT" | "MANUAL_EDIT";
 
 export type TimeOffUnit = "DAYS" | "HOURS";
@@ -51,9 +50,87 @@ export interface SalaryStructure {
   ruleIds: ID[];
   basePercentage?: number;
 }
-export interface Payrun { id: ID; reference: string; period: string; employeeCount: number; grossTotal: number; netTotal: number; status: PayrunStatus; }
-export interface Payslip { id: ID; payrunId: ID; employeeId: ID; reference: string; gross: number; net: number; status: "DRAFT" | "PAID" | "DUPLICATE_WARNING"; }
+export type PayrunStatus = "DRAFT" | "COMPUTED" | "PROCESSING" | "WARNING" | "PENDING_APPROVAL" | "VALIDATED" | "PAID";
+export type PayslipStatus = "DRAFT" | "COMPUTED" | "VALIDATED" | "PAID" | "SENT" | "DUPLICATE_WARNING";
+
+export type WarningSeverity = "INFO" | "WARNING" | "ERROR";
+
+export type WarningType =
+  | "MISSING_BANK_DETAILS"
+  | "MISSING_ACTIVE_CONTRACT"
+  | "CONTRACT_NOT_VALID_FOR_PERIOD"
+  | "MISSING_REQUIRED_EMPLOYEE_DATA"
+  | "DUPLICATE_PAYSLIP"
+  | "INVALID_SALARY_CONFIGURATION"
+  | "CALCULATION_ERROR";
+
+export interface PayrunWarning {
+  id: ID;
+  type: WarningType;
+  severity: WarningSeverity;
+  message: string;
+  employeeId?: ID;
+  employeeName?: string;
+  payslipId?: ID;
+  blocking?: boolean;
+}
+
+export interface PayslipLine {
+  ruleId: ID;
+  sequence: number;
+  code: string;
+  name: string;
+  category: SalaryRuleCategory;
+  amount: number;
+  calculationDisplay?: string;
+}
+
+export interface Payrun {
+  id: ID;
+  reference: string;
+  name?: string;
+  salaryStructureId?: ID;
+  period: string;
+  periodStart?: string;
+  periodEnd?: string;
+  employeeCount: number;
+  selectedEmployeeIds?: ID[];
+  grossTotal: number;
+  deductionsTotal?: number;
+  netTotal: number;
+  status: PayrunStatus;
+  warnings?: PayrunWarning[];
+  createdAt?: string;
+  computedAt?: string;
+  validatedAt?: string;
+  paidAt?: string;
+}
+
+export interface Payslip {
+  id: ID;
+  payrunId: ID;
+  employeeId: ID;
+  reference: string;
+  contractId?: ID;
+  salaryStructureId?: ID;
+  period?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  workedDays?: number;
+  basicTotal?: number;
+  allowancesTotal?: number;
+  gross: number;
+  deductions?: number;
+  net: number;
+  status: PayslipStatus;
+  lines?: PayslipLine[];
+  warnings?: PayrunWarning[];
+  sentAt?: string;
+  paidAt?: string;
+}
+
 export interface User { id: ID; name: string; email: string; role: "EMPLOYEE" | "HR_MANAGER" | "HR_PAYROLL_USER" | "HR_PAYROLL_MANAGER" | "ADMIN"; status: "ACTIVE" | "INVITED" | "INACTIVE"; }
 export interface DashboardMetric { label: string; value: string; change: string; trend: "up" | "down"; tone: "blue" | "green" | "amber" | "violet"; }
 export interface DashboardAlert { label: string; detail: string; tone: "warning" | "pending" | "approved" | "error"; }
 export interface DashboardData { metrics: DashboardMetric[]; alerts: DashboardAlert[]; activeEmployees: number; presentToday: number; pendingRequests: number; salaryByDepartment: { name: string; value: number }[]; salaryTrend: { name: string; value: number }[]; }
+

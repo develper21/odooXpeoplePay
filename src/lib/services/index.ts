@@ -202,10 +202,28 @@ export const timeOffWorkflow = {
   },
 };
 
+import {
+  computePayrun,
+  validatePayrun,
+  markPayrunPaid,
+  sendPayrunPayslips,
+  findApplicableContract,
+  computeWorkedDays,
+} from "@/lib/services/payroll-service";
+
 export const payrunWorkflow = {
   create: async (input: Omit<Payrun, "id">) => payrunService.create(input),
-  compute: async (id: string) => dataMode === "api" ? apiClient<Payrun>(`/payruns/${id}/compute`, { method: "POST" }) : updateMock("payruns", id, { status: "PROCESSING" }),
-  validate: async (id: string) => dataMode === "api" ? apiClient<Payrun>(`/payruns/${id}/validate`, { method: "POST" }) : updateMock("payruns", id, { status: "VALIDATED" }),
-  markPaid: async (id: string) => dataMode === "api" ? apiClient<Payrun>(`/payruns/${id}/paid`, { method: "POST" }) : updateMock("payruns", id, { status: "PAID" }),
-  sendPayslips: async (id: string) => dataMode === "api" ? apiClient<void>(`/payruns/${id}/send-payslips`, { method: "POST" }) : undefined,
+  compute: computePayrun,
+  validate: validatePayrun,
+  markPaid: markPayrunPaid,
+  sendPayslips: sendPayrunPayslips,
+};
+
+export {
+  computePayrun,
+  validatePayrun,
+  markPayrunPaid,
+  sendPayrunPayslips,
+  findApplicableContract,
+  computeWorkedDays,
 };

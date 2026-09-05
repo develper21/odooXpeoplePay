@@ -72,9 +72,14 @@ export function useDeleteTimeOffRequest() { const queryClient = useQueryClient()
 export function useApproveTimeOff() { const queryClient = useQueryClient(); return useMutation({ mutationFn: timeOffWorkflow.approve, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["time-off"] }); queryClient.invalidateQueries({ queryKey: ["time-off-allocations"] }); } }); }
 export function useRefuseTimeOff() { const queryClient = useQueryClient(); return useMutation({ mutationFn: timeOffWorkflow.refuse, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["time-off"] }) }); }
 
+export function usePayrun(id: string) { return useQuery({ queryKey: ["payruns", id], queryFn: () => payrunService.get(id), enabled: Boolean(id) }); }
+export function usePayslip(id: string) { return useQuery({ queryKey: ["payslips", id], queryFn: () => payslipService.get(id), enabled: Boolean(id) }); }
+export function useEmployeePayslips(employeeId?: string) { return useQuery({ queryKey: ["payslips", "employee", employeeId ?? "all"], queryFn: payslipService.list, select: (slips) => employeeId ? slips.filter((s) => s.employeeId === employeeId) : slips }); }
+
 export function useCreatePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<Payrun, "id">) => payrunService.create(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payruns"] }) }); }
-export function useComputePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.compute, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payruns"] }) }); }
-export function useValidatePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.validate, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payruns"] }) }); }
-export function useMarkPayrunPaid() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.markPaid, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payruns"] }) }); }
-export function useSendPayslips() { return useMutation({ mutationFn: payrunWorkflow.sendPayslips }); }
+export function useComputePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.compute, onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["payruns"] }); queryClient.invalidateQueries({ queryKey: ["payruns", variables] }); queryClient.invalidateQueries({ queryKey: ["payslips"] }); } }); }
+export function useValidatePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.validate, onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["payruns"] }); queryClient.invalidateQueries({ queryKey: ["payruns", variables] }); queryClient.invalidateQueries({ queryKey: ["payslips"] }); } }); }
+export function useMarkPayrunPaid() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.markPaid, onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["payruns"] }); queryClient.invalidateQueries({ queryKey: ["payruns", variables] }); queryClient.invalidateQueries({ queryKey: ["payslips"] }); } }); }
+export function useSendPayslips() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.sendPayslips, onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["payslips"] }); queryClient.invalidateQueries({ queryKey: ["payruns", variables] }); } }); }
+
 
