@@ -1,8 +1,6 @@
 import type { AttendanceRecord } from "@/types/domain";
-export const mockAttendance: AttendanceRecord[] = [
-  { id: "att-001", employeeId: "emp-001", date: "2026-09-04", checkIn: "08:54", checkOut: "17:32", status: "PRESENT" },
-  { id: "att-002", employeeId: "emp-002", date: "2026-09-04", checkIn: "09:18", checkOut: "18:06", status: "LATE" },
-  { id: "att-003", employeeId: "emp-003", date: "2026-09-04", checkIn: "", status: "ABSENT" },
-  { id: "att-004", employeeId: "emp-004", date: "2026-09-04", checkIn: "08:47", status: "MISSING_CHECKOUT" },
-  { id: "att-005", employeeId: "emp-006", date: "2026-09-04", checkIn: "08:31", checkOut: "17:15", status: "PRESENT" },
-];
+
+const employeeIds = ["emp-001", "emp-002", "emp-003", "emp-004", "emp-005", "emp-006", "emp-008", "emp-009", "emp-011", "emp-012", "emp-013", "emp-014", "emp-015", "emp-016"];
+const dates = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05", "2026-08-31", "2026-08-28", "2026-08-27"];
+
+export const mockAttendance: AttendanceRecord[] = Array.from({ length: 112 }, (_, index) => { const employeeId = employeeIds[index % employeeIds.length]; const date = dates[Math.floor(index / employeeIds.length)]; const variant = index % 11; if (variant === 2) return { id: `att-${String(index + 1).padStart(3, "0")}`, employeeId, date, checkIn: "", status: "ABSENT" }; if (variant === 4) return { id: `att-${String(index + 1).padStart(3, "0")}`, employeeId, date, checkIn: "09:11", status: "MISSING_CHECKOUT" }; if (variant === 6) return { id: `att-${String(index + 1).padStart(3, "0")}`, employeeId, date, checkIn: "08:48", checkOut: "19:12", workedMinutes: 564, status: "OVERTIME" }; if (variant === 8) return { id: `att-${String(index + 1).padStart(3, "0")}`, employeeId, date, checkIn: "09:27", checkOut: "18:03", breakMinutes: 60, workedMinutes: 516, notes: "Corrected from kiosk import", manuallyEdited: true, status: "MANUAL_EDIT" }; const late = variant === 1 || variant === 9; return { id: `att-${String(index + 1).padStart(3, "0")}`, employeeId, date, checkIn: late ? "09:18" : "08:58", checkOut: late ? "18:06" : "17:58", breakMinutes: 60, workedMinutes: late ? 528 : 480, status: late ? "LATE" : "PRESENT" }; });

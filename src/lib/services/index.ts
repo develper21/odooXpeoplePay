@@ -1,12 +1,12 @@
 import { apiClient } from "@/lib/api/client";
 import { dataMode } from "@/lib/data-mode";
 import { mockDashboard } from "@/data/mock";
-import { updateMock } from "@/lib/services/mock-store";
+import { createMock, deleteMock, listMock, updateMock } from "@/lib/services/mock-store";
 import { createResourceService } from "@/lib/services/resource-service";
 import type { AttendanceRecord, Contract, DashboardData, Employee, Payrun, Payslip, SalaryRule, SalaryStructure, TimeOffAllocation, TimeOffRequest, User, WorkingSchedule } from "@/types/domain";
 
 export const employeeService = createResourceService<Employee>("employees", "/employees");
-export const contractService = createResourceService<Contract>("contracts", "/contracts");
+export const contractService = { ...createResourceService<Contract>("contracts", "/contracts"), listByEmployee: async (employeeId: string) => dataMode === "api" ? apiClient<Contract[]>(`/contracts?employeeId=${employeeId}`) : (listMock("contracts") as Contract[]).filter((contract) => contract.employeeId === employeeId) };
 export const scheduleService = createResourceService<WorkingSchedule>("schedules", "/schedules");
 export const attendanceService = createResourceService<AttendanceRecord>("attendance", "/attendance");
 export const allocationService = createResourceService<TimeOffAllocation>("allocations", "/time-off/allocations");
