@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { allocationService, attendanceService, contractService, dashboardService, employeeService, payrunService, payrunWorkflow, payslipService, salaryRuleService, salaryStructureService, scheduleService, timeOffService, timeOffTypeService, timeOffWorkflow, userService } from "@/lib/services";
-import type { AttendanceRecord, Contract, Employee, Payrun, TimeOffAllocation, TimeOffRequest, TimeOffType, WorkingSchedule } from "@/types/domain";
+import { allocationService, attendanceService, contractService, dashboardService, employeeService, payrunService, payrunWorkflow, payslipService, salaryCalculationService, salaryRuleService, salaryStructureService, scheduleService, timeOffService, timeOffTypeService, timeOffWorkflow, userService } from "@/lib/services";
+import type { AttendanceRecord, Contract, Employee, Payrun, SalaryRule, SalaryStructure, TimeOffAllocation, TimeOffRequest, TimeOffType, WorkingSchedule } from "@/types/domain";
 
 export function useDashboard() { return useQuery({ queryKey: ["dashboard"], queryFn: dashboardService.get }); }
 export function useEmployees() { return useQuery({ queryKey: ["employees"], queryFn: employeeService.list }); }
@@ -25,7 +25,21 @@ export function useTimeOffAllocations(employeeId?: string) { return useQuery({ q
 export function useTimeOffAllocation(id: string) { return useQuery({ queryKey: ["time-off-allocations", id], queryFn: () => allocationService.get(id), enabled: Boolean(id) }); }
 
 export function useSalaryStructures() { return useQuery({ queryKey: ["salary-structures"], queryFn: salaryStructureService.list }); }
+export function useSalaryStructure(id: string) { return useQuery({ queryKey: ["salary-structures", id], queryFn: () => salaryStructureService.get(id), enabled: Boolean(id) }); }
+
 export function useSalaryRules() { return useQuery({ queryKey: ["salary-rules"], queryFn: salaryRuleService.list }); }
+export function useSalaryRule(id: string) { return useQuery({ queryKey: ["salary-rules", id], queryFn: () => salaryRuleService.get(id), enabled: Boolean(id) }); }
+
+export function useCreateSalaryStructure() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<SalaryStructure, "id">) => salaryStructureService.create(input), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["salary-structures"] }); } }); }
+export function useUpdateSalaryStructure() { const queryClient = useQueryClient(); return useMutation({ mutationFn: ({ id, input }: { id: string; input: Partial<SalaryStructure> }) => salaryStructureService.update(id, input), onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["salary-structures"] }); queryClient.invalidateQueries({ queryKey: ["salary-structures", variables.id] }); } }); }
+export function useDeleteSalaryStructure() { const queryClient = useQueryClient(); return useMutation({ mutationFn: salaryStructureService.remove, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["salary-structures"] }); } }); }
+
+export function useCreateSalaryRule() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<SalaryRule, "id">) => salaryRuleService.create(input), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["salary-rules"] }); } }); }
+export function useUpdateSalaryRule() { const queryClient = useQueryClient(); return useMutation({ mutationFn: ({ id, input }: { id: string; input: Partial<SalaryRule> }) => salaryRuleService.update(id, input), onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["salary-rules"] }); queryClient.invalidateQueries({ queryKey: ["salary-rules", variables.id] }); } }); }
+export function useDeleteSalaryRule() { const queryClient = useQueryClient(); return useMutation({ mutationFn: salaryRuleService.remove, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["salary-rules"] }); queryClient.invalidateQueries({ queryKey: ["salary-structures"] }); } }); }
+
+export function useSalaryCalculationPreview(structureId: string, baseSalary?: number) { return useQuery({ queryKey: ["salary-calculation-preview", structureId, baseSalary], queryFn: () => salaryCalculationService.calculateForStructure(structureId, { baseSalary }), enabled: Boolean(structureId) }); }
+
 export function usePayruns() { return useQuery({ queryKey: ["payruns"], queryFn: payrunService.list }); }
 export function usePayslips() { return useQuery({ queryKey: ["payslips"], queryFn: payslipService.list }); }
 export function useUsers() { return useQuery({ queryKey: ["users"], queryFn: userService.list }); }

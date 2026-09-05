@@ -77,5 +77,11 @@ export function permissionForPath(pathname: string) {
   if (pathname === "/time-off/requests/new") return "timeoff.create";
   if (pathname.startsWith("/time-off/requests/") && pathname.endsWith("/edit")) return "timeoff.create";
   if (pathname.startsWith("/time-off/requests")) return "timeoff.read";
+  if (pathname === "/salary-structures/new") return "salary_structure.create";
+  if (pathname.startsWith("/salary-structures/") && pathname.endsWith("/edit")) return "salary_structure.update";
+  if (pathname.startsWith("/salary-structures/")) return "salary_structure.read";
+  if (pathname === "/salary-rules/new") return "salary_rule.create";
+  if (pathname.startsWith("/salary-rules/") && pathname.endsWith("/edit")) return "salary_rule.update";
+  if (pathname.startsWith("/salary-rules/")) return "salary_rule.read";
   return pathname.startsWith("/payroll/") ? "payrun.read" : undefined;
 }

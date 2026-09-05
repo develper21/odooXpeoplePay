@@ -81,5 +81,31 @@ Status: **Complete**
 
 ### Exact Next Task
 
-Sprint 6: Salary Structures + Salary Rules.
+Sprint 6 completed Salary Structures and Salary Rules.
+
+## Sprint 6: Salary Structures + Salary Rules
+
+Status: **Complete**
+
+### Completed Work
+
+- Domain Models: Centralized `SalaryRuleCategory` ("BASIC", "ALLOWANCE", "GROSS", "DEDUCTION", "NET"), `ComputationType` ("FIXED", "PERCENTAGE", "FORMULA"), `SalaryStructureStatus` ("ACTIVE", "INACTIVE", "DRAFT"), and `SalaryRuleStatus`.
+- Calculation Engine & Safe Formula Parser: Built `src/lib/salary-calculator.ts` with strict recursive descent arithmetic parser without arbitrary JavaScript execution (`eval` and `new Function()` strictly prohibited).
+- Rule Sequencing: Deterministic sorting `sortRulesBySequence()` ensuring lowest to highest sequence execution.
+- Dependency & Cycle Validation: `validateRuleDependencies()` detecting missing references, circular dependencies, and forward-reference sequence violations.
+- Live Simulation Preview: Interactive `SalaryCalculationPreview` component with live base wage input, preset buttons, rule breakdown table, and category totals (Basic, Allowances, Gross, Deductions, Net).
+- Salary Structures Module: List view (`/salary-structures`), Details view (`/salary-structures/[id]`), Create (`/salary-structures/new`), and Edit (`/salary-structures/[id]/edit`) with dynamic employee and rule counts, sequence visualization, and assigned contracts.
+- Salary Rules Module: List view (`/salary-rules`), Details view (`/salary-rules/[id]`), Create (`/salary-rules/new`), and Edit (`/salary-rules/[id]/edit`) with filters for category, computation type, status, search, and configuration summaries.
+- Rule Form & Formula Toolbar: Interactive rule builder with real-time formula syntax validation, clickable tokens, and basis helpers.
+- Contract Integration: Connected contracts to shared salary structures with dynamic resolution in contract details.
+- Mock Data: 15 realistic rules (BASIC, HRA, TRANSPORT, GROSS, PF, TAX, NET, etc.) and 4 realistic structures (Regular, Sales, Part-Time, Contractor).
+- Safe CRUD & Integrity: Prevented duplicate rule codes; blocked deleting rules in use by structures; blocked deleting structures referenced by active contracts.
+- RBAC: Fully aligned permissions. Employee and HR Manager have no access; HR Payroll User has read-only access (inspection allowed, mutation buttons hidden and routes blocked); HR Payroll Manager and Admin have full CRUD.
+- Navigation: Added `SalaryTabs` component for seamless switching between Salary Structures and Salary Rules.
+- Production Build & Quality: TypeScript passed with 0 errors; production build succeeded with all 32 routes compiled.
+
+### Exact Next Task
+
+Sprint 7: Payruns + Payslips + Payroll Processing.
+
 

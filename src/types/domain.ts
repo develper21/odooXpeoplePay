@@ -21,8 +21,36 @@ export interface WorkingSchedule { id: ID; name: string; type: ScheduleType; sta
 export interface AttendanceRecord { id: ID; employeeId: ID; date: string; checkIn: string; checkOut?: string; breakMinutes?: number; workedMinutes?: number; notes?: string; manuallyEdited?: boolean; status: AttendanceStatus; }
 export interface TimeOffAllocation { id: ID; employeeId: ID; typeId?: ID; type: string; allocatedDays: number; usedDays: number; remainingDays: number; unit?: TimeOffUnit; validFrom: string; validTo: string; status: AllocationStatus; }
 export interface TimeOffRequest { id: ID; employeeId: ID; typeId?: ID; type: string; allocationId?: ID; startDate: string; endDate: string; days: number; unit?: TimeOffUnit; status: RequestStatus; reason: string; }
-export interface SalaryStructure { id: ID; name: string; currency: string; basePercentage: number; ruleIds: ID[]; }
-export interface SalaryRule { id: ID; code: string; name: string; category: "EARNING" | "DEDUCTION"; amount: number; kind: "FIXED" | "PERCENTAGE"; }
+export type SalaryRuleCategory = "BASIC" | "ALLOWANCE" | "GROSS" | "DEDUCTION" | "NET";
+export type ComputationType = "FIXED" | "PERCENTAGE" | "FORMULA";
+export type SalaryStructureStatus = "ACTIVE" | "INACTIVE" | "DRAFT";
+export type SalaryRuleStatus = "ACTIVE" | "INACTIVE" | "DRAFT";
+
+export interface SalaryRule {
+  id: ID;
+  code: string;
+  name: string;
+  category: SalaryRuleCategory | "EARNING" | "DEDUCTION";
+  sequence: number;
+  computationType: ComputationType;
+  status: SalaryRuleStatus;
+  description?: string;
+  amount?: number;
+  percentage?: number;
+  basedOn?: string[];
+  formula?: string;
+  kind?: "FIXED" | "PERCENTAGE";
+}
+
+export interface SalaryStructure {
+  id: ID;
+  name: string;
+  description?: string;
+  status: SalaryStructureStatus;
+  currency?: string;
+  ruleIds: ID[];
+  basePercentage?: number;
+}
 export interface Payrun { id: ID; reference: string; period: string; employeeCount: number; grossTotal: number; netTotal: number; status: PayrunStatus; }
 export interface Payslip { id: ID; payrunId: ID; employeeId: ID; reference: string; gross: number; net: number; status: "DRAFT" | "PAID" | "DUPLICATE_WARNING"; }
 export interface User { id: ID; name: string; email: string; role: "EMPLOYEE" | "HR_MANAGER" | "HR_PAYROLL_USER" | "HR_PAYROLL_MANAGER" | "ADMIN"; status: "ACTIVE" | "INVITED" | "INACTIVE"; }
