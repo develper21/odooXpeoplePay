@@ -60,4 +60,26 @@ Sprint 3 deliberately does not implement attendance or time-off business logic, 
 
 ### Exact Next Task
 
-Sprint 4 should begin with Working Schedules and Attendance: replace the related placeholders with schedule assignment and attendance workflows while consuming the employee/contract relationships established here.
+Sprint 4 completed Working Schedules and Attendance.
+
+## Sprint 5: Time Off
+
+Status: **Complete**
+
+### Completed Work
+
+- Time Off Types: full CRUD, list, details with live metrics, policy configuration (unit, allocationRequired, approvalRequired, payrollIntegration, status), search, unit filter, and safe deletion.
+- Allocations: full CRUD, list, details with visual `LeaveBalanceCard` progress bar, employee relationship, active/expired validity period validation, search, filters, and employee-scoped visibility for privacy.
+- Requests: full CRUD, list, details with balance context (Current Remaining vs Projected Remaining), search, multi-filter, UTC-based calendar duration calculation, allocation balance validation preventing excessive requests.
+- Approval Workflow: atomic approval updating request to `APPROVED`, finding applicable allocation, deducting `usedDays`, recalculating `remainingDays`, with duplicate approval guards preventing double deduction.
+- Refusal Workflow: accessible confirmation dialog, status set to `REFUSED`, guaranteeing no balance deduction.
+- Deletion Reversal: deleting an approved request automatically restores the consumed allocation balance.
+- Employee Contextual Views: functional smart buttons and dynamic counts on `/employees/[id]` linking to `/employees/[id]/time-off` and `/employees/[id]/allocations`.
+- RBAC: Employee role restricted to viewing own balances/requests and creating requests for themselves; HR Manager, HR Payroll User, HR Payroll Manager, and Admin authorized for management and approvals.
+- Navigation: dedicated Time Off navigation section with Requests, Allocations, Types, and Overview tabs.
+- Production Build & Types: `tsc --noEmit` and `next build --webpack` (all 30 routes) succeed with 0 errors.
+
+### Exact Next Task
+
+Sprint 6: Salary Structures + Salary Rules.
+

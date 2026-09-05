@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type Status = "active" | "paid" | "approved" | "present" | "pending" | "warning" | "processing" | "draft" | "inactive" | "on_leave" | "expired" | "terminated" | "refused" | "overtime" | "missing_checkout" | "manual_edit" | "absent" | "error" | "late";
+type Status = "active" | "paid" | "approved" | "present" | "pending" | "warning" | "processing" | "draft" | "inactive" | "on_leave" | "expired" | "terminated" | "refused" | "cancelled" | "overtime" | "missing_checkout" | "manual_edit" | "absent" | "error" | "late";
 const styles: Record<Status, string> = { 
   active: "bg-green-500/10 text-green-400 border border-green-500/20", 
   paid: "bg-green-500/10 text-green-400 border border-green-500/20", 
@@ -15,6 +15,7 @@ const styles: Record<Status, string> = {
   expired: "bg-red-500/10 text-red-400 border border-red-500/20", 
   terminated: "bg-red-500/10 text-red-400 border border-red-500/20", 
   refused: "bg-red-500/10 text-red-400 border border-red-500/20", 
+  cancelled: "bg-slate-500/10 text-slate-400 border border-slate-500/20",
   overtime: "bg-blue-500/10 text-blue-400 border border-blue-500/20", 
   missing_checkout: "bg-amber-500/10 text-amber-400 border border-amber-500/20", 
   manual_edit: "bg-blue-500/10 text-blue-400 border border-blue-500/20", 

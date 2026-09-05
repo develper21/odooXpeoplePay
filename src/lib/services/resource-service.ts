@@ -3,7 +3,7 @@ import { dataMode } from "@/lib/data-mode";
 import { createMock, deleteMock, listMock, updateMock } from "@/lib/services/mock-store";
 import type { CrudService } from "@/lib/services/types";
 
-type StoreKey = "employees" | "contracts" | "schedules" | "attendance" | "allocations" | "timeOffRequests" | "salaryStructures" | "salaryRules" | "payruns" | "payslips" | "users";
+type StoreKey = "employees" | "contracts" | "schedules" | "attendance" | "allocations" | "timeOffRequests" | "timeOffTypes" | "salaryStructures" | "salaryRules" | "payruns" | "payslips" | "users";
 
 export function createResourceService<T extends { id: string }>(key: StoreKey, apiPath: string): CrudService<T> {
   if (dataMode === "api") return apiResource<T>(apiPath) as CrudService<T>;
