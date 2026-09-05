@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { allocationService, attendanceService, contractService, dashboardService, employeeService, payrunService, payrunWorkflow, payslipService, salaryRuleService, salaryStructureService, scheduleService, timeOffService, timeOffWorkflow, userService } from "@/lib/services";
-import type { Contract, Employee, Payrun } from "@/types/domain";
+import type { AttendanceRecord, Contract, Employee, Payrun, WorkingSchedule } from "@/types/domain";
 
 export function useDashboard() { return useQuery({ queryKey: ["dashboard"], queryFn: dashboardService.get }); }
 export function useEmployees() { return useQuery({ queryKey: ["employees"], queryFn: employeeService.list }); }
@@ -11,7 +11,9 @@ export function useContracts() { return useQuery({ queryKey: ["contracts"], quer
 export function useContract(id: string) { return useQuery({ queryKey: ["contracts", id], queryFn: () => contractService.get(id), enabled: Boolean(id) }); }
 export function useEmployeeContracts(employeeId: string) { return useQuery({ queryKey: ["contracts", "employee", employeeId], queryFn: () => contractService.listByEmployee(employeeId), enabled: Boolean(employeeId) }); }
 export function useSchedules() { return useQuery({ queryKey: ["schedules"], queryFn: scheduleService.list }); }
-export function useAttendance() { return useQuery({ queryKey: ["attendance"], queryFn: attendanceService.list }); }
+export function useSchedule(id: string) { return useQuery({ queryKey: ["schedules", id], queryFn: () => scheduleService.get(id), enabled: Boolean(id) }); }
+export function useAttendance(employeeId?: string) { return useQuery({ queryKey: ["attendance", employeeId ?? "all"], queryFn: attendanceService.list, select: (records) => employeeId ? records.filter((record) => record.employeeId === employeeId) : records }); }
+export function useAttendanceRecord(id: string) { return useQuery({ queryKey: ["attendance", id], queryFn: () => attendanceService.get(id), enabled: Boolean(id) }); }
 export function useTimeOff() { return useQuery({ queryKey: ["time-off"], queryFn: timeOffService.list }); }
 export function useTimeOffAllocations() { return useQuery({ queryKey: ["time-off-allocations"], queryFn: allocationService.list }); }
 export function useSalaryStructures() { return useQuery({ queryKey: ["salary-structures"], queryFn: salaryStructureService.list }); }
@@ -26,6 +28,12 @@ export function useDeleteEmployee() { const queryClient = useQueryClient(); retu
 export function useCreateContract() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<Contract, "id">) => contractService.create(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts"] }) }); }
 export function useUpdateContract() { const queryClient = useQueryClient(); return useMutation({ mutationFn: ({ id, input }: { id: string; input: Partial<Contract> }) => contractService.update(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts"] }) }); }
 export function useDeleteContract() { const queryClient = useQueryClient(); return useMutation({ mutationFn: contractService.remove, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts"] }) }); }
+export function useCreateSchedule() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<WorkingSchedule, "id">) => scheduleService.create(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }) }); }
+export function useUpdateSchedule() { const queryClient = useQueryClient(); return useMutation({ mutationFn: ({ id, input }: { id: string; input: Partial<WorkingSchedule> }) => scheduleService.update(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }) }); }
+export function useDeleteSchedule() { const queryClient = useQueryClient(); return useMutation({ mutationFn: scheduleService.remove, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }) }); }
+export function useCreateAttendance() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<AttendanceRecord, "id">) => attendanceService.create(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["attendance"] }) }); }
+export function useUpdateAttendance() { const queryClient = useQueryClient(); return useMutation({ mutationFn: ({ id, input }: { id: string; input: Partial<AttendanceRecord> }) => attendanceService.update(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["attendance"] }) }); }
+export function useDeleteAttendance() { const queryClient = useQueryClient(); return useMutation({ mutationFn: attendanceService.remove, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["attendance"] }) }); }
 export function useApproveTimeOff() { const queryClient = useQueryClient(); return useMutation({ mutationFn: timeOffWorkflow.approve, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["time-off"] }) }); }
 export function useRefuseTimeOff() { const queryClient = useQueryClient(); return useMutation({ mutationFn: timeOffWorkflow.refuse, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["time-off"] }) }); }
 export function useCreatePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<Payrun, "id">) => payrunService.create(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payruns"] }) }); }
