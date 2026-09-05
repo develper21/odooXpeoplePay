@@ -15,7 +15,7 @@ export interface SalaryStructure { id: ID; name: string; currency: string; baseP
 export interface SalaryRule { id: ID; code: string; name: string; category: "EARNING" | "DEDUCTION"; amount: number; kind: "FIXED" | "PERCENTAGE"; }
 export interface Payrun { id: ID; reference: string; period: string; employeeCount: number; grossTotal: number; netTotal: number; status: PayrunStatus; }
 export interface Payslip { id: ID; payrunId: ID; employeeId: ID; reference: string; gross: number; net: number; status: "DRAFT" | "PAID" | "DUPLICATE_WARNING"; }
-export interface User { id: ID; name: string; email: string; role: string; status: "ACTIVE" | "INVITED" | "INACTIVE"; }
+export interface User { id: ID; name: string; email: string; role: "EMPLOYEE" | "HR_MANAGER" | "HR_PAYROLL_USER" | "HR_PAYROLL_MANAGER" | "ADMIN"; status: "ACTIVE" | "INVITED" | "INACTIVE"; }
 export interface DashboardMetric { label: string; value: string; change: string; trend: "up" | "down"; tone: "blue" | "green" | "amber" | "violet"; }
 export interface DashboardAlert { label: string; detail: string; tone: "warning" | "pending" | "approved" | "error"; }
 export interface DashboardData { metrics: DashboardMetric[]; alerts: DashboardAlert[]; activeEmployees: number; presentToday: number; pendingRequests: number; salaryByDepartment: { name: string; value: number }[]; salaryTrend: { name: string; value: number }[]; }

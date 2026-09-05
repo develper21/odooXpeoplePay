@@ -2,7 +2,7 @@
 
 ## Sprint
 
-Sprint 1 is complete.
+Sprint 2 is complete. Sprint 1 foundation remains intact.
 
 ## Completed
 
@@ -18,6 +18,9 @@ Sprint 1 is complete.
 - Added environment-controlled `mock`/`api` data mode with `.env.local` defaulting to mock.
 - Added shared domain models, interconnected mock datasets, in-memory CRUD store, resource services, query hooks, and time-off/payrun workflow actions.
 - Connected the dashboard to `useDashboard()` instead of page-owned mock constants.
+- Added centralized mock authentication with five realistic development accounts, persisted session storage, auth provider/context, loading state, login redirect, logout, and backend-ready auth service.
+- Added canonical granular permission definitions, inherited role mappings, route permission resolution, permission/role gates, protected route handling, role-aware navigation, current-user header identity, and `/unauthorized`.
+- Added action-level permission examples for payrun creation and salary configuration editing.
 
 ## Verification
 
@@ -31,3 +34,4 @@ Sprint 1 is complete.
 - Authentication, dashboard values, navigation role selection, and API responses are mock/foundation behavior only.
 - The API service paths are prepared, but no backend is running in this repository.
 - Mock mutations are in-memory and reset when the browser session/module process restarts.
+- Browser automation could not be run because the local Playwright Chromium executable is not installed; typecheck and production build were run successfully.
