@@ -70,6 +70,10 @@ export const mockTimeOffAllocations: TimeOffAllocation[] = [
   { id: "alloc-019", employeeId: "emp-001", typeId: "tot-005", type: "Compensatory Leave", allocatedDays: 16, usedDays: 0, remainingDays: 16, unit: "HOURS", validFrom: "2026-01-01", validTo: "2026-12-31", status: "ACTIVE" },
   { id: "alloc-020", employeeId: "emp-004", typeId: "tot-002", type: "Sick Leave", allocatedDays: 10, usedDays: 1, remainingDays: 9, unit: "DAYS", validFrom: "2026-01-01", validTo: "2026-12-31", status: "ACTIVE" },
   { id: "alloc-021", employeeId: "emp-005", typeId: "tot-002", type: "Sick Leave", allocatedDays: 10, usedDays: 10, remainingDays: 0, unit: "DAYS", validFrom: "2025-01-01", validTo: "2025-12-31", status: "EXPIRED" },
+  { id: "alloc-022", employeeId: "emp-001", typeId: "tot-003", type: "Casual Leave", allocatedDays: 5, usedDays: 0, remainingDays: 5, unit: "DAYS", validFrom: "2026-07-01", validTo: "2026-12-31", status: "PENDING" },
+  { id: "alloc-023", employeeId: "emp-002", typeId: "tot-005", type: "Compensatory Leave", allocatedDays: 16, usedDays: 0, remainingDays: 16, unit: "HOURS", validFrom: "2026-08-01", validTo: "2026-12-31", status: "PENDING" },
+  { id: "alloc-024", employeeId: "emp-003", typeId: "tot-004", type: "Maternity/Paternity", allocatedDays: 90, usedDays: 0, remainingDays: 90, unit: "DAYS", validFrom: "2026-06-01", validTo: "2026-12-31", status: "APPROVED" },
+  { id: "alloc-025", employeeId: "emp-004", typeId: "tot-003", type: "Casual Leave", allocatedDays: 8, usedDays: 0, remainingDays: 8, unit: "DAYS", validFrom: "2026-05-01", validTo: "2026-12-31", status: "REFUSED" },
 ];
 
 export const mockTimeOffRequests: TimeOffRequest[] = [

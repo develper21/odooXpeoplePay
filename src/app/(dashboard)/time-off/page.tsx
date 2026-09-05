@@ -75,7 +75,7 @@ export default function TimeOffOverviewPage() {
 
       {/* Metric Summary Bar for HR/Admin */}
       {canManage && (
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -86,6 +86,22 @@ export default function TimeOffOverviewPage() {
                 <Clock className="size-5" />
               </div>
             </div>
+          </Card>
+
+          <Card className="p-4">
+            <Link href="/time-off/allocations">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-text-muted">Pending Allocations</p>
+                  <p className="mt-1 text-2xl font-bold text-amber-400">
+                    {allocations.filter((a) => a.status === "PENDING").length}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-amber-500/10 p-2 text-amber-400">
+                  <Clock className="size-5" />
+                </div>
+              </div>
+            </Link>
           </Card>
 
           <Card className="p-4">
@@ -103,10 +119,10 @@ export default function TimeOffOverviewPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-text-muted">Leave Types Configured</p>
-                <p className="mt-1 text-2xl font-bold text-success">{types.length}</p>
+                <p className="text-xs text-text-muted">Leave Types</p>
+                <p className="mt-1 text-2xl font-bold text-green-400">{types.length}</p>
               </div>
-              <div className="rounded-lg bg-success/10 p-2 text-success">
+              <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
                 <ShieldCheck className="size-5" />
               </div>
             </div>

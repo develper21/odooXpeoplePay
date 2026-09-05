@@ -3,8 +3,15 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
-import { useTimeOffAllocation, useDeleteAllocation, useEmployee, useTimeOff } from "@/hooks/use-data";
+import { AlertCircle, CheckCircle2, Clock, Trash2, XCircle } from "lucide-react";
+import {
+  useTimeOffAllocation,
+  useDeleteAllocation,
+  useEmployee,
+  useTimeOff,
+  useApproveAllocation,
+  useRefuseAllocation,
+} from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { employeeName } from "@/lib/hr-utils";
@@ -26,8 +33,11 @@ export default function AllocationDetailPage() {
   const { data: employee } = useEmployee(allocation?.employeeId ?? "");
   const { data: requests = [] } = useTimeOff();
   const deleteMutation = useDeleteAllocation();
+  const approveMutation = useApproveAllocation();
+  const refuseMutation = useRefuseAllocation();
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmRefuseOpen, setConfirmRefuseOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
@@ -47,6 +57,17 @@ export default function AllocationDetailPage() {
       (r.allocationId === allocation.id || r.type.toLowerCase() === allocation.type.toLowerCase())
   );
 
+  const handleApprove = async () => {
+    await approveMutation.mutateAsync(id);
+    setToastMessage("Allocation approved! Balance is now available for leave requests.");
+  };
+
+  const handleRefuse = async () => {
+    await refuseMutation.mutateAsync({ id });
+    setToastMessage("Allocation refused. It will not contribute to employee balances.");
+    setConfirmRefuseOpen(false);
+  };
+
   const remove = async () => {
     await deleteMutation.mutateAsync(id);
     setToastMessage("Allocation deleted successfully.");
@@ -54,6 +75,10 @@ export default function AllocationDetailPage() {
       router.push("/time-off/allocations");
     }, 600);
   };
+
+  const isPending = allocation.status === "PENDING";
+  const isApproved = allocation.status === "APPROVED" || allocation.status === "ACTIVE";
+  const isRefused = allocation.status === "REFUSED";
 
   return (
     <>
@@ -68,14 +93,98 @@ export default function AllocationDetailPage() {
         }
       />
 
-      <div className="mb-6 flex items-center gap-3">
-        <StatusBadge status={allocation.status.toLowerCase() as "active" | "expired" | "draft" | "inactive"} />
-        {canDelete && (
-          <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
-            <Trash2 className="size-3.5" /> Delete
-          </Button>
-        )}
+      {/* Action and status bar */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <StatusBadge
+            status={
+              allocation.status.toLowerCase() as
+                | "active"
+                | "expired"
+                | "draft"
+                | "inactive"
+                | "pending"
+                | "approved"
+                | "refused"
+            }
+          />
+          <span className="text-xs text-text-muted">
+            {isApproved && "Available for leave consumption"}
+            {isPending && "Awaiting HR Manager or Admin approval"}
+            {isRefused && "Refused — unavailable for leave requests"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isPending && canEdit && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                onClick={handleApprove}
+                busy={approveMutation.isPending}
+              >
+                <CheckCircle2 className="size-4" /> Approve Allocation
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setConfirmRefuseOpen(true)}
+              >
+                <XCircle className="size-4" /> Refuse Allocation
+              </Button>
+            </>
+          )}
+
+          {canDelete && (
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
+              <Trash2 className="size-4 text-text-muted hover:text-red-400" />
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Lifecycle informational banners */}
+      {isPending && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-300">
+          <Clock className="size-5 shrink-0 text-amber-400" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-semibold text-amber-200">Allocation Pending Approval</p>
+            <p className="mt-0.5 text-amber-300/90">
+              This quota of {allocation.allocatedDays} {allocation.unit ?? "DAYS"} has been submitted
+              for approval. Per enterprise policy, it does <strong>not</strong> contribute to the
+              employee’s usable leave balance until an authorized manager approves it.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isRefused && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+          <AlertCircle className="size-5 shrink-0 text-red-400" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-semibold text-red-200">Allocation Refused</p>
+            <p className="mt-0.5 text-red-300/90">
+              This allocation was refused and has not contributed to the employee’s leave balance.
+              If this was done in error, please submit a new allocation request.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isApproved && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-300">
+          <CheckCircle2 className="size-5 shrink-0 text-green-400" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-semibold text-green-200">Allocation Approved & Active</p>
+            <p className="mt-0.5 text-green-300/90">
+              This allocation is active. Employees may submit leave requests against the {allocation.remainingDays}{" "}
+              {allocation.unit ?? "DAYS"} remaining balance within the validity window.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <LeaveBalanceCard allocation={allocation} />
@@ -87,7 +196,10 @@ export default function AllocationDetailPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs text-text-muted">Employee</p>
-              <Link href={`/employees/${allocation.employeeId}`} className="mt-1 block text-sm font-semibold text-primary">
+              <Link
+                href={`/employees/${allocation.employeeId}`}
+                className="mt-1 block text-sm font-semibold text-primary"
+              >
                 {employee ? employeeName(employee) : allocation.employeeId}
               </Link>
             </div>
@@ -98,13 +210,19 @@ export default function AllocationDetailPage() {
             <div>
               <p className="text-xs text-text-muted">Allocated Quantity</p>
               <p className="mt-1 text-lg font-bold">
-                {allocation.allocatedDays} <span className="text-xs font-normal text-text-muted">{allocation.unit ?? "DAYS"}</span>
+                {allocation.allocatedDays}{" "}
+                <span className="text-xs font-normal text-text-muted">
+                  {allocation.unit ?? "DAYS"}
+                </span>
               </p>
             </div>
             <div>
               <p className="text-xs text-text-muted">Taken Quantity</p>
               <p className="mt-1 text-lg font-bold text-text-secondary">
-                {allocation.usedDays} <span className="text-xs font-normal text-text-muted">{allocation.unit ?? "DAYS"}</span>
+                {allocation.usedDays}{" "}
+                <span className="text-xs font-normal text-text-muted">
+                  {allocation.unit ?? "DAYS"}
+                </span>
               </p>
             </div>
             <div>
@@ -121,14 +239,26 @@ export default function AllocationDetailPage() {
         </Card>
       </div>
 
+      {/* Delete confirmation dialog */}
       <ConfirmationDialog
-        open={confirmOpen}
+        open={confirmDeleteOpen}
         title="Delete allocation?"
-        message="This action removes the mock allocation record. Remaining balances for this employee will update accordingly."
+        message="This action removes the allocation record. Any leave balance calculations will update accordingly."
         confirmLabel="Delete Allocation"
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={() => setConfirmDeleteOpen(false)}
         onConfirm={remove}
         busy={deleteMutation.isPending}
+      />
+
+      {/* Refusal confirmation dialog */}
+      <ConfirmationDialog
+        open={confirmRefuseOpen}
+        title="Refuse Leave Allocation?"
+        message="Refusing this allocation will permanently mark it as REFUSED and prevent it from becoming available to the employee."
+        confirmLabel="Refuse Allocation"
+        onCancel={() => setConfirmRefuseOpen(false)}
+        onConfirm={handleRefuse}
+        busy={refuseMutation.isPending}
       />
     </>
   );

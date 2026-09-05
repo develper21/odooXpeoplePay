@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { Employee, TimeOffAllocation, TimeOffRequest, TimeOffType } from "@/types/domain";
-import { calculateRequestDuration, findApplicableAllocation } from "@/lib/time-off-utils";
+import { calculateRequestDuration, findApplicableAllocation, usableAllocationRemaining } from "@/lib/time-off-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -79,7 +79,7 @@ export function RequestForm({
   const hasNoAllocation = Boolean(selectedType?.allocationRequired && !matchedAllocation);
   const hasInsufficientBalance = Boolean(
     selectedType?.allocationRequired &&
-      (hasNoAllocation || (matchedAllocation && matchedAllocation.remainingDays < duration))
+      (hasNoAllocation || (matchedAllocation && usableAllocationRemaining(matchedAllocation) < duration))
   );
 
   const submit = async (raw: FormValues) => {
@@ -100,7 +100,7 @@ export function RequestForm({
 
     if (hasInsufficientBalance) {
       setError("endDate", {
-        message: `Insufficient leave balance. Remaining: ${matchedAllocation?.remainingDays ?? 0} days, Requested: ${duration} days`,
+        message: `Insufficient leave balance. Remaining: ${matchedAllocation ? usableAllocationRemaining(matchedAllocation) : 0} days, Requested: ${duration} days`,
       });
       return;
     }
@@ -194,7 +194,8 @@ export function RequestForm({
             <p className="text-xs text-text-muted">Current Leave Balance</p>
             {matchedAllocation ? (
               <p className="mt-1 text-sm font-semibold text-text-secondary">
-                {matchedAllocation.remainingDays} {selectedType?.unit ?? "DAYS"} remaining (out of {matchedAllocation.allocatedDays})
+                {usableAllocationRemaining(matchedAllocation)} {selectedType?.unit ?? "DAYS"} remaining (out of {matchedAllocation.allocatedDays})
+                              {usableAllocationRemaining(matchedAllocation)} {selectedType?.unit ?? "DAYS"} remaining (out of {matchedAllocation.allocatedDays})
               </p>
             ) : selectedType?.allocationRequired ? (
               <p className="mt-1 text-xs font-semibold text-amber-400">No active allocation found</p>
@@ -213,6 +214,7 @@ export function RequestForm({
         {!hasNoAllocation && hasInsufficientBalance && (
           <p className="mt-3 text-xs font-semibold text-danger">
             ⚠️ Requested duration ({duration} days) exceeds available balance ({matchedAllocation?.remainingDays} days).
+                      ⚠️ Requested duration ({duration} days) exceeds available balance ({matchedAllocation ? usableAllocationRemaining(matchedAllocation) : 0} days).
           </p>
         )}
       </div>
