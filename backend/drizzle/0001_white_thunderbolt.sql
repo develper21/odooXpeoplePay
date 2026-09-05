@@ -1,0 +1,7 @@
+ALTER TABLE "payslips" ALTER COLUMN "contract_id" SET NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_contracts_employee_active" ON "contracts" USING btree ("employee_id") WHERE "contracts"."status" = 'active';--> statement-breakpoint
+ALTER TABLE "allocations" ADD CONSTRAINT "chk_allocations_period_valid" CHECK ("allocations"."effective_to" IS NULL OR "allocations"."effective_to" >= "allocations"."effective_from");--> statement-breakpoint
+ALTER TABLE "attendances" ADD CONSTRAINT "chk_attendance_clockout_after_clockin" CHECK ("attendances"."clock_out" IS NULL OR "attendances"."clock_in" IS NULL OR "attendances"."clock_out" > "attendances"."clock_in");--> statement-breakpoint
+ALTER TABLE "salary_rules" ADD CONSTRAINT "chk_salary_rules_calculation" CHECK (("salary_rules"."calculation_type" = 'fixed' AND "salary_rules"."amount" IS NOT NULL)
+        OR ("salary_rules"."calculation_type" = 'percentage' AND "salary_rules"."percentage" IS NOT NULL AND "salary_rules"."percentage_base" IS NOT NULL));--> statement-breakpoint
+ALTER TABLE "salary_structures" ADD CONSTRAINT "chk_salary_structures_period_valid" CHECK ("salary_structures"."effective_to" IS NULL OR "salary_structures"."effective_from" IS NULL OR "salary_structures"."effective_to" >= "salary_structures"."effective_from");
