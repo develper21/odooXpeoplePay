@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "uq_attendances_employee_open" ON "attendances" USING btree ("employee_id") WHERE "attendances"."clock_in" IS NOT NULL AND "attendances"."clock_out" IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_employees_user_id" ON "employees" USING btree ("user_id");
