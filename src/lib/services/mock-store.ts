@@ -1,7 +1,7 @@
 import { mockAttendance, mockContracts, mockEmployees, mockPayruns, mockPayslips, mockSalaryRules, mockSalaryStructures, mockSchedules, mockTimeOffAllocations, mockTimeOffRequests, mockUsers } from "@/data/mock";
 import type { AttendanceRecord, Contract, Employee, Payrun, Payslip, SalaryRule, SalaryStructure, TimeOffAllocation, TimeOffRequest, User, WorkingSchedule } from "@/types/domain";
 
-type Store = { employees: Employee[]; contracts: Contract[]; schedules: WorkingSchedule[]; attendance: AttendanceRecord[]; allocations: TimeOffAllocation[]; timeOffRequests: TimeOffRequest[]; salaryStructures: SalaryStructure[]; salaryRules: SalaryRule[]; payruns: Payrun[]; payslips: Payslip[]; users: User[] };
+export type Store = { employees: Employee[]; contracts: Contract[]; schedules: WorkingSchedule[]; attendance: AttendanceRecord[]; allocations: TimeOffAllocation[]; timeOffRequests: TimeOffRequest[]; salaryStructures: SalaryStructure[]; salaryRules: SalaryRule[]; payruns: Payrun[]; payslips: Payslip[]; users: User[] };
 
 export const mockStore: Store = { employees: [...mockEmployees], contracts: [...mockContracts], schedules: [...mockSchedules], attendance: [...mockAttendance], allocations: [...mockTimeOffAllocations], timeOffRequests: [...mockTimeOffRequests], salaryStructures: [...mockSalaryStructures], salaryRules: [...mockSalaryRules], payruns: [...mockPayruns], payslips: [...mockPayslips], users: [...mockUsers] };
 

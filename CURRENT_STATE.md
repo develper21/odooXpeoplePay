@@ -2,7 +2,7 @@
 
 ## Sprint
 
-Sprint 2 is complete. Sprint 1 foundation remains intact.
+Sprint 3 is complete. Sprint 1 and Sprint 2 foundations remain intact.
 
 ## Completed
 
@@ -35,3 +35,4 @@ Sprint 2 is complete. Sprint 1 foundation remains intact.
 - The API service paths are prepared, but no backend is running in this repository.
 - Mock mutations are in-memory and reset when the browser session/module process restarts.
 - Browser automation could not be run because the local Playwright Chromium executable is not installed; typecheck and production build were run successfully.
+- Employee and contract success feedback currently uses navigation plus mutation error states; the existing Toast primitive remains available but is not yet centralized as a global notification provider.
