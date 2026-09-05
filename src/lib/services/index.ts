@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api/client";
+import { apiBlob, apiClient } from "@/lib/api/client";
 import { dataMode } from "@/lib/data-mode";
 import { mockDashboard } from "@/data/mock";
 import { createMock, deleteMock, listMock, updateMock } from "@/lib/services/mock-store";
@@ -122,7 +122,26 @@ export const salaryCalculationService = {
   },
 };
 export const payrunService = createResourceService<Payrun>("payruns", "/payruns");
-export const payslipService = createResourceService<Payslip>("payslips", "/payslips");
+export type PayslipPdfResult =
+  | { kind: "server-pdf"; blob: Blob }
+  | { kind: "browser-print-fallback"; reason: string };
+
+export const payslipService = {
+  ...createResourceService<Payslip>("payslips", "/payslips"),
+  generatePdf: async (id: string): Promise<PayslipPdfResult> => {
+    if (dataMode === "api") {
+      return { kind: "server-pdf", blob: await apiBlob(`/payslips/${id}/pdf`) };
+    }
+
+    const payslip = (listMock("payslips") as Payslip[]).find((record) => record.id === id);
+    if (!payslip) throw new Error("Payslip record was not found.");
+
+    return {
+      kind: "browser-print-fallback",
+      reason: "Server PDF generation is not configured in mock mode. The printable payslip is ready for browser PDF export.",
+    };
+  },
+};
 export const userService = createResourceService<User>("users", "/users");
 
 export { dashboardService } from "./dashboard-service";

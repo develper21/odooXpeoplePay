@@ -276,6 +276,7 @@ export async function computePayrun(payrunId: string): Promise<Payrun> {
       deductions: calcResult.totals.deductions,
       net: calcResult.totals.net,
       status: "COMPUTED",
+      deliveryStatus: "PENDING",
       lines,
       warnings: employeeWarnings,
     };
@@ -398,6 +399,7 @@ export async function sendPayrunPayslips(payrunId: string): Promise<{
   sentCount: number;
   failedCount: number;
   failures: { employeeName: string; reason: string }[];
+  simulated?: boolean;
 }> {
   if (dataMode === "api") {
     return apiClient(`/payruns/${payrunId}/send-payslips`, { method: "POST" });
@@ -407,6 +409,10 @@ export async function sendPayrunPayslips(payrunId: string): Promise<{
   const payrun = payruns.find((p) => p.id === payrunId);
   if (!payrun) {
     throw new Error(`Payrun with ID ${payrunId} not found.`);
+  }
+
+  if (payrun.status !== "PAID") {
+    throw new Error("Payslips can only be sent after the payrun is marked as paid.");
   }
 
   const allPayslips = listMock("payslips");
@@ -432,12 +438,16 @@ export async function sendPayrunPayslips(payrunId: string): Promise<{
         employeeName: empName,
         reason: "Cannot send payslip — missing or invalid email address.",
       });
+      updateMock("payslips", payslip.id, {
+        deliveryStatus: "FAILED",
+        deliveryError: "Email address missing or invalid.",
+      });
       continue;
     }
 
-    // Mark as SENT
     updateMock("payslips", payslip.id, {
-      status: "SENT",
+      deliveryStatus: "SENT",
+      deliveryError: undefined,
       sentAt: now,
     });
     sentCount++;
@@ -448,5 +458,6 @@ export async function sendPayrunPayslips(payrunId: string): Promise<{
     sentCount,
     failedCount,
     failures,
+    simulated: true,
   };
 }
