@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0f14;
+  --surface: #111827;
+  --surface-raised: #161d2a;
+  --surface-soft: #1b2432;
+  --border: #263244;
+  --primary: #3b82f6;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-foreground: var(--text);
+  --font-sans: var(--font-geist-sans);
+}
+
+* { border-color: var(--border); }
+html, body { min-height: 100%; }
+body { background: var(--background); color: var(--text); font-family: Arial, sans-serif; }
+button, a, input { outline-color: var(--primary); }
+::selection { background: #2563eb55; }
+
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.animate-rise-in { animation: rise-in 420ms ease-out both; }

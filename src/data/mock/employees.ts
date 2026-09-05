@@ -1,0 +1,12 @@
+import type { Employee } from "@/types/domain";
+
+export const mockEmployees: Employee[] = [
+  { id: "emp-001", employeeNumber: "PP-1001", firstName: "Maya", lastName: "Patel", email: "maya.patel@northstar.io", department: "Engineering", position: "Staff Engineer", managerId: "emp-006", status: "ACTIVE", contractId: "con-001", scheduleId: "sch-001", salaryStructureId: "ss-001", bankAccount: "**** 4821", joinedOn: "2021-04-12" },
+  { id: "emp-002", employeeNumber: "PP-1002", firstName: "Jonas", lastName: "Reed", email: "jonas.reed@northstar.io", department: "Sales", position: "Account Executive", managerId: "emp-007", status: "ACTIVE", contractId: "con-002", scheduleId: "sch-002", salaryStructureId: "ss-002", bankAccount: "**** 1087", joinedOn: "2022-08-01" },
+  { id: "emp-003", employeeNumber: "PP-1003", firstName: "Leila", lastName: "Okafor", email: "leila.okafor@northstar.io", department: "People", position: "People Partner", status: "ON_LEAVE", contractId: "con-003", scheduleId: "sch-001", salaryStructureId: "ss-001", bankAccount: "**** 7740", joinedOn: "2020-11-09" },
+  { id: "emp-004", employeeNumber: "PP-1004", firstName: "Theo", lastName: "Meyer", email: "theo.meyer@northstar.io", department: "Operations", position: "Operations Coordinator", status: "ACTIVE", contractId: "con-004", scheduleId: "sch-001", salaryStructureId: "ss-001", joinedOn: "2024-01-15" },
+  { id: "emp-005", employeeNumber: "PP-1005", firstName: "Rina", lastName: "Shah", email: "rina.shah@northstar.io", department: "Finance", position: "Payroll Specialist", status: "ACTIVE", scheduleId: "sch-001", salaryStructureId: "ss-001", joinedOn: "2023-05-22" },
+  { id: "emp-006", employeeNumber: "PP-1006", firstName: "Daniel", lastName: "Kim", email: "daniel.kim@northstar.io", department: "Engineering", position: "VP Engineering", status: "ACTIVE", contractId: "con-006", scheduleId: "sch-001", salaryStructureId: "ss-001", joinedOn: "2019-02-04" },
+  { id: "emp-007", employeeNumber: "PP-1007", firstName: "Sofia", lastName: "Alvarez", email: "sofia.alvarez@northstar.io", department: "Sales", position: "Sales Director", status: "INACTIVE", contractId: "con-007", scheduleId: "sch-002", salaryStructureId: "ss-002", joinedOn: "2018-09-17" },
+  { id: "emp-008", employeeNumber: "PP-1008", firstName: "Owen", lastName: "Brooks", email: "owen.brooks@northstar.io", department: "Operations", position: "Operations Associate", status: "ACTIVE", contractId: "con-008", scheduleId: "sch-001", salaryStructureId: "ss-001", joinedOn: "2024-03-18" },
+];
