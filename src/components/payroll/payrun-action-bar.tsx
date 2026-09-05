@@ -51,7 +51,7 @@ export function PayrunActionBar({
   const computeDisabled = !canCompute || isPaid || isComputing;
   const validateDisabled = !canValidate || (!isComputed && !isValidated) || isPaid || hasBlockingErrors || isValidating;
   const markPaidDisabled = !canMarkPaid || !isValidated || isPaid || isMarkingPaid;
-  const sendDisabled = !canSend || (!isComputed && !isValidated && !isPaid) || isSending;
+  const sendDisabled = !canSend || !isPaid || isSending;
 
   return (
     <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-border bg-surface-raised/70 p-2.5">
@@ -147,7 +147,7 @@ export function PayrunActionBar({
         size="sm"
         disabled={sendDisabled}
         onClick={onSendPayslips}
-        title={!canSend ? "Insufficient permissions" : "Send payslips via email to employees"}
+        title={!canSend ? "Insufficient permissions" : !isPaid ? "Mark the payrun as paid before sending payslips" : "Send payslips via email to employees"}
         className="text-xs ml-auto"
       >
         {isSending ? (

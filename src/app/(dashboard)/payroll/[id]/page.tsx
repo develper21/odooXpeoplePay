@@ -72,6 +72,7 @@ export default function PayrunDetailsPage() {
     sentCount: number;
     failedCount: number;
     failures: { employeeName: string; reason: string }[];
+    simulated?: boolean;
   } | null>(null);
 
   // Payslips belonging to this payrun
@@ -218,6 +219,7 @@ export default function PayrunDetailsPage() {
             <Send className="size-4 text-primary" /> Payslip Delivery Summary
           </div>
           <p className="mt-1 text-text-secondary">
+            {sendSummary.simulated && <span className="mr-1 text-warning">Mock delivery simulation:</span>}
             Dispatched <strong className="text-foreground">{sendSummary.sentCount}</strong> payslip(s) successfully.
             {sendSummary.failedCount > 0 && (
               <span className="text-danger ml-1">

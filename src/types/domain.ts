@@ -53,7 +53,8 @@ export interface SalaryStructure {
   basePercentage?: number;
 }
 export type PayrunStatus = "DRAFT" | "COMPUTED" | "PROCESSING" | "WARNING" | "PENDING_APPROVAL" | "VALIDATED" | "PAID";
-export type PayslipStatus = "DRAFT" | "COMPUTED" | "VALIDATED" | "PAID" | "SENT" | "DUPLICATE_WARNING";
+export type PayslipStatus = "DRAFT" | "COMPUTED" | "VALIDATED" | "PAID" | "DUPLICATE_WARNING";
+export type PayslipDeliveryStatus = "PENDING" | "SENT" | "FAILED";
 
 export type WarningSeverity = "INFO" | "WARNING" | "ERROR";
 
@@ -125,6 +126,8 @@ export interface Payslip {
   deductions?: number;
   net: number;
   status: PayslipStatus;
+  deliveryStatus?: PayslipDeliveryStatus;
+  deliveryError?: string;
   lines?: PayslipLine[];
   warnings?: PayrunWarning[];
   sentAt?: string;

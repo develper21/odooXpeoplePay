@@ -1,8 +1,10 @@
 "use client";
 
 import { Printer } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { useGeneratePayslipPdf } from "@/hooks/use-data";
 import type { Employee, Contract, Payslip, SalaryStructure } from "@/types/domain";
 
 interface PrintablePayslipProps {
@@ -18,9 +20,22 @@ export function PrintablePayslip({
   contract,
   structure,
 }: PrintablePayslipProps) {
-  const handlePrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
+  const generatePdfMutation = useGeneratePayslipPdf();
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handleGeneratePdf = async () => {
+    setPdfError(null);
+    try {
+      const result = await generatePdfMutation.mutateAsync(payslip.id);
+      if (result.kind === "server-pdf") {
+        const url = URL.createObjectURL(result.blob);
+        window.open(url, "_blank", "noopener,noreferrer");
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } else {
+        window.print();
+      }
+    } catch (error) {
+      setPdfError(error instanceof Error ? error.message : "PDF generation failed. Please try again.");
     }
   };
 
@@ -37,11 +52,12 @@ export function PrintablePayslip({
         <div>
           <h2 className="text-lg font-bold">Official Payslip Document</h2>
           <p className="text-xs text-text-secondary">
-            Use the browser print command to export to PDF or send to a connected printer.
+            Mock mode uses the printable browser fallback; API mode opens the generated PDF response.
           </p>
+          {pdfError && <p className="mt-2 text-xs text-danger" role="alert">{pdfError}</p>}
         </div>
-        <Button onClick={handlePrint} variant="primary" className="gap-2">
-          <Printer className="size-4" /> Print Payslip
+        <Button onClick={handleGeneratePdf} variant="primary" className="gap-2" busy={generatePdfMutation.isPending}>
+          <Printer className="size-4" /> {generatePdfMutation.isPending ? "Generating..." : "Generate PDF"}
         </Button>
       </div>
 

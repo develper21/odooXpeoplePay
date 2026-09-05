@@ -11,6 +11,7 @@ import type {
   DepartmentBreakdownItem,
   TimeOffOverview,
 } from "@/types/domain";
+import { isAllocationAvailable } from "@/lib/time-off-utils";
 
 export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
   const employees = listMock("employees");
@@ -325,7 +326,7 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
   };
 
   // 10. Time Off Overview
-  const filteredAllocations = allocations.filter((a) => filteredEmpIds.has(a.employeeId));
+  const filteredAllocations = allocations.filter((a) => filteredEmpIds.has(a.employeeId) && isAllocationAvailable(a));
   const totalAllocatedDays = filteredAllocations.reduce((s, a) => s + (a.allocatedDays || 0), 0);
   const totalRemainingDays = filteredAllocations.reduce((s, a) => s + (a.remainingDays || 0), 0);
 
