@@ -1,3 +1,5 @@
+import type { Role } from "@/lib/auth/auth-types";
+
 export type ID = string;
 export type EmploymentStatus = "ACTIVE" | "INACTIVE" | "ON_LEAVE";
 export type EmployeeType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
@@ -7,7 +9,7 @@ export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "OVERTIME" | "MIS
 
 export type TimeOffUnit = "DAYS" | "HOURS";
 export type TimeOffTypeStatus = "ACTIVE" | "INACTIVE";
-export type AllocationStatus = "ACTIVE" | "EXPIRED" | "DRAFT" | "INACTIVE" | "PENDING" | "APPROVED";
+export type AllocationStatus = "ACTIVE" | "EXPIRED" | "DRAFT" | "INACTIVE" | "PENDING" | "APPROVED" | "REFUSED";
 
 export interface TimeOffType { id: ID; name: string; unit: TimeOffUnit; allocationRequired: boolean; approvalRequired: boolean; payrollIntegration: boolean; status: TimeOffTypeStatus; }
 
@@ -51,7 +53,8 @@ export interface SalaryStructure {
   basePercentage?: number;
 }
 export type PayrunStatus = "DRAFT" | "COMPUTED" | "PROCESSING" | "WARNING" | "PENDING_APPROVAL" | "VALIDATED" | "PAID";
-export type PayslipStatus = "DRAFT" | "COMPUTED" | "VALIDATED" | "PAID" | "SENT" | "DUPLICATE_WARNING";
+export type PayslipStatus = "DRAFT" | "COMPUTED" | "VALIDATED" | "PAID" | "DUPLICATE_WARNING";
+export type PayslipDeliveryStatus = "PENDING" | "SENT" | "FAILED";
 
 export type WarningSeverity = "INFO" | "WARNING" | "ERROR";
 
@@ -123,13 +126,24 @@ export interface Payslip {
   deductions?: number;
   net: number;
   status: PayslipStatus;
+  deliveryStatus?: PayslipDeliveryStatus;
+  deliveryError?: string;
   lines?: PayslipLine[];
   warnings?: PayrunWarning[];
   sentAt?: string;
   paidAt?: string;
 }
 
-export interface User { id: ID; name: string; email: string; role: "EMPLOYEE" | "HR_MANAGER" | "HR_PAYROLL_USER" | "HR_PAYROLL_MANAGER" | "ADMIN"; status: "ACTIVE" | "INVITED" | "INACTIVE"; }
+export interface User {
+  id: ID;
+  name: string;
+  email: string;
+  role: Role;
+  status: "ACTIVE" | "INVITED" | "INACTIVE";
+  employeeId?: ID;
+  lastActivity?: string;
+  createdAt?: string;
+}
 export interface DashboardMetric { label: string; value: string; change: string; trend: "up" | "down"; tone: "blue" | "green" | "amber" | "violet"; href?: string; }
 export interface DashboardAlert { label: string; detail: string; tone: "warning" | "pending" | "approved" | "error"; }
 
@@ -192,5 +206,50 @@ export interface DashboardData {
   availablePeriods: string[];
   availableDepartments: string[];
   filtersApplied: DashboardFilters;
+}
+
+export interface RoleSummary {
+  id: Role;
+  name: string;
+  description: string;
+  userCount: number;
+  permissionCount: number;
+  isSystem: boolean;
+  status: "ACTIVE" | "INACTIVE";
+}
+
+export interface SystemSettings {
+  organization: {
+    companyName: string;
+    legalName: string;
+    email: string;
+    phone: string;
+    website: string;
+    taxId: string;
+    fiscalYearStart: string;
+    currency: string;
+    timezone: string;
+  };
+  general: {
+    dateFormat: string;
+    timeFormat: string;
+    language: string;
+    theme: string;
+    workingDaysPerWeek: number;
+    standardDailyHours: number;
+  };
+  payrollSecurity: {
+    cutoffDay: number;
+    overtimeMultiplier: number;
+    sessionTimeoutMinutes: number;
+    requireTwoFactor: boolean;
+    autoPayslipEmail: boolean;
+  };
+  notifications: {
+    notifyOnPayrunFinalize: boolean;
+    notifyOnLeaveRequest: boolean;
+    notifyOnContractExpiry: boolean;
+    contractExpiryWarningDays: number;
+  };
 }
 

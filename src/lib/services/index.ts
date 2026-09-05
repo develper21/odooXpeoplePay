@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api/client";
+import { apiBlob, apiClient } from "@/lib/api/client";
 import { dataMode } from "@/lib/data-mode";
 import { mockDashboard } from "@/data/mock";
 import { createMock, deleteMock, listMock, updateMock } from "@/lib/services/mock-store";
@@ -122,7 +122,26 @@ export const salaryCalculationService = {
   },
 };
 export const payrunService = createResourceService<Payrun>("payruns", "/payruns");
-export const payslipService = createResourceService<Payslip>("payslips", "/payslips");
+export type PayslipPdfResult =
+  | { kind: "server-pdf"; blob: Blob }
+  | { kind: "browser-print-fallback"; reason: string };
+
+export const payslipService = {
+  ...createResourceService<Payslip>("payslips", "/payslips"),
+  generatePdf: async (id: string): Promise<PayslipPdfResult> => {
+    if (dataMode === "api") {
+      return { kind: "server-pdf", blob: await apiBlob(`/payslips/${id}/pdf`) };
+    }
+
+    const payslip = (listMock("payslips") as Payslip[]).find((record) => record.id === id);
+    if (!payslip) throw new Error("Payslip record was not found.");
+
+    return {
+      kind: "browser-print-fallback",
+      reason: "Server PDF generation is not configured in mock mode. The printable payslip is ready for browser PDF export.",
+    };
+  },
+};
 export const userService = createResourceService<User>("users", "/users");
 
 export { dashboardService } from "./dashboard-service";
@@ -149,20 +168,23 @@ export const timeOffWorkflow = {
     const requiresAllocation = leaveType ? leaveType.allocationRequired : true;
 
     if (requiresAllocation) {
-      // Deduct from allocation if applicable
+      // Deduct from an approved or active allocation only
       const allocations = listMock("allocations");
       const alloc = allocations.find(
         (a) =>
-          a.id === request.allocationId ||
-          (a.employeeId === request.employeeId &&
-            (a.typeId === request.typeId || a.type.toLowerCase() === request.type.toLowerCase()))
+          (a.status === "APPROVED" || a.status === "ACTIVE") &&
+          (a.id === request.allocationId ||
+            (a.employeeId === request.employeeId &&
+              (a.typeId === request.typeId || a.type.toLowerCase() === request.type.toLowerCase())))
       );
 
-      if (alloc) {
-        const newUsed = alloc.usedDays + request.days;
-        const newRemaining = Math.max(0, alloc.allocatedDays - newUsed);
-        updateMock("allocations", alloc.id, { usedDays: newUsed, remainingDays: newRemaining });
+      if (!alloc) {
+        throw new Error("Cannot approve request: No approved and active leave allocation found for this employee.");
       }
+
+      const newUsed = alloc.usedDays + request.days;
+      const newRemaining = Math.max(0, alloc.allocatedDays - newUsed);
+      updateMock("allocations", alloc.id, { usedDays: newUsed, remainingDays: newRemaining });
     }
 
     return updateMock("timeOffRequests", id, { status: "APPROVED" });
@@ -197,6 +219,132 @@ export const timeOffWorkflow = {
       }
     }
     return updateMock("timeOffRequests", id, { status: "REFUSED" });
+  },
+};
+
+export const allocationWorkflow = {
+  approve: async (id: string) => {
+    if (dataMode === "api") {
+      return apiClient<TimeOffAllocation>(`/time-off/allocations/${id}/approve`, { method: "POST" });
+    }
+    const allocations = listMock("allocations");
+    const allocation = allocations.find((a) => a.id === id);
+    if (!allocation) throw new Error("Allocation not found");
+    if (allocation.status === "APPROVED") {
+      return allocation;
+    }
+    if (allocation.status === "ACTIVE") {
+      return allocation;
+    }
+    if (allocation.status === "REFUSED") {
+      throw new Error("Refused allocation cannot be approved directly.");
+    }
+    return updateMock("allocations", id, { status: "APPROVED" });
+  },
+  refuse: async (id: string, reason?: string) => {
+    if (dataMode === "api") {
+      return apiClient<TimeOffAllocation>(`/time-off/allocations/${id}/refuse`, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      });
+    }
+    const allocations = listMock("allocations");
+    const allocation = allocations.find((a) => a.id === id);
+    if (!allocation) throw new Error("Allocation not found");
+    if (allocation.status === "REFUSED") {
+      return allocation;
+    }
+    if (allocation.status === "APPROVED" || allocation.status === "ACTIVE") {
+      throw new Error("An available allocation cannot be refused.");
+    }
+    return updateMock("allocations", id, { status: "REFUSED" });
+  },
+};
+
+import {
+  roleLabels,
+  roleDescriptions,
+  rolePermissions,
+  setRolePermissions,
+  resetRolePermissionsToDefault,
+  type Permission,
+} from "@/lib/permissions";
+import type { Role } from "@/lib/auth/auth-types";
+import type { RoleSummary, SystemSettings } from "@/types/domain";
+import { mockStore } from "@/lib/services/mock-store";
+
+const canonicalRoles: Role[] = ["ADMIN", "HR_PAYROLL_MANAGER", "HR_PAYROLL_USER", "HR_MANAGER", "EMPLOYEE"];
+
+export const roleService = {
+  listRoles: async (): Promise<RoleSummary[]> => {
+    if (dataMode === "api") {
+      return apiClient<RoleSummary[]>("/roles");
+    }
+    const users = listMock("users");
+    return canonicalRoles.map((role) => ({
+      id: role,
+      name: roleLabels[role],
+      description: roleDescriptions[role],
+      userCount: users.filter((u) => u.role === role).length,
+      permissionCount: (rolePermissions[role] || []).length,
+      isSystem: true,
+      status: "ACTIVE",
+    }));
+  },
+  getRole: async (role: Role): Promise<RoleSummary> => {
+    const roles = await roleService.listRoles();
+    const found = roles.find((r) => r.id === role);
+    if (!found) throw new Error(`Role ${role} not found`);
+    return found;
+  },
+  getPermissions: async (role: Role): Promise<Permission[]> => {
+    if (dataMode === "api") {
+      return apiClient<Permission[]>(`/roles/${role}/permissions`);
+    }
+    return [...(rolePermissions[role] || [])];
+  },
+  updatePermissions: async (role: Role, permissions: Permission[]): Promise<Permission[]> => {
+    if (dataMode === "api") {
+      return apiClient<Permission[]>(`/roles/${role}/permissions`, {
+        method: "PUT",
+        body: JSON.stringify({ permissions }),
+      });
+    }
+    setRolePermissions(role, permissions);
+    return [...rolePermissions[role]];
+  },
+  resetPermissions: async (role: Role): Promise<Permission[]> => {
+    if (dataMode === "api") {
+      return apiClient<Permission[]>(`/roles/${role}/permissions/reset`, { method: "POST" });
+    }
+    resetRolePermissionsToDefault(role);
+    return [...rolePermissions[role]];
+  },
+};
+
+export const settingsService = {
+  get: async (): Promise<SystemSettings> => {
+    if (dataMode === "api") {
+      return apiClient<SystemSettings>("/settings");
+    }
+    return { ...listMock("settings") };
+  },
+  update: async (partial: Partial<SystemSettings>): Promise<SystemSettings> => {
+    if (dataMode === "api") {
+      return apiClient<SystemSettings>("/settings", {
+        method: "PATCH",
+        body: JSON.stringify(partial),
+      });
+    }
+    const current = listMock("settings");
+    const updated: SystemSettings = {
+      organization: { ...current.organization, ...(partial.organization || {}) },
+      general: { ...current.general, ...(partial.general || {}) },
+      payrollSecurity: { ...current.payrollSecurity, ...(partial.payrollSecurity || {}) },
+      notifications: { ...current.notifications, ...(partial.notifications || {}) },
+    };
+    mockStore.settings = updated;
+    return updated;
   },
 };
 

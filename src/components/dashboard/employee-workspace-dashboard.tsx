@@ -47,8 +47,11 @@ export function EmployeeWorkspaceDashboard({ user }: EmployeeWorkspaceDashboardP
   const paidPayslips = payslips.filter((p) => p.status === "PAID");
   const latestPayslip = paidPayslips.length > 0 ? paidPayslips[paidPayslips.length - 1] : payslips[0];
 
-  const totalAllocated = allocations.reduce((s, a) => s + (a.allocatedDays || 0), 0);
-  const totalRemaining = allocations.reduce((s, a) => s + (a.remainingDays || 0), 0);
+  const approvedAllocations = allocations.filter((a) => a.status === "APPROVED" || a.status === "ACTIVE");
+  const pendingAllocations = allocations.filter((a) => a.status === "PENDING");
+  const totalAllocated = approvedAllocations.reduce((s, a) => s + (a.allocatedDays || 0), 0);
+  const totalRemaining = approvedAllocations.reduce((s, a) => s + (a.remainingDays || 0), 0);
+  const pendingDays = pendingAllocations.reduce((s, a) => s + (a.allocatedDays || 0), 0);
   const approvedLeaves = timeOffRequests
     .filter((r) => r.status === "APPROVED")
     .reduce((s, r) => s + (r.days || 0), 0);
@@ -219,27 +222,57 @@ export function EmployeeWorkspaceDashboard({ user }: EmployeeWorkspaceDashboardP
             </Link>
           </CardHeader>
           <CardContent className="space-y-3.5 p-4 pt-0">
+            {pendingDays > 0 && (
+              <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                <span className="font-semibold">Pending Allocation:</span>
+                <span className="font-bold">{pendingDays} days awaiting manager approval</span>
+              </div>
+            )}
             {allocations.length === 0 ? (
               <p className="py-6 text-center text-xs text-text-muted">No allocations assigned.</p>
             ) : (
               allocations.map((alloc) => {
+                const isPending = alloc.status === "PENDING";
+                const isRefused = alloc.status === "REFUSED";
                 const pct = alloc.allocatedDays > 0 ? Math.round((alloc.usedDays / alloc.allocatedDays) * 100) : 0;
                 return (
                   <div key={alloc.id} className="rounded-lg border border-border-subtle bg-surface p-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-text-primary">{alloc.type}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-text-primary">{alloc.type}</span>
+                        {isPending && (
+                          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-400 border border-amber-500/20">
+                            Pending Approval
+                          </span>
+                        )}
+                        {isRefused && (
+                          <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-red-400 border border-red-500/20">
+                            Refused
+                          </span>
+                        )}
+                      </div>
                       <span className="text-text-muted">
-                        <strong className="text-primary">{alloc.remainingDays}</strong> / {alloc.allocatedDays} days remaining
+                        {isPending ? (
+                          <span className="text-amber-400 font-semibold">{alloc.allocatedDays} days pending</span>
+                        ) : isRefused ? (
+                          <span className="text-red-400 font-semibold">0 days (refused)</span>
+                        ) : (
+                          <>
+                            <strong className="text-primary">{alloc.remainingDays}</strong> / {alloc.allocatedDays} days remaining
+                          </>
+                        )}
                       </span>
                     </div>
-                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-raised">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${Math.min(pct, 100)}%` }}
-                      />
-                    </div>
+                    {!isPending && !isRefused && (
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-raised">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                    )}
                     <div className="mt-1 flex items-center justify-between text-[10px] text-text-muted">
-                      <span>{alloc.usedDays} days taken</span>
+                      <span>{isPending ? "Not yet usable" : `${alloc.usedDays} days taken`}</span>
                       <span>Valid until {alloc.validTo}</span>
                     </div>
                   </div>

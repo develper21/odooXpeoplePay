@@ -28,6 +28,7 @@ import {
   useTimeOffTypes,
 } from "@/hooks/use-data";
 import { canAccess } from "@/lib/permissions";
+import { usableAllocationRemaining } from "@/lib/time-off-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
@@ -247,8 +248,10 @@ export default function ReportsPage() {
         .reduce((s, r) => s + (r.days || 0), 0);
 
       const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
-      const remainingQuota = empAllocs.reduce((s, a) => s + (a.remainingDays || 0), 0);
-      const totalQuota = empAllocs.reduce((s, a) => s + (a.allocatedDays || 0), 0);
+      const remainingQuota = empAllocs.reduce((s, a) => s + usableAllocationRemaining(a), 0);
+      const totalQuota = empAllocs
+        .filter((a) => a.status === "APPROVED" || a.status === "ACTIVE")
+        .reduce((s, a) => s + (a.allocatedDays || 0), 0);
 
       return {
         employeeNumber: emp.employeeNumber,

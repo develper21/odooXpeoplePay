@@ -16,6 +16,14 @@ export function calculateRequestDuration(startDate: string, endDate: string, uni
   return Math.max(1, diffDays);
 }
 
+export function isAllocationAvailable(allocation: TimeOffAllocation): boolean {
+  return allocation.status === "APPROVED" || allocation.status === "ACTIVE";
+}
+
+export function usableAllocationRemaining(allocation: TimeOffAllocation): number {
+  return isAllocationAvailable(allocation) ? allocation.remainingDays : 0;
+}
+
 export function calculateAllocationRemaining(allocatedDays: number, usedDays: number): number {
   return Math.max(0, allocatedDays - usedDays);
 }
@@ -29,6 +37,7 @@ export function findApplicableAllocation(
   const matches = allocations.filter(
     (alloc) =>
       alloc.employeeId === employeeId &&
+      isAllocationAvailable(alloc) &&
       (alloc.typeId === typeIdOrName || alloc.type.toLowerCase() === typeIdOrName.toLowerCase())
   );
 

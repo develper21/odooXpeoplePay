@@ -6,6 +6,18 @@ export async function apiClient<T>(path: string, init?: RequestInit): Promise<T>
   return response.json() as Promise<T>;
 }
 
+export async function apiBlob(path: string, init?: RequestInit): Promise<Blob> {
+  const response = await fetch(`${apiBaseUrl}${path}`, init);
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new Error("You are not authorized to generate this PDF.");
+    if (response.status === 404) throw new Error("Payslip record was not found.");
+    throw new Error("PDF generation failed. Please try again later.");
+  }
+  const blob = await response.blob();
+  if (blob.size === 0) throw new Error("The PDF response was empty.");
+  return blob;
+}
+
 export const apiResource = <T>(path: string) => ({
   list: () => apiClient<T[]>(path),
   get: (id: string) => apiClient<T>(`${path}/${id}`),
