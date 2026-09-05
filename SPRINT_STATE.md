@@ -1,10 +1,10 @@
 # Sprint State
 
-## Sprint 2: Authentication and Role-Based Access Control
+## Sprint 3: Employees and Contracts
 
 Status: **Complete**
 
-Sprint 1 foundation remains complete and was extended in place.
+Sprint 1 foundation and Sprint 2 authentication/RBAC remain complete and were extended in place.
 
 ### Completed Work
 
@@ -22,10 +22,15 @@ Sprint 1 foundation remains complete and was extended in place.
 - Mock auth service with five role-specific accounts, centralized browser session storage, auth provider/context, loading state, login/logout behavior, and API-mode login/logout boundary.
 - Canonical granular permission union, explicit inherited role-to-permission mapping, route permission resolution, `PermissionGate`, `RoleGate`, protected route guard, unauthorized page, dynamic sidebar, and current-user header menu.
 - Action-level gates for payrun creation and salary structure/rule editing.
+- Employee domain expanded with employee type, contact information, and 16 realistic connected records across departments, managers, schedules, statuses, and employment types.
+- Contract domain expanded with references, departments, positions, salary structure links, dates, active/history statuses, and preserved historical records.
+- Employees list supports query-backed list/kanban switching, search, status/department filters, reset, employee-role self scoping, and permission-aware creation.
+- Added employee create/edit/detail/delete flows, central HR hub smart buttons, active contract highlighting, contract history, confirmation dialog, and related route placeholders.
+- Added contracts list, create, edit, detail, delete, employee-specific history, wage/date/status display, active highlighting, and salary structure linkage.
 
 ### Routes
 
-`/login`, `/dashboard`, `/employees`, `/contracts`, `/schedules`, `/attendance`, `/time-off`, `/payroll`, `/payroll/new`, `/payslips`, `/salary-structures`, `/salary-rules`, `/reports`, `/users`, `/roles`, `/settings`.
+`/login`, `/dashboard`, `/employees`, `/employees/new`, `/employees/[id]`, `/employees/[id]/edit`, `/employees/[id]/contracts`, `/employees/[id]/attendance`, `/employees/[id]/time-off`, `/employees/[id]/allocations`, `/contracts`, `/contracts/new`, `/contracts/[id]`, `/contracts/[id]/edit`, `/schedules`, `/attendance`, `/time-off`, `/payroll`, `/payroll/new`, `/payslips`, `/salary-structures`, `/salary-rules`, `/reports`, `/users`, `/roles`, `/settings`, `/unauthorized`.
 
 ### Main Files and Areas Added
 
@@ -36,6 +41,7 @@ Sprint 1 foundation remains complete and was extended in place.
 - `src/components/dashboard/` Recharts dashboard visuals.
 - `src/lib/permissions.ts`, `src/lib/api/client.ts`, and `src/lib/utils.ts`.
 - `src/types/index.ts`.
+- `src/types/domain.ts`, `src/lib/hr-utils.ts`, `src/components/employees/employee-form.tsx`, `src/components/contracts/contract-form.tsx`, `src/components/shared/smart-button.tsx`, and `src/components/ui/confirmation-dialog.tsx`.
 - `package.json`, `tsconfig.json`, `postcss.config.mjs`, `components.json`.
 
 ### APIs Integrated
@@ -48,8 +54,10 @@ Native SWC is unavailable in the local Windows environment. Scripts use `next de
 
 Mock mutations are in-memory and reset when the browser session/module process restarts.
 
-Playwright browser verification was unavailable because the local Chromium executable is not installed. Manual browser role-flow verification remains recommended once browser tooling is available.
+Playwright browser verification was unavailable because the local Chromium executable is not installed. Manual browser CRUD and responsive verification remains recommended once browser tooling is available.
+
+Sprint 3 deliberately does not implement attendance or time-off business logic, payroll computation, salary configuration, or backend persistence. Related employee routes preserve the future relationship and show clear placeholders.
 
 ### Exact Next Task
 
-Sprint 3 should begin with the Employee central HR hub: define the employee domain/API contract, add employee list/detail views, and connect contracts, schedules, attendance, and time-off navigation from employee context. Do not begin payroll calculation logic until the employee foundation is connected.
+Sprint 4 should begin with Working Schedules and Attendance: replace the related placeholders with schedule assignment and attendance workflows while consuming the employee/contract relationships established here.
