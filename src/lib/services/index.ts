@@ -3,6 +3,7 @@ import { dataMode } from "@/lib/data-mode";
 import { mockDashboard } from "@/data/mock";
 import { createMock, deleteMock, listMock, updateMock } from "@/lib/services/mock-store";
 import { createResourceService } from "@/lib/services/resource-service";
+import { calculateSalary, type SalaryCalculationContext, type SalaryCalculationResult } from "@/lib/salary-calculator";
 import type { AttendanceRecord, Contract, DashboardData, Employee, Payrun, Payslip, SalaryRule, SalaryStructure, TimeOffAllocation, TimeOffRequest, TimeOffType, User, WorkingSchedule } from "@/types/domain";
 
 export const employeeService = createResourceService<Employee>("employees", "/employees");
@@ -40,8 +41,86 @@ export const timeOffService = {
   },
 };
 export const timeOffTypeService = createResourceService<TimeOffType>("timeOffTypes", "/time-off/types");
-export const salaryStructureService = createResourceService<SalaryStructure>("salaryStructures", "/salary-structures");
-export const salaryRuleService = createResourceService<SalaryRule>("salaryRules", "/salary-rules");
+export const salaryStructureService = {
+  ...createResourceService<SalaryStructure>("salaryStructures", "/salary-structures"),
+  remove: async (id: string) => {
+    if (dataMode === "api") {
+      return apiClient<void>(`/salary-structures/${id}`, { method: "DELETE" });
+    }
+    const contracts = listMock("contracts");
+    const assignedContracts = contracts.filter((c) => c.salaryStructureId === id);
+    if (assignedContracts.length > 0) {
+      throw new Error(`Cannot delete salary structure: it is referenced by ${assignedContracts.length} contract(s) (e.g. ${assignedContracts[0].reference}). Reassign them before deleting.`);
+    }
+    return deleteMock("salaryStructures", id);
+  },
+};
+
+export const salaryRuleService = {
+  ...createResourceService<SalaryRule>("salaryRules", "/salary-rules"),
+  create: async (input: Omit<SalaryRule, "id">) => {
+    if (dataMode === "api") {
+      return apiClient<SalaryRule>("/salary-rules", { method: "POST", body: JSON.stringify(input) });
+    }
+    const rules = listMock("salaryRules");
+    const codeUpper = input.code.trim().toUpperCase();
+    if (rules.some((r) => r.code.toUpperCase() === codeUpper)) {
+      throw new Error(`Salary rule code "${codeUpper}" already exists. Rule codes must be unique.`);
+    }
+    const id = `sr-${Date.now().toString(36)}`;
+    return createMock("salaryRules", { ...input, id, code: codeUpper });
+  },
+  update: async (id: string, input: Partial<SalaryRule>) => {
+    if (dataMode === "api") {
+      return apiClient<SalaryRule>(`/salary-rules/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+    }
+    if (input.code) {
+      const codeUpper = input.code.trim().toUpperCase();
+      const rules = listMock("salaryRules");
+      if (rules.some((r) => r.id !== id && r.code.toUpperCase() === codeUpper)) {
+        throw new Error(`Salary rule code "${codeUpper}" already exists on another rule.`);
+      }
+      input.code = codeUpper;
+    }
+    return updateMock("salaryRules", id, input);
+  },
+  remove: async (id: string) => {
+    if (dataMode === "api") {
+      return apiClient<void>(`/salary-rules/${id}`, { method: "DELETE" });
+    }
+    const structures = listMock("salaryStructures");
+    const referencingStructures = structures.filter((s) => s.ruleIds?.includes(id));
+    if (referencingStructures.length > 0) {
+      throw new Error(`Cannot delete salary rule: it is currently used in "${referencingStructures[0].name}". Remove it from the structure first.`);
+    }
+    return deleteMock("salaryRules", id);
+  },
+};
+
+export const salaryCalculationService = {
+  calculate: async (rules: SalaryRule[], context?: SalaryCalculationContext): Promise<SalaryCalculationResult> => {
+    return calculateSalary(rules, context);
+  },
+  calculateForStructure: async (structureId: string, context?: SalaryCalculationContext): Promise<SalaryCalculationResult> => {
+    if (dataMode === "api") {
+      return apiClient<SalaryCalculationResult>(`/salary-structures/${structureId}/calculate`, {
+        method: "POST",
+        body: JSON.stringify(context || {}),
+      });
+    }
+    const structures = listMock("salaryStructures");
+    const structure = structures.find((s) => s.id === structureId);
+    if (!structure) {
+      throw new Error(`Salary structure ${structureId} not found.`);
+    }
+    const allRules = listMock("salaryRules");
+    const structureRules = (structure.ruleIds || [])
+      .map((rId) => allRules.find((r) => r.id === rId))
+      .filter((r): r is SalaryRule => Boolean(r));
+
+    return calculateSalary(structureRules, context);
+  },
+};
 export const payrunService = createResourceService<Payrun>("payruns", "/payruns");
 export const payslipService = createResourceService<Payslip>("payslips", "/payslips");
 export const userService = createResourceService<User>("users", "/users");

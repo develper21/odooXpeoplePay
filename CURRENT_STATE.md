@@ -2,7 +2,7 @@
 
 ## Sprint
 
-Sprint 5 (Time Off) is complete. Previous sprints (Sprint 1 Foundation, Sprint 2 Auth & RBAC, Sprint 3 Employees & Contracts, Sprint 4 Working Schedules & Attendance) remain intact.
+Sprint 6 (Salary Structures + Salary Rules) is complete. Previous sprints (Sprint 1 Foundation, Sprint 2 Auth & RBAC, Sprint 3 Employees & Contracts, Sprint 4 Working Schedules & Attendance, Sprint 5 Time Off) remain intact.
 
 ## Completed
 
