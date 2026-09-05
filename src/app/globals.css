@@ -36,3 +36,22 @@ button, a, input { outline-color: var(--primary); }
 
 @keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .animate-rise-in { animation: rise-in 420ms ease-out both; }
+
+@media print {
+  aside,
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+

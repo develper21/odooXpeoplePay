@@ -106,6 +106,23 @@ Status: **Complete**
 
 ### Exact Next Task
 
-Sprint 7: Payruns + Payslips + Payroll Processing.
+Sprint 7 completed Payruns, Payslips, and Payroll Processing.
 
+## Sprint 7: Payruns + Payslips + Payroll Processing
 
+Status: **Complete**
+
+### Completed Work
+
+- Payrun Lifecycle Workflow: Full progression through DRAFT -> COMPUTED -> CONFIRMED -> PAID with state validations, automated payslip generation, and re-computation safety.
+- Payroll Calculation Engine: Integrated dynamic rule sequencing, contract wage resolution, attendance worked days computation, and rule breakdown into payslip lines.
+- Warning & Edge Case Detection: Proactive scanning for missing/expired contracts, zero-wage agreements, unassigned salary structures, and missing attendance records with dismissible/actionable alerts.
+- Payrun Management UI (`/payroll` and `/payroll/[id]`): Batch actions, progress bar, interactive employee status table, wage summary metrics, and status badges.
+- Payslips Listing & Detail Views (`/payslips` and `/payslips/[id]`): Filterable by payrun/employee/status, individual line-item inspection, breakdown by category, and full printable payslip view (`PrintablePayslip`) with company branding and print styles.
+- Create Payrun Wizard (`/payroll/new`): Period picker, department/schedule filtering, preview of eligible employees before creation.
+- RBAC & Permissions: Enforced `payruns:create`, `payruns:compute`, `payruns:validate`, `payruns:pay`, and `payslips:view` with employee self-view restrictions.
+- Production Build & Quality: TypeScript passed with 0 errors (`npx tsc --noEmit`); all routes compiled successfully.
+
+### Exact Next Task
+
+Sprint 8: Reports, Analytics, and Final System Hardening.

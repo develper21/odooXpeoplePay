@@ -26,7 +26,7 @@ const hrPermissions: Permission[] = ["dashboard.read", "employee.read", "employe
 const payrollUserPermissions: Permission[] = ["payrun.read", "payrun.create", "payrun.update", "payslip.read", "payslip.create", "payslip.update", "salary_structure.read", "salary_rule.read"];
 
 export const rolePermissions: Record<Role, Permission[]> = {
-  EMPLOYEE: ["dashboard.read", "employee.read", "attendance.read", "attendance.create", "timeoff.read", "timeoff.create"],
+  EMPLOYEE: ["dashboard.read", "employee.read", "attendance.read", "attendance.create", "timeoff.read", "timeoff.create", "payslip.read"],
   HR_MANAGER: hrPermissions,
   HR_PAYROLL_USER: [...hrPermissions, ...payrollUserPermissions],
   HR_PAYROLL_MANAGER: [...hrPermissions, ...payrollUserPermissions, "payrun.delete", "payrun.compute", "payrun.validate", "payrun.mark_paid", "payslip.delete", "payslip.print", "payslip.send", "salary_structure.create", "salary_structure.update", "salary_structure.delete", "salary_rule.create", "salary_rule.update", "salary_rule.delete"],
@@ -83,5 +83,6 @@ export function permissionForPath(pathname: string) {
   if (pathname === "/salary-rules/new") return "salary_rule.create";
   if (pathname.startsWith("/salary-rules/") && pathname.endsWith("/edit")) return "salary_rule.update";
   if (pathname.startsWith("/salary-rules/")) return "salary_rule.read";
+  if (pathname.startsWith("/payslips/")) return "payslip.read";
   return pathname.startsWith("/payroll/") ? "payrun.read" : undefined;
 }
