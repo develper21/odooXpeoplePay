@@ -130,7 +130,67 @@ export interface Payslip {
 }
 
 export interface User { id: ID; name: string; email: string; role: "EMPLOYEE" | "HR_MANAGER" | "HR_PAYROLL_USER" | "HR_PAYROLL_MANAGER" | "ADMIN"; status: "ACTIVE" | "INVITED" | "INACTIVE"; }
-export interface DashboardMetric { label: string; value: string; change: string; trend: "up" | "down"; tone: "blue" | "green" | "amber" | "violet"; }
+export interface DashboardMetric { label: string; value: string; change: string; trend: "up" | "down"; tone: "blue" | "green" | "amber" | "violet"; href?: string; }
 export interface DashboardAlert { label: string; detail: string; tone: "warning" | "pending" | "approved" | "error"; }
-export interface DashboardData { metrics: DashboardMetric[]; alerts: DashboardAlert[]; activeEmployees: number; presentToday: number; pendingRequests: number; salaryByDepartment: { name: string; value: number }[]; salaryTrend: { name: string; value: number }[]; }
+
+export interface ActionableAlert {
+  id: string;
+  title: string;
+  detail: string;
+  severity: "INFO" | "WARNING" | "ERROR";
+  href: string;
+  linkText: string;
+  entityType?: "PAYRUN" | "PAYSLIP" | "EMPLOYEE" | "CONTRACT" | "TIME_OFF" | "ATTENDANCE";
+}
+
+export interface AttendanceOverview {
+  present: number;
+  late: number;
+  absent: number;
+  overtime: number;
+  missingCheckout: number;
+  manualEdit: number;
+  totalRecords: number;
+  coveragePercent: number;
+}
+
+export interface TimeOffOverview {
+  approvedDays: number;
+  pendingRequests: number;
+  totalAllocatedDays: number;
+  totalRemainingDays: number;
+  byType: { type: string; days: number; count: number }[];
+}
+
+export interface DepartmentBreakdownItem {
+  department: string;
+  headcount: number;
+  totalGross: number;
+  totalDeductions: number;
+  totalNet: number;
+  averageNet: number;
+}
+
+export interface DashboardFilters {
+  period?: string;
+  department?: string;
+  employeeType?: string;
+}
+
+export interface DashboardData {
+  metrics: DashboardMetric[];
+  alerts: DashboardAlert[];
+  actionableAlerts: ActionableAlert[];
+  activeEmployees: number;
+  presentToday: number;
+  pendingRequests: number;
+  salaryByDepartment: { name: string; value: number; headcount?: number; gross?: number }[];
+  salaryTrend: { name: string; value: number; gross?: number }[];
+  attendanceOverview: AttendanceOverview;
+  timeOffOverview: TimeOffOverview;
+  departmentBreakdown: DepartmentBreakdownItem[];
+  availablePeriods: string[];
+  availableDepartments: string[];
+  filtersApplied: DashboardFilters;
+}
 

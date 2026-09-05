@@ -125,9 +125,7 @@ export const payrunService = createResourceService<Payrun>("payruns", "/payruns"
 export const payslipService = createResourceService<Payslip>("payslips", "/payslips");
 export const userService = createResourceService<User>("users", "/users");
 
-export const dashboardService = {
-  get: async (): Promise<DashboardData> => dataMode === "api" ? apiClient<DashboardData>("/dashboard") : mockDashboard,
-};
+export { dashboardService } from "./dashboard-service";
 
 export const timeOffWorkflow = {
   approve: async (id: string) => {
