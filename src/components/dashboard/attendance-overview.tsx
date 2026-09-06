@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle, Clock, AlertOctagon, Timer, Edit3, HelpCircle } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle,
+  Clock,
+  AlertOctagon,
+  Timer,
+  Edit3,
+  HelpCircle,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AttendanceOverview as AttendanceOverviewType } from "@/types/domain";
 
@@ -10,14 +18,64 @@ interface AttendanceOverviewProps {
 }
 
 export function AttendanceOverview({ overview }: AttendanceOverviewProps) {
+  const safeOverview = overview || {
+    present: 0,
+    late: 0,
+    absent: 0,
+    overtime: 0,
+    missingCheckout: 0,
+    manualEdit: 0,
+    totalRecords: 0,
+    coveragePercent: 0,
+  };
+
   const items = [
-    { label: "Present", count: overview.present, icon: CheckCircle, color: "text-success", bg: "bg-success/10" },
-    { label: "Late Arrivals", count: overview.late, icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-    { label: "Absent", count: overview.absent, icon: AlertOctagon, color: "text-danger", bg: "bg-danger/10" },
-    { label: "Overtime", count: overview.overtime, icon: Timer, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Missing Checkouts", count: overview.missingCheckout, icon: HelpCircle, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { label: "Manual Edits", count: overview.manualEdit, icon: Edit3, color: "text-purple-400", bg: "bg-purple-500/10" },
+    {
+      label: "Present",
+      count: safeOverview.present ?? 0,
+      icon: CheckCircle,
+      color: "text-success",
+      bg: "bg-success/10",
+    },
+    {
+      label: "Late Arrivals",
+      count: safeOverview.late ?? 0,
+      icon: Clock,
+      color: "text-warning",
+      bg: "bg-warning/10",
+    },
+    {
+      label: "Absent",
+      count: safeOverview.absent ?? 0,
+      icon: AlertOctagon,
+      color: "text-danger",
+      bg: "bg-danger/10",
+    },
+    {
+      label: "Overtime",
+      count: safeOverview.overtime ?? 0,
+      icon: Timer,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: "Missing Checkouts",
+      count: safeOverview.missingCheckout ?? 0,
+      icon: HelpCircle,
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+    },
+    {
+      label: "Manual Edits",
+      count: safeOverview.manualEdit ?? 0,
+      icon: Edit3,
+      color: "text-purple-400",
+      bg: "bg-purple-500/10",
+    },
   ];
+
+  const coverage = safeOverview.coveragePercent ?? 0;
+  const totalRecords = safeOverview.totalRecords ?? 0;
 
   return (
     <Card>
@@ -39,23 +97,25 @@ export function AttendanceOverview({ overview }: AttendanceOverviewProps) {
         {/* Coverage Bar */}
         <div className="rounded-lg border border-border-subtle bg-surface-raised/40 p-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-text-secondary">Overall Coverage Health</span>
-            <span className="font-bold text-text-primary">{overview.coveragePercent}%</span>
+            <span className="font-medium text-text-secondary">
+              Overall Coverage Health
+            </span>
+            <span className="font-bold text-text-primary">{coverage}%</span>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-raised">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                overview.coveragePercent >= 90
+                coverage >= 90
                   ? "bg-success"
-                  : overview.coveragePercent >= 75
-                  ? "bg-warning"
-                  : "bg-danger"
+                  : coverage >= 75
+                    ? "bg-warning"
+                    : "bg-danger"
               }`}
-              style={{ width: `${Math.min(overview.coveragePercent, 100)}%` }}
+              style={{ width: `${Math.min(coverage, 100)}%` }}
             />
           </div>
           <p className="mt-1.5 text-[11px] text-text-muted">
-            Based on {overview.totalRecords.toLocaleString()} logged attendance records
+            Based on {totalRecords.toLocaleString()} logged attendance records
           </p>
         </div>
 
@@ -72,8 +132,12 @@ export function AttendanceOverview({ overview }: AttendanceOverviewProps) {
                   <Icon className="size-3.5" />
                 </span>
                 <div>
-                  <p className="text-[11px] font-medium text-text-muted">{item.label}</p>
-                  <p className="text-sm font-bold text-text-primary">{item.count}</p>
+                  <p className="text-[11px] font-medium text-text-muted">
+                    {item.label}
+                  </p>
+                  <p className="text-sm font-bold text-text-primary">
+                    {item.count}
+                  </p>
                 </div>
               </div>
             );
