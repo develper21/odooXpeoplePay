@@ -8,8 +8,8 @@ import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { contracts, employees, salaryRules, salaryStructures } from '@/lib/schema';
 
-const RULE_TYPES = new Set(['earning', 'deduction', 'employer_contribution']);
-const CALCULATION_TYPES = new Set(['fixed', 'percentage']);
+const RULE_TYPES = new Set(['earning', 'deduction', 'employer_contribution', 'basic', 'allowance', 'gross', 'net']);
+const CALCULATION_TYPES = new Set(['fixed', 'percentage', 'formula']);
 const BASES = new Set(['gross', 'basic', 'net']);
 
 export class SalaryCalculationError extends Error {
@@ -33,6 +33,91 @@ function numericValue(value, label) {
   return number;
 }
 
+function tokenizeFormula(formula) {
+  const tokens = [];
+  let i = 0;
+  while (i < formula.length) {
+    const ch = formula[i];
+    if (/\s/.test(ch)) { i++; continue; }
+    if (ch === '+') { tokens.push({ type: 'PLUS', value: '+' }); i++; }
+    else if (ch === '-') { tokens.push({ type: 'MINUS', value: '-' }); i++; }
+    else if (ch === '*') { tokens.push({ type: 'STAR', value: '*' }); i++; }
+    else if (ch === '/') { tokens.push({ type: 'SLASH', value: '/' }); i++; }
+    else if (ch === '(') { tokens.push({ type: 'LPAREN', value: '(' }); i++; }
+    else if (ch === ')') { tokens.push({ type: 'RPAREN', value: ')' }); i++; }
+    else if (/[0-9]/.test(ch) || (ch === '.' && i + 1 < formula.length && /[0-9]/.test(formula[i + 1]))) {
+      let numStr = '';
+      while (i < formula.length && /[0-9.]/.test(formula[i])) { numStr += formula[i]; i++; }
+      tokens.push({ type: 'NUMBER', value: Number(numStr) });
+    } else if (/[a-zA-Z_]/.test(ch)) {
+      let ident = '';
+      while (i < formula.length && /[a-zA-Z0-9_]/.test(formula[i])) { ident += formula[i]; i++; }
+      tokens.push({ type: 'IDENTIFIER', value: ident.toUpperCase() });
+    } else {
+      throw new SalaryCalculationError(`Invalid character "${ch}" in formula`);
+    }
+  }
+  return tokens;
+}
+
+function evaluateFormula(formula, scope) {
+  const tokens = tokenizeFormula(formula);
+  let index = 0;
+  function peek() { return tokens[index]; }
+  function consume(type) {
+    const t = tokens[index];
+    if (!t) throw new SalaryCalculationError('Unexpected end of formula');
+    if (type && t.type !== type) throw new SalaryCalculationError(`Expected ${type} but got ${t.type}`);
+    index++;
+    return t;
+  }
+  function parseExpression() {
+    let left = parseTerm();
+    while (peek() && (peek().type === 'PLUS' || peek().type === 'MINUS')) {
+      const op = consume().type;
+      const right = parseTerm();
+      left = op === 'PLUS' ? left + right : left - right;
+    }
+    return left;
+  }
+  function parseTerm() {
+    let left = parseFactor();
+    while (peek() && (peek().type === 'STAR' || peek().type === 'SLASH')) {
+      const op = consume().type;
+      const right = parseFactor();
+      if (op === 'SLASH' && right === 0) throw new SalaryCalculationError('Division by zero in formula');
+      left = op === 'STAR' ? left * right : left / right;
+    }
+    return left;
+  }
+  function parseFactor() {
+    if (peek() && peek().type === 'MINUS') {
+      consume();
+      return -parseFactor();
+    }
+    if (peek() && peek().type === 'PLUS') {
+      consume();
+      return parseFactor();
+    }
+    const t = consume();
+    if (t.type === 'NUMBER') return t.value;
+    if (t.type === 'IDENTIFIER') {
+      const val = scope[t.value];
+      if (val === undefined || isNaN(val)) return 0;
+      return val;
+    }
+    if (t.type === 'LPAREN') {
+      const val = parseExpression();
+      consume('RPAREN');
+      return val;
+    }
+    throw new SalaryCalculationError(`Unexpected token in formula: ${JSON.stringify(t)}`);
+  }
+  const result = parseExpression();
+  if (index < tokens.length) throw new SalaryCalculationError('Unexpected tokens at end of formula');
+  return roundMoney(result);
+}
+
 function validateRule(rule) {
   if (!rule.name || !rule.code || !RULE_TYPES.has(rule.type)) {
     throw new SalaryCalculationError(`Salary rule ${rule.id} has invalid identity or type.`);
@@ -46,17 +131,27 @@ function validateRule(rule) {
   if (!rule.isActive) return;
 
   if (rule.calculationType === 'fixed') {
-    const amount = numericValue(rule.amount, `Amount for salary rule ${rule.code}`);
+    const amount = numericValue(rule.amount ?? 0, `Amount for salary rule ${rule.code}`);
     if (amount < 0) throw new SalaryCalculationError(`Amount for salary rule ${rule.code} cannot be negative.`);
     return;
   }
 
-  const percentage = numericValue(rule.percentage, `Percentage for salary rule ${rule.code}`);
-  if (percentage < 0 || percentage > 100) {
-    throw new SalaryCalculationError(`Percentage for salary rule ${rule.code} must be between 0 and 100.`);
+  if (rule.calculationType === 'percentage') {
+    const percentage = numericValue(rule.percentage ?? 0, `Percentage for salary rule ${rule.code}`);
+    if (percentage < 0 || percentage > 100) {
+      throw new SalaryCalculationError(`Percentage for salary rule ${rule.code} must be between 0 and 100.`);
+    }
+    if (!BASES.has(rule.percentageBase)) {
+      throw new SalaryCalculationError(`Salary rule ${rule.code} requires a valid percentage base.`);
+    }
+    return;
   }
-  if (!BASES.has(rule.percentageBase)) {
-    throw new SalaryCalculationError(`Salary rule ${rule.code} requires a valid percentage base.`);
+
+  if (rule.calculationType === 'formula') {
+    const formula = rule.formula || rule.expression || rule.description;
+    if (!formula || typeof formula !== 'string' || formula.trim().length === 0) {
+      throw new SalaryCalculationError(`Salary rule ${rule.code} requires a valid mathematical formula.`);
+    }
   }
 }
 
@@ -67,16 +162,34 @@ function resolveBase(rule, totals) {
   throw new SalaryCalculationError(`Salary rule ${rule.code} has no usable percentage base.`);
 }
 
-function calculateRuleAmount(rule, totals) {
-  if (rule.calculationType === 'fixed') return roundMoney(numericValue(rule.amount, `Amount for salary rule ${rule.code}`));
-  const base = resolveBase(rule, totals);
-  return roundMoney((base * numericValue(rule.percentage, `Percentage for salary rule ${rule.code}`)) / 100);
+function calculateRuleAmount(rule, totals, scope = {}) {
+  if (rule.calculationType === 'fixed') {
+    return roundMoney(numericValue(rule.amount ?? 0, `Amount for salary rule ${rule.code}`));
+  }
+  if (rule.calculationType === 'percentage') {
+    const base = resolveBase(rule, totals);
+    return roundMoney((base * numericValue(rule.percentage ?? 0, `Percentage for salary rule ${rule.code}`)) / 100);
+  }
+  if (rule.calculationType === 'formula') {
+    const formulaStr = rule.formula || rule.expression || rule.description;
+    if (!formulaStr) return 0;
+    const formulaScope = {
+      ...scope,
+      BASIC: totals.basic ?? 0,
+      GROSS: totals.gross ?? 0,
+      DEDUCTION: totals.deductions ?? 0,
+      DEDUCTIONS: totals.deductions ?? 0,
+      NET: (totals.gross ?? 0) - (totals.deductions ?? 0),
+    };
+    return evaluateFormula(formulaStr, formulaScope);
+  }
+  return 0;
 }
 
 function sortRules(rules) {
-  const typeOrder = { earning: 0, deduction: 1, employer_contribution: 2 };
+  const typeOrder = { basic: 0, earning: 1, allowance: 1, gross: 2, deduction: 3, employer_contribution: 4, net: 5 };
   return [...rules].sort((left, right) =>
-    typeOrder[left.type] - typeOrder[right.type]
+    (typeOrder[left.type] ?? 1) - (typeOrder[right.type] ?? 1)
     || left.computationOrder - right.computationOrder
     || left.id - right.id,
   );
