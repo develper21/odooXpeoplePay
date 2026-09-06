@@ -113,10 +113,41 @@ export async function POST(request) {
   if (error) return error;
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Request body must be valid JSON.' }, { status: 400 }); }
-  const parsed = payrunSchema.safeParse(body ?? {});
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid payrun payload.', issues: parsed.error.issues.map((issue) => ({ field: issue.path.join('.'), message: issue.message })) }, { status: 400 });
+
+  const start = body.pay_period_start ?? body.period_start ?? body.periodStart ?? body.startDate ?? body.start_date;
+  const end = body.pay_period_end ?? body.period_end ?? body.periodEnd ?? body.endDate ?? body.end_date;
+  const payDate = body.payment_date ?? body.paymentDate ?? end ?? start;
+
+  const normalized = {
+    name: body.name || `Payrun ${start}`,
+    pay_period_start: start,
+    pay_period_end: end,
+    payment_date: payDate,
+    pay_frequency: (body.pay_frequency ?? body.payFrequency ?? 'monthly').toLowerCase(),
+    currency: (body.currency ?? 'INR').toUpperCase(),
+    notes: body.notes || null,
+  };
+
+  const parsed = payrunSchema.safeParse(normalized);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: 'Invalid payrun payload.',
+        issues: parsed.error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        })),
+      },
+      { status: 400 },
+    );
+  }
   const companyId = await getCompanyId();
   if (companyId === null) return NextResponse.json({ error: 'Company profile must be set up before creating payruns.' }, { status: 409 });
+
+  const rawEmployeeIds = body.employee_ids ?? body.employeeIds ?? body.selectedEmployeeIds ?? body.selected_employee_ids;
+  const explicitEmployeeIds = Array.isArray(rawEmployeeIds)
+    ? rawEmployeeIds.map((id) => Number(String(id).replace(/\D/g, ''))).filter((n) => Number.isInteger(n) && n > 0)
+    : null;
 
   try {
     const [created] = await db.insert(payruns).values({
@@ -135,8 +166,23 @@ export async function POST(request) {
         status: 'draft',
         notes: parsed.data.notes?.trim() || null,
       }).returning({ id: payruns.id });
-    const processed = await processPayrun(created.id, companyId);
-    return NextResponse.json({ payrun: await getPayrun(created.id, companyId), skipped_employees: processed.skipped_employees }, { status: 201 });
+
+    let processed = { skipped_employees: [] };
+    try {
+      processed = await processPayrun(created.id, companyId, explicitEmployeeIds);
+    } catch (procErr) {
+      console.warn('Auto payrun calculation note:', procErr.message);
+    }
+
+    const payrunData = await getPayrun(created.id, companyId);
+    return NextResponse.json(
+      {
+        ...payrunData,
+        payrun: payrunData,
+        skipped_employees: processed.skipped_employees || [],
+      },
+      { status: 201 },
+    );
   } catch (err) {
     const pgCode = err?.code ?? err?.cause?.code;
     if (pgCode === '23505' || /duplicate key/i.test(err?.message ?? '')) return NextResponse.json({ error: 'A payrun already exists for this company, pay frequency and payroll period.' }, { status: 409 });
