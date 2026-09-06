@@ -50,9 +50,17 @@ async function getCompanyId() {
   return company?.id ?? null;
 }
 
-async function findSchedule(id, companyId) {
+async function findSchedule(idOrCode, companyId) {
+  const numId = Number(idOrCode);
+  if (Number.isInteger(numId) && numId > 0) {
+    const byId = await db.query.workingSchedules.findFirst({
+      where: (s, { eq, and }) => and(eq(s.id, numId), eq(s.companyId, companyId)),
+    });
+    if (byId) return byId;
+  }
+  const code = String(idOrCode).toUpperCase();
   return db.query.workingSchedules.findFirst({
-    where: (s, { eq, and }) => and(eq(s.id, id), eq(s.companyId, companyId)),
+    where: (s, { eq, and }) => and(eq(s.code, code), eq(s.companyId, companyId)),
   });
 }
 
@@ -79,8 +87,9 @@ export async function GET(_request, { params }) {
   const { error } = await requirePermission('schedules:read');
   if (error) return error;
 
-  const id = Number(params?.id);
-  if (!Number.isInteger(id) || id <= 0) {
+  const resolvedParams = await params;
+  const rawId = resolvedParams?.id;
+  if (!rawId) {
     return NextResponse.json({ error: 'Invalid schedule id.' }, { status: 400 });
   }
 
@@ -90,9 +99,9 @@ export async function GET(_request, { params }) {
       return NextResponse.json({ error: 'Schedule not found.' }, { status: 404 });
     }
 
-    const schedule = await findSchedule(id, companyId);
+    const schedule = await findSchedule(rawId, companyId);
     if (!schedule) {
-      return NextResponse.json({ error: `Schedule ${id} not found.` }, { status: 404 });
+      return NextResponse.json({ error: `Schedule ${rawId} not found.` }, { status: 404 });
     }
 
     return NextResponse.json({ schedule });
@@ -106,7 +115,8 @@ export async function PATCH(request, { params }) {
   const { error } = await requirePermission('schedules:write');
   if (error) return error;
 
-  const id = Number(params?.id);
+  const resolvedParams = await params;
+  const id = Number(resolvedParams?.id);
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid schedule id.' }, { status: 400 });
   }
@@ -191,7 +201,8 @@ export async function DELETE(_request, { params }) {
   const { error } = await requirePermission('schedules:write');
   if (error) return error;
 
-  const id = Number(params?.id);
+  const resolvedParams = await params;
+  const id = Number(resolvedParams?.id);
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid schedule id.' }, { status: 400 });
   }
