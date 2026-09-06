@@ -135,7 +135,7 @@ export async function computePayrun(payrunId: string): Promise<Payrun> {
   }
 
   // Load Structure Rules
-  const structureRules = allRules.filter((r) => structure.ruleIds.includes(r.id) && r.status === "ACTIVE");
+  const structureRules = allRules.filter((r) => (structure.ruleIds || []).includes(r.id) && r.status === "ACTIVE");
   const sortedRules = sortRulesBySequence(structureRules);
 
   const generatedPayslips: Payslip[] = [];
