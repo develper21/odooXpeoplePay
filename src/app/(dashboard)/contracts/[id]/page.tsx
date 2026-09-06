@@ -52,7 +52,7 @@ export default function ContractDetailPage() {
       <div className="mb-6 flex items-center gap-3">
         <StatusBadge
           status={
-            contract.status.toLowerCase() as
+            (contract.status?.toLowerCase() || "draft") as
               | "active"
               | "expired"
               | "draft"

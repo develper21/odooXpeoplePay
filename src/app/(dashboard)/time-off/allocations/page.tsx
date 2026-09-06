@@ -300,7 +300,7 @@ export default function AllocationsPage() {
                   <TableCell>
                     <StatusBadge
                       status={
-                        alloc.status.toLowerCase() as
+                        (alloc.status?.toLowerCase() || "active") as
                           | "active"
                           | "expired"
                           | "draft"

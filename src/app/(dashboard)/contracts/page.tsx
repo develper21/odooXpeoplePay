@@ -148,7 +148,7 @@ export default function ContractsPage() {
                 <TableCell>
                   <StatusBadge
                     status={
-                      contract.status.toLowerCase() as
+                      (contract.status?.toLowerCase() || "draft") as
                         | "active"
                         | "expired"
                         | "draft"

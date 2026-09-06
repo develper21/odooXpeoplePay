@@ -59,7 +59,7 @@ export default function AttendanceDetailPage() {
       <div className="mb-6 flex items-center gap-3">
         <StatusBadge
           status={
-            record.status.toLowerCase() as
+            (record.status?.toLowerCase() || "present") as
               | "present"
               | "late"
               | "absent"

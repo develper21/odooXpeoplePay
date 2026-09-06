@@ -340,7 +340,7 @@ export default function TimeOffOverviewPage() {
                         <TableCell>
                           <StatusBadge
                             status={
-                              req.status.toLowerCase() as
+                              (req.status?.toLowerCase() || "pending") as
                                 | "pending"
                                 | "approved"
                                 | "refused"

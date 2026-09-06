@@ -75,7 +75,7 @@ export default function TimeOffTypeDetailPage() {
 
       <div className="mb-6 flex items-center gap-3">
         <StatusBadge
-          status={type.status.toLowerCase() as "active" | "inactive"}
+          status={(type.status?.toLowerCase() || "active") as "active" | "inactive"}
         />
         {canDelete && (
           <Button

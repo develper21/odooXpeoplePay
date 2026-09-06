@@ -534,3 +534,199 @@ export function calculateSalary(
     warnings,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Department & Experience-based Salary Determination Engine
+// ---------------------------------------------------------------------------
+
+export interface ExperienceTier {
+  id: string;
+  name: string;
+  minYears: number;
+  maxYears: number | null;
+  multiplier: number;
+  badgeVariant: "default" | "success" | "warning" | "info" | "purple";
+}
+
+export interface DepartmentBenchmark {
+  department: string;
+  baseSalary: number; // Base monthly salary
+  annualIncrement: number; // Increment per year of experience
+  description: string;
+}
+
+export const EXPERIENCE_TIERS: ExperienceTier[] = [
+  { id: "entry", name: "Entry Level", minYears: 0, maxYears: 1, multiplier: 1.0, badgeVariant: "info" },
+  { id: "junior", name: "Junior Professional", minYears: 1, maxYears: 3, multiplier: 1.2, badgeVariant: "default" },
+  { id: "mid", name: "Mid-Level", minYears: 3, maxYears: 5, multiplier: 1.5, badgeVariant: "success" },
+  { id: "senior", name: "Senior Specialist", minYears: 5, maxYears: 8, multiplier: 1.9, badgeVariant: "purple" },
+  { id: "lead", name: "Lead / Staff", minYears: 8, maxYears: 12, multiplier: 2.4, badgeVariant: "warning" },
+  { id: "executive", name: "Principal / Executive", minYears: 12, maxYears: null, multiplier: 3.0, badgeVariant: "purple" },
+];
+
+export const DEPARTMENT_BENCHMARKS: Record<string, DepartmentBenchmark> = {
+  Engineering: {
+    department: "Engineering",
+    baseSalary: 60000,
+    annualIncrement: 7000,
+    description: "Software, Cloud Infrastructure, QA & Data Architecture",
+  },
+  Sales: {
+    department: "Sales",
+    baseSalary: 45000,
+    annualIncrement: 5000,
+    description: "Account Management, Enterprise Sales & Business Dev",
+  },
+  Marketing: {
+    department: "Marketing",
+    baseSalary: 45000,
+    annualIncrement: 4800,
+    description: "Growth, Content Strategy, Brand & Digital Performance",
+  },
+  Finance: {
+    department: "Finance",
+    baseSalary: 52000,
+    annualIncrement: 5500,
+    description: "Financial Planning, Accounting, Audit & Payroll Operations",
+  },
+  People: {
+    department: "People",
+    baseSalary: 48000,
+    annualIncrement: 4800,
+    description: "Talent Acquisition, People Operations & HR Business Partnering",
+  },
+  "Human Resources": {
+    department: "Human Resources",
+    baseSalary: 48000,
+    annualIncrement: 4800,
+    description: "Talent Acquisition, People Operations & HR Business Partnering",
+  },
+  Operations: {
+    department: "Operations",
+    baseSalary: 42000,
+    annualIncrement: 4200,
+    description: "Logistics, Facilities, Vendor Management & Daily Operations",
+  },
+  Administration: {
+    department: "Administration",
+    baseSalary: 38000,
+    annualIncrement: 3800,
+    description: "Office Coordination, Executive Support & Governance",
+  },
+};
+
+export const DEFAULT_BENCHMARK: DepartmentBenchmark = {
+  department: "General",
+  baseSalary: 40000,
+  annualIncrement: 4500,
+  description: "Standard Cross-Department Operational Benchmark",
+};
+
+/**
+ * Get benchmark config for a department (case-insensitive fuzzy match)
+ */
+export function getDepartmentBenchmark(departmentName?: string): DepartmentBenchmark {
+  if (!departmentName) return DEFAULT_BENCHMARK;
+  const matchKey = Object.keys(DEPARTMENT_BENCHMARKS).find(
+    (key) => key.toLowerCase() === departmentName.trim().toLowerCase(),
+  );
+  return matchKey ? DEPARTMENT_BENCHMARKS[matchKey] : DEFAULT_BENCHMARK;
+}
+
+/**
+ * Determine experience tier based on years
+ */
+export function getExperienceTier(years: number): ExperienceTier {
+  const normalizedYears = Math.max(0, years);
+  for (const tier of EXPERIENCE_TIERS) {
+    if (tier.maxYears === null) {
+      if (normalizedYears >= tier.minYears) return tier;
+    } else if (normalizedYears >= tier.minYears && normalizedYears < tier.maxYears) {
+      return tier;
+    }
+  }
+  return EXPERIENCE_TIERS[0];
+}
+
+/**
+ * Calculate years of experience from joinedOn date or custom input
+ */
+export function calculateTenureYears(joinedOn?: string): number {
+  if (!joinedOn) return 0;
+  try {
+    const joinDate = new Date(joinedOn);
+    if (isNaN(joinDate.getTime())) return 0;
+    const now = new Date();
+    const diffTime = Math.max(0, now.getTime() - joinDate.getTime());
+    const years = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+    return Math.round(years * 10) / 10;
+  } catch {
+    return 0;
+  }
+}
+
+export interface DepartmentExperienceSalaryResult {
+  department: string;
+  experienceYears: number;
+  tier: ExperienceTier;
+  baseSalary: number;
+  experienceBonus: number;
+  recommendedSalary: number;
+  salaryRange: { min: number; max: number };
+  breakdown: {
+    label: string;
+    amount: number;
+    description: string;
+  }[];
+}
+
+/**
+ * Core Salary Recommendation Engine: Department + Years of Experience
+ */
+export function calculateSalaryRecommendation(params: {
+  department?: string;
+  experienceYears: number;
+  position?: string;
+}): DepartmentExperienceSalaryResult {
+  const { department = "Engineering", experienceYears } = params;
+  const benchmark = getDepartmentBenchmark(department);
+  const years = Math.max(0, experienceYears);
+  const tier = getExperienceTier(years);
+
+  const baseSalary = benchmark.baseSalary;
+  // Year-based increment
+  const experienceBonus = Math.round(years * benchmark.annualIncrement);
+
+  // Recommended monthly wage rounded to nearest 500
+  const rawTotal = baseSalary + experienceBonus;
+  const recommendedSalary = Math.round(rawTotal / 500) * 500;
+
+  // Grade wage band (min - max for this experience tier)
+  const tierMinYears = tier.minYears;
+  const tierMaxYears = tier.maxYears ?? tierMinYears + 4;
+  const minRange = Math.round((baseSalary + tierMinYears * benchmark.annualIncrement) / 500) * 500;
+  const maxRange = Math.round((baseSalary + tierMaxYears * benchmark.annualIncrement) / 500) * 500;
+
+  return {
+    department: benchmark.department,
+    experienceYears: years,
+    tier,
+    baseSalary,
+    experienceBonus,
+    recommendedSalary,
+    salaryRange: { min: minRange, max: maxRange },
+    breakdown: [
+      {
+        label: `${benchmark.department} Base Wage`,
+        amount: baseSalary,
+        description: `Standard baseline for ${benchmark.department} roles`,
+      },
+      {
+        label: `Experience Tier Increment (${years} yrs · ${tier.name})`,
+        amount: experienceBonus,
+        description: `₹${benchmark.annualIncrement.toLocaleString()}/yr × ${years} years`,
+      },
+    ],
+  };
+}
+

@@ -134,7 +134,7 @@ export default function RequestDetailPage() {
         <div className="flex items-center gap-3">
           <StatusBadge
             status={
-              request.status.toLowerCase() as "pending" | "approved" | "refused"
+              (request.status?.toLowerCase() || "pending") as "pending" | "approved" | "refused"
             }
           />
           {canDelete && (

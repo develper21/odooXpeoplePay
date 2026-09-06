@@ -423,12 +423,22 @@ export function transformPayloadToBackend(data: any): any {
       else if (key === "endDate") targetKey = "end_date";
       else if (key === "paymentDate") targetKey = "payment_date";
       else if (key === "selectedEmployeeIds" || key === "employeeIds") targetKey = "employee_ids";
+      else if (key === "date" || key === "attendanceDate") targetKey = "attendance_date";
+      else if (key === "checkIn" || key === "clockIn") targetKey = "clock_in";
+      else if (key === "checkOut" || key === "clockOut") targetKey = "clock_out";
+      else if (key === "breakMinutes" || key === "breaksDurationMinutes") targetKey = "breaks_duration_minutes";
+      else if (key === "workedMinutes" || key === "workHours") targetKey = "work_hours";
 
       let targetVal = transformPayloadToBackend(value);
 
       // Value normalizations
       if (key === "status" && typeof targetVal === "string") {
-        targetVal = targetVal.toLowerCase();
+        const lower = targetVal.toLowerCase();
+        if (lower === "manual_edit" || lower === "missing_checkout" || lower === "overtime") {
+          targetVal = "present";
+        } else {
+          targetVal = lower;
+        }
       } else if (
         (key === "employeeType" || key === "employmentType" || targetKey === "employment_type") &&
         typeof targetVal === "string"
@@ -444,6 +454,22 @@ export function transformPayloadToBackend(data: any): any {
         ["EARNING", "DEDUCTION"].includes(targetVal.toUpperCase())
       ) {
         targetVal = targetVal.toLowerCase();
+      }
+
+      // Convert workedMinutes into decimal hours if needed
+      if (targetKey === "work_hours" && typeof targetVal === "number" && targetVal > 24) {
+        targetVal = Number((targetVal / 60).toFixed(2));
+      }
+
+      // Ensure clock_in / clock_out are valid ISO timestamps when a time string like "09:00" is provided
+      if ((targetKey === "clock_in" || targetKey === "clock_out") && typeof targetVal === "string") {
+        if (!targetVal.trim()) {
+          targetVal = null;
+        } else if (/^\d{2}:\d{2}(:\d{2})?$/.test(targetVal)) {
+          const baseDate = (data.date || data.attendanceDate || data.attendance_date || new Date().toISOString().slice(0, 10));
+          const timePart = targetVal.length === 5 ? `${targetVal}:00` : targetVal;
+          targetVal = new Date(`${baseDate}T${timePart}Z`).toISOString();
+        }
       }
 
       // Ensure numeric integer IDs
@@ -546,6 +572,8 @@ export async function apiClient<T>(path: string, init?: RequestInit): Promise<T>
       "attendance",
       "allocation",
       "timeOffRequest",
+      "timeOffType",
+      "time_off_type",
       "salaryStructure",
       "salaryRule",
       "payrun",

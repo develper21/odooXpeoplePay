@@ -78,3 +78,35 @@ export function StatusBadge({ status }: { status?: string | null }) {
     </span>
   );
 }
+
+export function Badge({
+  children,
+  variant = "default",
+  className,
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "success" | "warning" | "info" | "purple" | "danger";
+  className?: string;
+}) {
+  const variantStyles = {
+    default: "bg-surface-raised text-text-secondary border-border",
+    success: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+    warning: "bg-amber-50 text-amber-800 border-amber-200/80",
+    info: "bg-blue-50 text-blue-700 border-blue-200/80",
+    purple: "bg-purple-50 text-purple-700 border-purple-200/80",
+    danger: "bg-rose-50 text-rose-700 border-rose-200/80",
+  };
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold",
+        variantStyles[variant] || variantStyles.default,
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+

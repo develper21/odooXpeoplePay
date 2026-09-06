@@ -119,7 +119,7 @@ export default function AllocationDetailPage() {
         <div className="flex items-center gap-3">
           <StatusBadge
             status={
-              allocation.status.toLowerCase() as
+              (allocation.status?.toLowerCase() || "active") as
                 | "active"
                 | "expired"
                 | "draft"

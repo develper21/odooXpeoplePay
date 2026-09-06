@@ -36,7 +36,7 @@ export function LeaveBalanceCard({
         </div>
         <StatusBadge
           status={
-            allocation.status.toLowerCase() as
+            (allocation.status?.toLowerCase() || "active") as
               | "active"
               | "expired"
               | "draft"

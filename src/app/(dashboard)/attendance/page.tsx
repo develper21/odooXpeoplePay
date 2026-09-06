@@ -278,7 +278,7 @@ export default function AttendancePage() {
                   <TableCell>
                     <StatusBadge
                       status={
-                        record.status.toLowerCase() as
+                        (record.status?.toLowerCase() || "present") as
                           | "present"
                           | "late"
                           | "absent"

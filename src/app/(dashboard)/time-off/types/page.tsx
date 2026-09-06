@@ -132,7 +132,7 @@ export default function TimeOffTypesPage() {
                 </TableCell>
                 <TableCell>
                   <StatusBadge
-                    status={type.status.toLowerCase() as "active" | "inactive"}
+                    status={(type.status?.toLowerCase() || "active") as "active" | "inactive"}
                   />
                 </TableCell>
                 <TableCell>
