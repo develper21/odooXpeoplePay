@@ -17,7 +17,8 @@ export default function EditUserPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !userItem) return <ErrorState message="User record not found." />;
+  if (isError || !userItem)
+    return <ErrorState message="User record not found." />;
 
   const handleSubmit = async (data: Omit<User, "id">) => {
     await updateUserMutation.mutateAsync({ id, input: data });
@@ -31,7 +32,7 @@ export default function EditUserPage() {
     <>
       {toastMessage && <Toast message={toastMessage} />}
       <PageHeader
-        title={`Edit · ${userItem.name}`}
+        title={`Edit · ${userItem.name || `${(userItem as any).firstName || ""} ${(userItem as any).lastName || ""}`.trim() || userItem.email || "User"}`}
         description="Update user contact details, role assignment, and linked employee profile."
       />
 
