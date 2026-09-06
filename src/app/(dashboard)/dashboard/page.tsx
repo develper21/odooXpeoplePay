@@ -40,7 +40,11 @@ export default function DashboardPage() {
   }
 
   if (isError || !data) {
-    return <ErrorState message={(error as Error)?.message || "Failed to load dashboard data."} />;
+    return (
+      <ErrorState
+        message={(error as Error)?.message || "Failed to load dashboard data."}
+      />
+    );
   }
 
   const canCreatePayrun = role ? canAccess(role, "payrun.create") : false;
@@ -50,9 +54,12 @@ export default function DashboardPage() {
       {/* Top Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Payroll Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">
+            Payroll Dashboard
+          </h1>
           <p className="mt-1 text-sm text-text-muted">
-            Aggregated operational intelligence for payments, staffing, attendance health, and compliance
+            Aggregated operational intelligence for payments, staffing,
+            attendance health, and compliance
           </p>
         </div>
 
@@ -69,34 +76,38 @@ export default function DashboardPage() {
       <DashboardFiltersBar
         filters={filters}
         onChange={setFilters}
-        availablePeriods={data.availablePeriods}
-        availableDepartments={data.availableDepartments}
+        availablePeriods={
+          data?.availablePeriods && data.availablePeriods.length > 0
+            ? data.availablePeriods
+            : [filters.period || "September 2026"]
+        }
+        availableDepartments={data?.availableDepartments || []}
       />
 
-      {/* Top 5 KPI Metrics Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {data.metrics.map((metric) => (
+      {/* Top KPI Metrics Row */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {(data?.metrics || []).map((metric) => (
           <MetricCard key={metric.label} metric={metric} />
         ))}
       </div>
 
       {/* Analytical Charts Grid */}
       <div className="grid gap-6 xl:grid-cols-2">
-        <SalaryChart data={data.salaryByDepartment} />
-        <TrendChart data={data.salaryTrend} />
+        <SalaryChart data={data?.salaryByDepartment || []} />
+        <TrendChart data={data?.salaryTrend || []} />
       </div>
 
       {/* Operational Alerts */}
-      <OperationalAlerts alerts={data.actionableAlerts} />
+      <OperationalAlerts alerts={data?.actionableAlerts || []} />
 
       {/* Attendance & Time Off Overviews */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <AttendanceOverview overview={data.attendanceOverview} />
-        <TimeOffOverview overview={data.timeOffOverview} />
+        <AttendanceOverview overview={data?.attendanceOverview} />
+        <TimeOffOverview overview={data?.timeOffOverview} />
       </div>
 
       {/* Department Breakdown Table */}
-      <DepartmentBreakdown breakdown={data.departmentBreakdown} />
+      <DepartmentBreakdown breakdown={data?.departmentBreakdown || []} />
     </div>
   );
 }
