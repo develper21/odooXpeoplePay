@@ -41,7 +41,7 @@ const payrunColumns = {
   updated_at: payruns.updatedAt,
 };
 
-export async function getEligibleEmployeeIds(payrun, companyId) {
+export async function getEligibleEmployeeIds(payrun, companyId, explicitEmployeeIds = null) {
   const candidates = await db
     .select({ employeeId: employees.id })
     .from(employees)
@@ -52,19 +52,27 @@ export async function getEligibleEmployeeIds(payrun, companyId) {
       eq(employees.status, 'active'),
       eq(contracts.companyId, companyId),
       eq(contracts.status, 'active'),
-      eq(contracts.payFrequency, payrun.pay_frequency),
       isNotNull(contracts.salaryStructureId),
       eq(salaryStructures.status, 'active'),
       lte(contracts.startDate, payrun.pay_period_end),
       or(isNull(contracts.endDate), gte(contracts.endDate, payrun.pay_period_start)),
     ));
-  return candidates.map((candidate) => candidate.employeeId);
+
+  let ids = candidates.map((candidate) => candidate.employeeId);
+  if (Array.isArray(explicitEmployeeIds) && explicitEmployeeIds.length > 0) {
+    const set = new Set(explicitEmployeeIds.map((id) => Number(String(id).replace(/\D/g, ''))).filter((n) => Number.isInteger(n) && n > 0));
+    if (set.size > 0) {
+      const filtered = ids.filter((id) => set.has(id));
+      if (filtered.length > 0) ids = filtered;
+    }
+  }
+  return ids;
 }
 
-async function calculateEmployees(payrun, companyId) {
+async function calculateEmployees(payrun, companyId, explicitEmployeeIds = null) {
   const results = [];
   const skipped = [];
-  for (const employeeId of await getEligibleEmployeeIds(payrun, companyId)) {
+  for (const employeeId of await getEligibleEmployeeIds(payrun, companyId, explicitEmployeeIds)) {
     try {
       results.push(await calculateEmployeeSalary(employeeId, { companyId }));
     } catch (error) {
@@ -79,7 +87,7 @@ async function calculateEmployees(payrun, companyId) {
   return { results, skipped };
 }
 
-export async function processPayrun(payrunId, companyId) {
+export async function processPayrun(payrunId, companyId, explicitEmployeeIds = null) {
   const [payrun] = await db
     .select(payrunColumns)
     .from(payruns)
@@ -90,7 +98,7 @@ export async function processPayrun(payrunId, companyId) {
     throw new PayrunProcessingError(`Payrun ${payrunId} cannot be recalculated after it is ${payrun.status}.`, 409, 'PAYRUN_FINALIZED');
   }
 
-  const { results, skipped } = await calculateEmployees(payrun, companyId);
+  const { results, skipped } = await calculateEmployees(payrun, companyId, explicitEmployeeIds);
   const totals = results.reduce((sum, result) => ({
     gross: sum.gross + result.gross_salary,
     deductions: sum.deductions + result.total_deductions,
