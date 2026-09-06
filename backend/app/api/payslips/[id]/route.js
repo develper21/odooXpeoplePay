@@ -4,7 +4,8 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-import { requirePermission } from '@/lib/auth-guard';
+import { requireUser } from '@/lib/auth-guard';
+import { hasPermission } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { employees, payslipLines, payslips, payruns } from '@/lib/schema';
 
@@ -52,15 +53,21 @@ async function getCompanyId() {
 }
 
 export async function GET(_request, { params }) {
-  const { error } = await requirePermission('payroll:read');
+  const { user, error } = await requireUser();
   if (error) return error;
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) return NextResponse.json({ error: 'Invalid payslip id.' }, { status: 400 });
   try {
     const companyId = await getCompanyId();
     if (companyId === null) return NextResponse.json({ error: `Payslip ${id} not found.` }, { status: 404 });
-    const [payslip] = await db.select({ ...payslipColumns, payrun_status: payruns.status, pay_period_start: payruns.payPeriodStart, pay_period_end: payruns.payPeriodEnd, employee_first_name: employees.firstName, employee_last_name: employees.lastName, employee_code: employees.employeeCode }).from(payslips).innerJoin(payruns, eq(payslips.payrunId, payruns.id)).innerJoin(employees, eq(payslips.employeeId, employees.id)).where(and(eq(payslips.id, id), eq(payruns.companyId, companyId))).limit(1);
+    const [payslip] = await db.select({ ...payslipColumns, payrun_status: payruns.status, pay_period_start: payruns.payPeriodStart, pay_period_end: payruns.payPeriodEnd, employee_first_name: employees.firstName, employee_last_name: employees.lastName, employee_code: employees.employeeCode, employee_user_id: employees.userId }).from(payslips).innerJoin(payruns, eq(payslips.payrunId, payruns.id)).innerJoin(employees, eq(payslips.employeeId, employees.id)).where(and(eq(payslips.id, id), eq(payruns.companyId, companyId))).limit(1);
     if (!payslip) return NextResponse.json({ error: `Payslip ${id} not found.` }, { status: 404 });
+
+    const canReadPayroll = hasPermission(user, 'payroll:read');
+    if (!canReadPayroll && payslip.employee_user_id !== user.id) {
+      return NextResponse.json({ error: 'Missing required permission.' }, { status: 403 });
+    }
+
     const lines = await db.select(lineColumns).from(payslipLines).where(eq(payslipLines.payslipId, id)).orderBy(asc(payslipLines.sortOrder), asc(payslipLines.id));
     return NextResponse.json({ payslip: { ...payslip, lines } });
   } catch (err) {
