@@ -44,7 +44,7 @@ function getSecretKey() {
  * Signs an auth token for the given payload using HS256.
  *
  * @param {Record<string, unknown>} payload Public session claims, e.g.
- *   { sub: '1', email: 'admin@acmedemo.com', role: 'ADMIN', permissions: ['*'] }.
+ *   { sub: '1', email: 'admin@northstar.io', role: 'ADMIN', permissions: ['*'] }.
  * @param {{ expiresIn?: string }} [options] Optional lifetime override
  *   (e.g. '2h', '30m'). Falls back to JWT_EXPIRES_IN, then '7d'.
  * @returns {Promise<string>} The compact JWT string.
