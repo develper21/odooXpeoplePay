@@ -7,10 +7,19 @@ import { usePayruns, useSalaryStructures, usePayslips } from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { PageHeader } from "@/components/shared/page-header";
-import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
+import {
+  DataTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/shared/metric-card";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
 import type { PayrunStatus } from "@/types/domain";
 
 export default function PayrollPage() {
@@ -36,7 +45,8 @@ export default function PayrollPage() {
     return payruns.filter((p) => {
       const matchesSearch =
         (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
-        (p.reference && p.reference.toLowerCase().includes(search.toLowerCase())) ||
+        (p.reference &&
+          p.reference.toLowerCase().includes(search.toLowerCase())) ||
         (p.period && p.period.toLowerCase().includes(search.toLowerCase()));
 
       const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
@@ -49,16 +59,23 @@ export default function PayrollPage() {
 
   // Derive Summary Metrics from Payruns & Payslips
   const totalPayruns = payruns?.length || 0;
-  const draftPayruns = (payruns || []).filter((p) => p.status === "DRAFT").length;
-  const activePayruns = (payruns || []).filter((p) => p.status === "COMPUTED" || p.status === "VALIDATED").length;
+  const draftPayruns = (payruns || []).filter(
+    (p) => p.status === "DRAFT",
+  ).length;
+  const activePayruns = (payruns || []).filter(
+    (p) => p.status === "COMPUTED" || p.status === "VALIDATED",
+  ).length;
   const paidPayruns = (payruns || []).filter((p) => p.status === "PAID").length;
 
   const totalDisbursed = (payruns || [])
     .filter((p) => p.status === "PAID")
-    .reduce((sum, p) => sum + (p.netTotal || 0), 0);
+    .reduce((sum, p) => sum + (Number(p.netTotal) || 0), 0);
 
   if (isLoading) return <LoadingState />;
-  if (error) return <ErrorState message="Failed to load payrun records. Please refresh the page." />;
+  if (error)
+    return (
+      <ErrorState message="Failed to load payrun records. Please refresh the page." />
+    );
 
   return (
     <div className="space-y-6">
@@ -107,7 +124,7 @@ export default function PayrollPage() {
         <MetricCard
           metric={{
             label: "Paid Net Total",
-            value: `₹${totalDisbursed.toLocaleString()}`,
+            value: `₹${Math.round(totalDisbursed).toLocaleString("en-IN")}`,
             change: "Cumulative",
             trend: "up",
             tone: "green",
@@ -194,7 +211,9 @@ export default function PayrollPage() {
                 : "Regular Salary";
 
               const warningCount = payrun.warnings?.length || 0;
-              const hasError = payrun.warnings?.some((w) => w.severity === "ERROR");
+              const hasError = payrun.warnings?.some(
+                (w) => w.severity === "ERROR",
+              );
 
               return (
                 <TableRow key={payrun.id}>
@@ -229,27 +248,39 @@ export default function PayrollPage() {
                   </TableCell>
 
                   <TableCell className="text-right font-medium">
-                    {payrun.grossTotal > 0 ? `₹${payrun.grossTotal.toLocaleString()}` : "—"}
+                    {payrun.grossTotal > 0
+                      ? `₹${payrun.grossTotal.toLocaleString()}`
+                      : "—"}
                   </TableCell>
 
                   <TableCell className="text-right font-bold text-success">
-                    {payrun.netTotal > 0 ? `₹${payrun.netTotal.toLocaleString()}` : "—"}
+                    {payrun.netTotal > 0
+                      ? `₹${payrun.netTotal.toLocaleString()}`
+                      : "—"}
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <StatusBadge status={payrun.status.toLowerCase() as any} />
+                    <StatusBadge status={payrun.status} />
                   </TableCell>
 
                   <TableCell>
                     {warningCount > 0 ? (
                       <div className="flex items-center gap-1 text-xs">
                         <AlertTriangle className="size-3.5 text-warning" />
-                        <span className={hasError ? "text-danger font-medium" : "text-warning font-medium"}>
+                        <span
+                          className={
+                            hasError
+                              ? "text-danger font-medium"
+                              : "text-warning font-medium"
+                          }
+                        >
                           {warningCount} issue{warningCount > 1 ? "s" : ""}
                         </span>
                       </div>
                     ) : payrun.status === "DRAFT" ? (
-                      <span className="text-xs text-text-muted">Not computed</span>
+                      <span className="text-xs text-text-muted">
+                        Not computed
+                      </span>
                     ) : (
                       <span className="text-xs text-green-400">✓ Verified</span>
                     )}
