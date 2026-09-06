@@ -29,7 +29,7 @@ import { NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth';
 import { AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 import { db } from '@/lib/db';
-import { roles, users } from '@/lib/schema';
+import { employees, roles, users } from '@/lib/schema';
 
 export async function GET() {
   try {
@@ -70,9 +70,11 @@ export async function GET() {
         roleCode: roles.code,
         roleName: roles.name,
         permissions: roles.permissions,
+        employeeId: employees.id,
       })
       .from(users)
       .leftJoin(roles, eq(users.roleId, roles.id))
+      .leftJoin(employees, eq(employees.userId, users.id))
       .where(eq(users.id, userId))
       .limit(1);
 
@@ -88,7 +90,6 @@ export async function GET() {
     }
 
     // 5. Safe fields only — the same user shape POST /api/auth/login returns.
-    //    password_hash is never selected; the token is never echoed back.
     return NextResponse.json({
       user: {
         id: user.id,
@@ -99,8 +100,11 @@ export async function GET() {
         email: user.email,
         first_name: user.firstName,
         last_name: user.lastName,
+        name: `${user.firstName} ${user.lastName}`.trim(),
         phone: user.phone,
         is_active: user.isActive,
+        employee_id: user.employeeId,
+        employeeId: user.employeeId ? String(user.employeeId) : undefined,
         last_login_at: user.lastLoginAt,
         created_at: user.createdAt,
         updated_at: user.updatedAt,
