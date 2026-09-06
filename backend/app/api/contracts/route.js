@@ -101,6 +101,18 @@ export async function GET(request) {
     const q = searchParams.get('q')?.trim();
 
     const filters = [eq(contracts.companyId, companyId)];
+    const empParam = searchParams.get('employee_id') || searchParams.get('employeeId');
+    if (empParam) {
+      const parsedId = Number(empParam);
+      if (Number.isInteger(parsedId) && parsedId > 0) {
+        filters.push(eq(contracts.employeeId, parsedId));
+      } else {
+        const numPart = Number(empParam.replace(/\D/g, ''));
+        if (Number.isInteger(numPart) && numPart > 0) {
+          filters.push(eq(contracts.employeeId, numPart));
+        }
+      }
+    }
     if (q) {
       filters.push(
         or(
