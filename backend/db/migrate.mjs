@@ -10,9 +10,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-import { migrate } from 'drizzle-orm/neon-http/migrator';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const envPath = path.resolve(here, '../.env.local');
@@ -22,6 +22,8 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const db = drizzle({ client: neon(process.env.DATABASE_URL) });
+const migrationClient = postgres(process.env.DATABASE_URL, { max: 1 });
+const db = drizzle(migrationClient);
 await migrate(db, { migrationsFolder: path.resolve(here, '../drizzle') });
+await migrationClient.end();
 console.log('Migrations applied ✔');
