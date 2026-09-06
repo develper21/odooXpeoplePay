@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Calculator, CheckCheck, Send, DollarSign, LoaderCircle } from "lucide-react";
+import {
+  Calculator,
+  CheckCheck,
+  Send,
+  DollarSign,
+  LoaderCircle,
+} from "lucide-react";
 import type { Payrun, PayrunStatus } from "@/types/domain";
 
 interface PayrunActionBarProps {
@@ -36,7 +42,9 @@ export function PayrunActionBar({
   isSending,
 }: PayrunActionBarProps) {
   const status = payrun.status;
-  const hasBlockingErrors = (payrun.warnings || []).some((w) => w.severity === "ERROR" || w.blocking);
+  const hasBlockingErrors = (payrun.warnings || []).some(
+    (w) => w.severity === "ERROR" || w.blocking,
+  );
 
   // Workflow Progression Rules
   // DRAFT -> Compute available
@@ -44,13 +52,22 @@ export function PayrunActionBar({
   // VALIDATED -> Mark Paid available
   // PAID -> No mark paid, Send payslips available
   const isDraft = status === "DRAFT";
-  const isComputed = status === "COMPUTED" || status === "WARNING" || status === "PENDING_APPROVAL";
+  const isComputed =
+    status === "COMPUTED" ||
+    status === "WARNING" ||
+    status === "PENDING_APPROVAL";
   const isValidated = status === "VALIDATED";
   const isPaid = status === "PAID";
 
   const computeDisabled = !canCompute || isPaid || isComputing;
-  const validateDisabled = !canValidate || (!isComputed && !isValidated) || isPaid || hasBlockingErrors || isValidating;
-  const markPaidDisabled = !canMarkPaid || !isValidated || isPaid || isMarkingPaid;
+  const validateDisabled =
+    !canValidate ||
+    (!isComputed && !isValidated) ||
+    isPaid ||
+    hasBlockingErrors ||
+    isValidating;
+  const markPaidDisabled =
+    !canMarkPaid || !isValidated || isPaid || isMarkingPaid;
   const sendDisabled = !canSend || !isPaid || isSending;
 
   return (
@@ -62,7 +79,13 @@ export function PayrunActionBar({
         size="sm"
         disabled={computeDisabled}
         onClick={onCompute}
-        title={!canCompute ? "Insufficient permissions" : isPaid ? "Payrun is already paid" : "Calculate salary rules for selected employees"}
+        title={
+          !canCompute
+            ? "Insufficient permissions"
+            : isPaid
+              ? "Payrun is already paid"
+              : "Calculate salary rules for selected employees"
+        }
         className="text-xs"
       >
         {isComputing ? (
@@ -89,10 +112,10 @@ export function PayrunActionBar({
           !canValidate
             ? "Insufficient permissions"
             : hasBlockingErrors
-            ? "Resolve blocking errors before validation"
-            : !isComputed
-            ? "Compute payrun before validating"
-            : "Lock and validate payrun calculations"
+              ? "Resolve blocking errors before validation"
+              : !isComputed
+                ? "Compute payrun before validating"
+                : "Lock and validate payrun calculations"
         }
         className="text-xs"
       >
@@ -120,10 +143,10 @@ export function PayrunActionBar({
           !canMarkPaid
             ? "Insufficient permissions"
             : !isValidated
-            ? "Payrun must be VALIDATED before marking as paid"
-            : isPaid
-            ? "Payrun has already been paid"
-            : "Finalize and mark payment as dispatched"
+              ? "Payrun must be VALIDATED before marking as paid"
+              : isPaid
+                ? "Payrun has already been paid"
+                : "Finalize and mark payment as dispatched"
         }
         className="text-xs"
       >
@@ -147,7 +170,13 @@ export function PayrunActionBar({
         size="sm"
         disabled={sendDisabled}
         onClick={onSendPayslips}
-        title={!canSend ? "Insufficient permissions" : !isPaid ? "Mark the payrun as paid before sending payslips" : "Send payslips via email to employees"}
+        title={
+          !canSend
+            ? "Insufficient permissions"
+            : !isPaid
+              ? "Mark the payrun as paid before sending payslips"
+              : "Send payslips via email to employees"
+        }
         className="text-xs ml-auto"
       >
         {isSending ? (
