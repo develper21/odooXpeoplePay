@@ -11,7 +11,7 @@ import {
   authCookieMaxAgeSeconds,
 } from '@/lib/auth-cookie';
 import { db } from '@/lib/db';
-import { roles, users } from '@/lib/schema';
+import { employees, roles, users } from '@/lib/schema';
 
 // Same normalisation + bcrypt 72-byte input cap as the register contract.
 const loginSchema = z.object({
@@ -75,9 +75,11 @@ export async function POST(request) {
         roleCode: roles.code,
         roleName: roles.name,
         permissions: roles.permissions,
+        employeeId: employees.id,
       })
       .from(users)
       .leftJoin(roles, eq(users.roleId, roles.id))
+      .leftJoin(employees, eq(employees.userId, users.id))
       .where(eq(users.email, email))
       .limit(1);
 
@@ -138,8 +140,11 @@ export async function POST(request) {
         email: user.email,
         first_name: user.firstName,
         last_name: user.lastName,
+        name: `${user.firstName} ${user.lastName}`.trim(),
         phone: user.phone,
         is_active: user.isActive,
+        employee_id: user.employeeId,
+        employeeId: user.employeeId ? String(user.employeeId) : undefined,
         last_login_at: loginAt.toISOString(),
         created_at: user.createdAt,
         updated_at: user.updatedAt,
