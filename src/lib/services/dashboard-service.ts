@@ -54,7 +54,7 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
 
   // Total Net Salary Paid (only PAID payslips)
   const paidPayslips = filteredPayslips.filter((ps) => ps.status === "PAID");
-  const totalNetSalaryPaid = paidPayslips.reduce((sum, ps) => sum + (ps.net || 0), 0);
+  const totalNetSalaryPaid = paidPayslips.reduce((sum, ps) => sum + (Number(ps.net) || 0), 0);
 
   // Payslips Generated
   const payslipsGenerated = filteredPayslips.length;
@@ -63,7 +63,7 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
   const relevantForAvg = filteredPayslips.length > 0 ? filteredPayslips : paidPayslips;
   const averageSalary =
     relevantForAvg.length > 0
-      ? Math.round(relevantForAvg.reduce((sum, ps) => sum + (ps.net || 0), 0) / relevantForAvg.length)
+      ? Math.round(relevantForAvg.reduce((sum, ps) => sum + (Number(ps.net) || 0), 0) / relevantForAvg.length)
       : 0;
 
   // 3. Filter Time Off Requests
@@ -80,7 +80,7 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
 
   const approvedTimeOffDays = filteredTimeOff
     .filter((r) => r.status === "APPROVED")
-    .reduce((sum, r) => sum + (r.days || 0), 0);
+    .reduce((sum, r) => sum + (Number(r.days) || 0), 0);
 
   const pendingRequestsCount = timeOffRequests.filter(
     (r) => filteredEmpIds.has(r.employeeId) && r.status === "PENDING"
@@ -172,8 +172,8 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
       return true;
     });
 
-    const netCost = deptPayslips.reduce((sum, ps) => sum + (ps.net || 0), 0);
-    const grossCost = deptPayslips.reduce((sum, ps) => sum + (ps.gross || 0), 0);
+    const netCost = deptPayslips.reduce((sum, ps) => sum + (Number(ps.net) || 0), 0);
+    const grossCost = deptPayslips.reduce((sum, ps) => sum + (Number(ps.gross) || 0), 0);
 
     if (deptEmployees.length > 0 || netCost > 0) {
       salaryByDepartment.push({
@@ -203,8 +203,8 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
       return ps.period === pName;
     });
 
-    const totalNet = monthSlips.reduce((sum, ps) => sum + (ps.net || 0), 0);
-    const totalGross = monthSlips.reduce((sum, ps) => sum + (ps.gross || 0), 0);
+    const totalNet = monthSlips.reduce((sum, ps) => sum + (Number(ps.net) || 0), 0);
+    const totalGross = monthSlips.reduce((sum, ps) => sum + (Number(ps.gross) || 0), 0);
     return {
       name: label,
       value: totalNet,
@@ -327,8 +327,8 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
 
   // 10. Time Off Overview
   const filteredAllocations = allocations.filter((a) => filteredEmpIds.has(a.employeeId) && isAllocationAvailable(a));
-  const totalAllocatedDays = filteredAllocations.reduce((s, a) => s + (a.allocatedDays || 0), 0);
-  const totalRemainingDays = filteredAllocations.reduce((s, a) => s + (a.remainingDays || 0), 0);
+  const totalAllocatedDays = filteredAllocations.reduce((s, a) => s + (Number(a.allocatedDays) || 0), 0);
+  const totalRemainingDays = filteredAllocations.reduce((s, a) => s + (Number(a.remainingDays) || 0), 0);
 
   const typeMap: Record<string, { days: number; count: number }> = {};
   filteredTimeOff.forEach((req) => {
@@ -336,7 +336,7 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
       if (!typeMap[req.type]) {
         typeMap[req.type] = { days: 0, count: 0 };
       }
-      typeMap[req.type].days += req.days || 0;
+      typeMap[req.type].days += Number(req.days) || 0;
       typeMap[req.type].count += 1;
     }
   });
@@ -368,9 +368,9 @@ export function deriveDashboardData(filters?: DashboardFilters): DashboardData {
       return true;
     });
 
-    const totalGross = deptPayslips.reduce((s, p) => s + (p.gross || 0), 0);
-    const totalDeductions = deptPayslips.reduce((s, p) => s + (p.deductions || 0), 0);
-    const totalNet = deptPayslips.reduce((s, p) => s + (p.net || 0), 0);
+    const totalGross = deptPayslips.reduce((s, p) => s + (Number(p.gross) || 0), 0);
+    const totalDeductions = deptPayslips.reduce((s, p) => s + (Number(p.deductions) || 0), 0);
+    const totalNet = deptPayslips.reduce((s, p) => s + (Number(p.net) || 0), 0);
     const headcount = deptEmployees.filter((e) => e.status === "ACTIVE").length;
     const countForAvg = deptPayslips.length || headcount || 1;
     const averageNet = Math.round(totalNet / countForAvg);
