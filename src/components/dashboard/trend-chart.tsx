@@ -1,10 +1,22 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Inbox } from "lucide-react";
 
-export function TrendChart({ data }: { data: { name: string; value: number }[] }) {
+export function TrendChart({
+  data,
+}: {
+  data: { name: string; value: number }[];
+}) {
   const hasData = data && data.length > 0 && data.some((d) => d.value > 0);
 
   return (
@@ -31,14 +43,25 @@ export function TrendChart({ data }: { data: { name: string; value: number }[] }
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
+              <AreaChart
+                data={data}
+                margin={{ top: 12, right: 16, left: -10, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="salaryFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
+                    <stop
+                      offset="100%"
+                      stopColor="#3b82f6"
+                      stopOpacity={0.02}
+                    />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="#263244" vertical={false} strokeDasharray="3 3" />
+                <CartesianGrid
+                  stroke="#263244"
+                  vertical={false}
+                  strokeDasharray="3 3"
+                />
                 <XAxis
                   dataKey="name"
                   stroke="#64748b"
