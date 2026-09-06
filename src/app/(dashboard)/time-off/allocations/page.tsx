@@ -3,23 +3,46 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { CheckCircle2, Clock, Search, XCircle } from "lucide-react";
-import { useTimeOffAllocations, useEmployees, useTimeOffTypes, useApproveAllocation, useRefuseAllocation } from "@/hooks/use-data";
+import {
+  useTimeOffAllocations,
+  useEmployees,
+  useTimeOffTypes,
+  useApproveAllocation,
+  useRefuseAllocation,
+} from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { employeeName } from "@/lib/hr-utils";
-import { formatTimeOffDate, usableAllocationRemaining } from "@/lib/time-off-utils";
+import {
+  formatTimeOffDate,
+  usableAllocationRemaining,
+} from "@/lib/time-off-utils";
 import { PageHeader } from "@/components/shared/page-header";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Toast } from "@/components/ui/toast";
 import { TimeOffTabs } from "@/components/time-off/time-off-tabs";
+import { matchesEmployee } from "@/lib/utils";
 
 export default function AllocationsPage() {
-  const { data: allocations = [], isLoading, isError } = useTimeOffAllocations();
+  const {
+    data: allocations = [],
+    isLoading,
+    isError,
+  } = useTimeOffAllocations();
   const { data: employees = [] } = useEmployees();
   const { data: types = [] } = useTimeOffTypes();
   const { user } = useAuth();
@@ -38,48 +61,63 @@ export default function AllocationsPage() {
 
   const scopedAllocations = useMemo(() => {
     return isEmployeeRole
-      ? allocations.filter((a) => a.employeeId === currentUserEmpId)
+      ? allocations.filter((a) =>
+          matchesEmployee(a.employeeId, currentUserEmpId),
+        )
       : allocations;
   }, [allocations, isEmployeeRole, currentUserEmpId]);
 
   const pendingCount = useMemo(() => {
-    return scopedAllocations.filter((a) => a.status === "PENDING").length;
+    return scopedAllocations.filter(
+      (a) => a.status?.toUpperCase() === "PENDING",
+    ).length;
   }, [scopedAllocations]);
 
   const filtered = useMemo(() => {
     return scopedAllocations.filter((alloc) => {
-      const emp = employees.find((e) => e.id === alloc.employeeId);
+      const emp = employees.find((e) =>
+        matchesEmployee(e.id, alloc.employeeId),
+      );
       const name = emp ? employeeName(emp).toLowerCase() : "";
-      const code = emp ? emp.employeeNumber.toLowerCase() : "";
+      const code = emp ? (emp.employeeNumber || "").toLowerCase() : "";
+      const allocType = (alloc.type || "").toLowerCase();
       const matchSearch =
         name.includes(search.toLowerCase()) ||
         code.includes(search.toLowerCase()) ||
-        alloc.type.toLowerCase().includes(search.toLowerCase());
+        allocType.includes(search.toLowerCase());
 
       const matchType =
         typeFilter === "ALL" ||
-        alloc.typeId === typeFilter ||
-        alloc.type.toLowerCase() === typeFilter.toLowerCase();
+        String(alloc.typeId) === String(typeFilter) ||
+        allocType === typeFilter.toLowerCase();
 
-      const matchStatus = statusFilter === "ALL" || alloc.status === statusFilter;
+      const matchStatus =
+        statusFilter === "ALL" ||
+        alloc.status?.toUpperCase() === statusFilter.toUpperCase();
 
       return matchSearch && matchType && matchStatus;
     });
   }, [scopedAllocations, employees, search, typeFilter, statusFilter]);
 
   if (isLoading) return <LoadingState />;
-  if (isError) return <ErrorState message="Leave allocations could not be loaded." />;
+  if (isError)
+    return <ErrorState message="Leave allocations could not be loaded." />;
 
   const canManage = Boolean(user && canAccess(user.role, "timeoff.approve"));
 
   const handleApprove = async (id: string) => {
     await approveMutation.mutateAsync(id);
-    setToastMessage("Leave allocation approved. Usable balance is now unlocked.");
+    setToastMessage(
+      "Leave allocation approved. Usable balance is now unlocked.",
+    );
   };
 
   const confirmRefuse = async () => {
     if (!refuseTargetId) return;
-    await refuseMutation.mutateAsync({ id: refuseTargetId, reason: refuseReason });
+    await refuseMutation.mutateAsync({
+      id: refuseTargetId,
+      reason: refuseReason,
+    });
     setToastMessage("Leave allocation refused.");
     setRefuseTargetId(null);
     setRefuseReason("");
@@ -133,7 +171,13 @@ export default function AllocationsPage() {
                 : "border bg-surface text-text-secondary hover:bg-surface-raised"
             }`}
           >
-            Approved ({scopedAllocations.filter((a) => a.status === "APPROVED" || a.status === "ACTIVE").length})
+            Approved (
+            {
+              scopedAllocations.filter(
+                (a) => a.status?.toUpperCase() === "APPROVED" || a.status?.toUpperCase() === "ACTIVE",
+              ).length
+            }
+            )
           </button>
           <button
             onClick={() => setStatusFilter("REFUSED")}
@@ -143,7 +187,8 @@ export default function AllocationsPage() {
                 : "border bg-surface text-text-secondary hover:bg-surface-raised"
             }`}
           >
-            Refused ({scopedAllocations.filter((a) => a.status === "REFUSED").length})
+            Refused (
+            {scopedAllocations.filter((a) => a.status?.toUpperCase() === "REFUSED").length})
           </button>
         </div>
       )}
@@ -163,7 +208,7 @@ export default function AllocationsPage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-10 rounded-md border bg-surface-raised px-3 text-xs text-text-secondary"
+            className="h-10 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors"
           >
             <option value="ALL">All Leave Types</option>
             {types.map((t) => (
@@ -176,7 +221,7 @@ export default function AllocationsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 rounded-md border bg-surface-raised px-3 text-xs text-text-secondary"
+            className="h-10 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors"
           >
             <option value="ALL">All Statuses</option>
             <option value="PENDING">Pending</option>
@@ -236,7 +281,9 @@ export default function AllocationsPage() {
                       {emp ? employeeName(emp) : alloc.employeeId}
                     </Link>
                   </TableCell>
-                  <TableCell className="font-medium text-text-primary">{alloc.type}</TableCell>
+                  <TableCell className="font-medium text-text-primary">
+                    {alloc.type}
+                  </TableCell>
                   <TableCell className="font-semibold">
                     {alloc.allocatedDays} {unitLabel}
                   </TableCell>
@@ -247,7 +294,8 @@ export default function AllocationsPage() {
                     {usableAllocationRemaining(alloc)} {unitLabel}
                   </TableCell>
                   <TableCell className="text-xs text-text-secondary">
-                    {formatTimeOffDate(alloc.validFrom)} → {formatTimeOffDate(alloc.validTo)}
+                    {formatTimeOffDate(alloc.validFrom)} →{" "}
+                    {formatTimeOffDate(alloc.validTo)}
                   </TableCell>
                   <TableCell>
                     <StatusBadge
