@@ -52,7 +52,11 @@ export default function PayrunDetailsPage() {
   const canSend = canAccess(role, "payslip.send");
 
   // Data Queries
-  const { data: payrun, isLoading: loadingPayrun, error: payrunError } = usePayrun(id);
+  const {
+    data: payrun,
+    isLoading: loadingPayrun,
+    error: payrunError,
+  } = usePayrun(id);
   const { data: allPayslips, isLoading: loadingPayslips } = usePayslips();
   const { data: employees } = useEmployees();
   const { data: contracts } = useContracts();
@@ -89,9 +93,17 @@ export default function PayrunDetailsPage() {
   // Derived Totals
   const isComputed = payrun?.status !== "DRAFT";
   const totalEmployees = payrun?.employeeCount || payrunPayslips.length || 0;
-  const totalGross = isComputed ? payrun?.grossTotal || payrunPayslips.reduce((s, p) => s + (p.gross || 0), 0) : 0;
-  const totalDeductions = isComputed ? payrun?.deductionsTotal || payrunPayslips.reduce((s, p) => s + (p.deductions || 0), 0) : 0;
-  const totalNet = isComputed ? payrun?.netTotal || payrunPayslips.reduce((s, p) => s + (p.net || 0), 0) : 0;
+  const totalGross = isComputed
+    ? (Number(payrun?.grossTotal) ||
+      payrunPayslips.reduce((s, p) => s + (Number(p.gross) || 0), 0))
+    : 0;
+  const totalDeductions = isComputed
+    ? (Number(payrun?.deductionsTotal) ||
+      payrunPayslips.reduce((s, p) => s + (Number(p.deductions) || 0), 0))
+    : 0;
+  const totalNet = isComputed
+    ? (Number(payrun?.netTotal) || payrunPayslips.reduce((s, p) => s + (Number(p.net) || 0), 0))
+    : 0;
 
   // Actions
   const handleCompute = async () => {
@@ -110,7 +122,9 @@ export default function PayrunDetailsPage() {
     setToastMessage(null);
     try {
       await validateMutation.mutateAsync(id);
-      setToastMessage("Payrun validated successfully. Calculations are locked.");
+      setToastMessage(
+        "Payrun validated successfully. Calculations are locked.",
+      );
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to validate payrun.");
     }
@@ -145,7 +159,9 @@ export default function PayrunDetailsPage() {
 
   if (loadingPayrun || loadingPayslips) return <LoadingState />;
   if (payrunError || !payrun) {
-    return <ErrorState message="Payrun cycle not found or access is restricted." />;
+    return (
+      <ErrorState message="Payrun cycle not found or access is restricted." />
+    );
   }
 
   return (
@@ -167,7 +183,7 @@ export default function PayrunDetailsPage() {
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {payrun.name || payrun.reference}
               </h1>
-              <StatusBadge status={payrun.status.toLowerCase() as any} />
+              <StatusBadge status={payrun.status} />
             </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary mt-1">
               <span className="font-mono">{payrun.reference}</span>
@@ -208,7 +224,9 @@ export default function PayrunDetailsPage() {
           <div className="flex items-center gap-2 font-bold">
             <AlertTriangle className="size-4" /> Operation Blocked
           </div>
-          <p className="mt-1 whitespace-pre-line leading-relaxed">{errorMessage}</p>
+          <p className="mt-1 whitespace-pre-line leading-relaxed">
+            {errorMessage}
+          </p>
         </div>
       )}
 
@@ -219,8 +237,14 @@ export default function PayrunDetailsPage() {
             <Send className="size-4 text-primary" /> Payslip Delivery Summary
           </div>
           <p className="mt-1 text-text-secondary">
-            {sendSummary.simulated && <span className="mr-1 text-warning">Mock delivery simulation:</span>}
-            Dispatched <strong className="text-foreground">{sendSummary.sentCount}</strong> payslip(s) successfully.
+            {sendSummary.simulated && (
+              <span className="mr-1 text-warning">
+                Mock delivery simulation:
+              </span>
+            )}
+            Dispatched{" "}
+            <strong className="text-foreground">{sendSummary.sentCount}</strong>{" "}
+            payslip(s) successfully.
             {sendSummary.failedCount > 0 && (
               <span className="text-danger ml-1">
                 ({sendSummary.failedCount} failed due to missing email address)
@@ -231,7 +255,9 @@ export default function PayrunDetailsPage() {
             <div className="mt-2 space-y-1 rounded border border-border/60 bg-surface p-2 text-[11px] text-text-secondary">
               {sendSummary.failures.map((f, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-danger">
-                  <span>• {f.employeeName}: {f.reason}</span>
+                  <span>
+                    • {f.employeeName}: {f.reason}
+                  </span>
                 </div>
               ))}
             </div>
@@ -256,7 +282,9 @@ export default function PayrunDetailsPage() {
         <MetricCard
           metric={{
             label: "Gross Salary",
-            value: isComputed ? `₹${totalGross.toLocaleString()}` : "Not Computed",
+            value: isComputed
+              ? `₹${totalGross.toLocaleString()}`
+              : "Not Computed",
             change: "Earnings",
             trend: "up",
             tone: "violet",
@@ -265,7 +293,9 @@ export default function PayrunDetailsPage() {
         <MetricCard
           metric={{
             label: "Deductions",
-            value: isComputed ? `₹${totalDeductions.toLocaleString()}` : "Not Computed",
+            value: isComputed
+              ? `₹${totalDeductions.toLocaleString()}`
+              : "Not Computed",
             change: "Withholdings",
             trend: "down",
             tone: "amber",
@@ -274,7 +304,9 @@ export default function PayrunDetailsPage() {
         <MetricCard
           metric={{
             label: "Net Payable",
-            value: isComputed ? `₹${totalNet.toLocaleString()}` : "Not Computed",
+            value: isComputed
+              ? `₹${totalNet.toLocaleString()}`
+              : "Not Computed",
             change: "Disbursement",
             trend: "up",
             tone: "green",
@@ -299,11 +331,13 @@ export default function PayrunDetailsPage() {
               Employee Breakdown & Generated Payslips
             </h2>
             <p className="text-xs text-text-secondary">
-              Click any employee row to open the complete salary calculation and printable payslip statement.
+              Click any employee row to open the complete salary calculation and
+              printable payslip statement.
             </p>
           </div>
           <span className="text-xs font-semibold text-text-muted">
-            {payrunPayslips.length} Payslip{payrunPayslips.length === 1 ? "" : "s"}
+            {payrunPayslips.length} Payslip
+            {payrunPayslips.length === 1 ? "" : "s"}
           </span>
         </div>
 
