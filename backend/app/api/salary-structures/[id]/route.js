@@ -1,6 +1,6 @@
 // Single salary structure API with configurable salary rules.
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -78,7 +78,11 @@ const structureFields = {
   effective_to: z.string().date().nullable().optional(),
   status: z.enum(['active', 'inactive']).optional(),
 };
-const updateSchema = z.object({ ...structureFields, rules: z.array(ruleSchema).optional() });
+const updateSchema = z.object({
+  ...structureFields,
+  rules: z.array(ruleSchema).optional(),
+  rule_ids: z.array(z.union([z.number(), z.string()])).optional(),
+});
 function ruleValues(rule, salaryStructureId) {
   const fixed = rule.calculation_type === 'fixed';
   return {
@@ -152,6 +156,27 @@ export async function PATCH(request, { params }) {
       if (data.rules !== undefined) {
         await tx.delete(salaryRules).where(eq(salaryRules.salaryStructureId, id));
         if (data.rules.length) await tx.insert(salaryRules).values(data.rules.map((rule) => ruleValues(rule, id)));
+      } else if (data.rule_ids !== undefined) {
+        await tx.delete(salaryRules).where(eq(salaryRules.salaryStructureId, id));
+        const numericIds = data.rule_ids.map(Number).filter(n => Number.isInteger(n) && n > 0);
+        if (numericIds.length > 0) {
+          const fetchedRules = await tx.select().from(salaryRules).where(inArray(salaryRules.id, numericIds));
+          const toInsert = fetchedRules.map(r => ({
+            name: r.name,
+            code: r.code,
+            type: r.type,
+            calculation_type: r.calculationType,
+            amount: r.amount ? Number(r.amount) : null,
+            percentage: r.percentage ? Number(r.percentage) : null,
+            percentage_base: r.percentageBase,
+            is_taxable: r.isTaxable,
+            computation_order: r.computationOrder,
+            is_active: r.isActive,
+          }));
+          if (toInsert.length > 0) {
+            await tx.insert(salaryRules).values(toInsert.map((rule) => ruleValues(rule, id)));
+          }
+        }
       }
       return updated;
     });
