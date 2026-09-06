@@ -19,7 +19,11 @@ export default function EditSalaryStructurePage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const { data: structure, isLoading: structureLoading, isError } = useSalaryStructure(id);
+  const {
+    data: structure,
+    isLoading: structureLoading,
+    isError,
+  } = useSalaryStructure(id);
   const { data: allRules = [], isLoading: rulesLoading } = useSalaryRules();
   const updateStructure = useUpdateSalaryStructure();
 
@@ -28,7 +32,9 @@ export default function EditSalaryStructurePage() {
     return <ErrorState message="Salary structure could not be found." />;
   }
 
-  const canEdit = Boolean(user && canAccess(user.role, "salary_structure.update"));
+  const canEdit = Boolean(
+    user && canAccess(user.role, "salary_structure.update"),
+  );
   if (!canEdit) {
     return (
       <div className="rounded-lg border border-danger/30 bg-danger/10 p-6 text-center text-danger">
