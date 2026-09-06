@@ -2,7 +2,13 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTimeOffRequest, useUpdateTimeOffRequest, useEmployees, useTimeOffTypes, useTimeOffAllocations } from "@/hooks/use-data";
+import {
+  useTimeOffRequest,
+  useUpdateTimeOffRequest,
+  useEmployees,
+  useTimeOffTypes,
+  useTimeOffAllocations,
+} from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { LoadingState, ErrorState } from "@/components/shared/states";
 import { PageHeader } from "@/components/shared/page-header";
@@ -26,12 +32,15 @@ export default function EditTimeOffRequestPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !request) return <ErrorState message="Request record was not found." />;
+  if (isError || !request)
+    return <ErrorState message="Request record was not found." />;
   if (request.status !== "PENDING") {
     return <ErrorState message="Only pending leave requests can be edited." />;
   }
   if (isEmployeeRole && request.employeeId !== user?.employeeId) {
-    return <ErrorState message="You are only authorized to edit your own leave requests." />;
+    return (
+      <ErrorState message="You are only authorized to edit your own leave requests." />
+    );
   }
 
   return (
@@ -54,7 +63,10 @@ export default function EditTimeOffRequestPage() {
             submitLabel="Update Request"
             onCancel={() => router.push(`/time-off/requests/${id}`)}
             onSubmit={async (values) => {
-              await mutation.mutateAsync({ id, input: values as Partial<TimeOffRequest> });
+              await mutation.mutateAsync({
+                id,
+                input: values as Partial<TimeOffRequest>,
+              });
               setToastMessage("Request updated successfully.");
               setTimeout(() => {
                 router.push(`/time-off/requests/${id}`);

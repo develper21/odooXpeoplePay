@@ -5,3 +5,4 @@ out
 !.env.example
 npm-debug.log*
 *.tsbuildinfo
+package-lock.json

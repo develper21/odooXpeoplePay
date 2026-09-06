@@ -13,7 +13,9 @@ export function PayrunWarningsAlert({
       <div className="flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/5 px-4 py-3 text-sm text-green-400">
         <CheckCircle2 className="size-4 shrink-0 text-success" />
         <div>
-          <span className="font-semibold">No payroll issues detected</span> — All selected employees have active contracts, valid banking, and consistent payslip profiles.
+          <span className="font-semibold">No payroll issues detected</span> —
+          All selected employees have active contracts, valid banking, and
+          consistent payslip profiles.
         </div>
       </div>
     );
@@ -36,7 +38,9 @@ export function PayrunWarningsAlert({
                 Payroll Warnings & Validation Issues
               </h3>
               <p className="text-xs text-text-secondary">
-                {warnings.length} {warnings.length === 1 ? "issue requires" : "issues require"} review before payroll finalization.
+                {warnings.length}{" "}
+                {warnings.length === 1 ? "issue requires" : "issues require"}{" "}
+                review before payroll finalization.
               </p>
             </div>
           </div>

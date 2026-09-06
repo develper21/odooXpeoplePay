@@ -2,7 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { useCreateTimeOffRequest, useEmployees, useTimeOffAllocations, useTimeOffTypes } from "@/hooks/use-data";
+import {
+  useCreateTimeOffRequest,
+  useEmployees,
+  useTimeOffAllocations,
+  useTimeOffTypes,
+} from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState } from "@/components/shared/states";
@@ -22,14 +27,16 @@ function NewRequestContent() {
 
   const { data: employees = [], isLoading: empLoading } = useEmployees();
   const { data: types = [], isLoading: typesLoading } = useTimeOffTypes();
-  const { data: allocations = [], isLoading: allocLoading } = useTimeOffAllocations();
+  const { data: allocations = [], isLoading: allocLoading } =
+    useTimeOffAllocations();
 
   const mutation = useCreateTimeOffRequest();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (empLoading || typesLoading || allocLoading) return <LoadingState />;
 
-  const targetEmployeeId = paramEmployeeId ?? (isEmployeeRole ? currentUserEmpId : undefined);
+  const targetEmployeeId =
+    paramEmployeeId ?? (isEmployeeRole ? currentUserEmpId : undefined);
 
   return (
     <>
@@ -56,7 +63,7 @@ function NewRequestContent() {
                 router.push(
                   isEmployeeRole
                     ? `/employees/${values.employeeId}/time-off`
-                    : "/time-off/requests"
+                    : "/time-off/requests",
                 );
               }, 600);
             }}
@@ -65,7 +72,8 @@ function NewRequestContent() {
       </Card>
       {mutation.isError && (
         <p className="mt-4 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
-          Time Off request could not be submitted.
+          {(mutation.error as any)?.message ||
+            "Time Off request could not be submitted. Please verify dates and leave balance."}
         </p>
       )}
     </>

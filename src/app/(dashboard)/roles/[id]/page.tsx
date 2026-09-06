@@ -58,8 +58,13 @@ export default function RoleDetailPage() {
   const roleKey = params.id as Role;
 
   const isValidRole = validRoles.includes(roleKey);
-  const { data: roleInfo, isLoading: roleLoading, isError: roleError } = useRole(roleKey);
-  const { data: activePermissions = [], isLoading: permLoading } = useRolePermissions(roleKey);
+  const {
+    data: roleInfo,
+    isLoading: roleLoading,
+    isError: roleError,
+  } = useRole(isValidRole ? roleKey : ("" as any));
+  const { data: serverPermissions, isLoading: permLoading } =
+    useRolePermissions(isValidRole ? roleKey : ("" as any));
   const { data: users = [] } = useUsers();
   const { data: employees = [] } = useEmployees();
 
@@ -71,12 +76,31 @@ export default function RoleDetailPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
 
+  const activePermissions: Permission[] = useMemo(() => {
+    const raw = serverPermissions;
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === "object" && Array.isArray((raw as any).permissions)) {
+      return (raw as any).permissions;
+    }
+    return defaultRolePermissions[roleKey] || [];
+  }, [serverPermissions, roleKey]);
+
+  const serializedPerms = useMemo(() => {
+    return Array.isArray(activePermissions)
+      ? activePermissions.slice().sort().join(",")
+      : "";
+  }, [activePermissions]);
+
   // Sync draft state when server/mock permissions load
   useEffect(() => {
-    if (activePermissions) {
-      setDraftPermissions([...activePermissions]);
+    if (serializedPerms) {
+      setDraftPermissions(
+        serializedPerms.split(",").filter(Boolean) as Permission[]
+      );
+    } else {
+      setDraftPermissions([]);
     }
-  }, [activePermissions]);
+  }, [serializedPerms]);
 
   const defaultPerms = useMemo(() => {
     return defaultRolePermissions[roleKey] || [];
@@ -84,6 +108,8 @@ export default function RoleDetailPage() {
 
   // Check if draft has unsaved changes compared to active saved state
   const isDirty = useMemo(() => {
+    if (!Array.isArray(draftPermissions) || !Array.isArray(activePermissions))
+      return false;
     if (draftPermissions.length !== activePermissions.length) return true;
     const activeSet = new Set(activePermissions);
     return draftPermissions.some((p) => !activeSet.has(p));
@@ -91,6 +117,8 @@ export default function RoleDetailPage() {
 
   // Check if active saved permissions differ from system default
   const isCustomized = useMemo(() => {
+    if (!Array.isArray(activePermissions) || !Array.isArray(defaultPerms))
+      return false;
     if (activePermissions.length !== defaultPerms.length) return true;
     const defaultSet = new Set(defaultPerms);
     return activePermissions.some((p) => !defaultSet.has(p));
@@ -98,7 +126,7 @@ export default function RoleDetailPage() {
 
   // Users assigned to this specific role
   const assignedUsers = useMemo(() => {
-    return users.filter((u) => u.role === roleKey);
+    return (users || []).filter((u) => u.role === roleKey);
   }, [users, roleKey]);
 
   if (!isValidRole) {
@@ -106,7 +134,8 @@ export default function RoleDetailPage() {
   }
 
   if (roleLoading || permLoading) return <LoadingState />;
-  if (roleError || !roleInfo) return <ErrorState message="Role information could not be loaded." />;
+  if (roleError || !roleInfo)
+    return <ErrorState message="Role information could not be loaded." />;
 
   const togglePermission = (permKey: Permission) => {
     setDraftPermissions((prev) => {
@@ -138,7 +167,9 @@ export default function RoleDetailPage() {
       role: roleKey,
       permissions: draftPermissions,
     });
-    setToastMessage(`Permissions for ${roleLabels[roleKey]} updated successfully.`);
+    setToastMessage(
+      `Permissions for ${roleLabels[roleKey]} updated successfully.`,
+    );
   };
 
   const handleDiscardChanges = () => {
@@ -149,7 +180,9 @@ export default function RoleDetailPage() {
     await resetMutation.mutateAsync(roleKey);
     setDraftPermissions([...defaultPerms]);
     setConfirmResetOpen(false);
-    setToastMessage(`Reset ${roleLabels[roleKey]} permissions to system baseline.`);
+    setToastMessage(
+      `Reset ${roleLabels[roleKey]} permissions to system baseline.`,
+    );
   };
 
   return (
@@ -179,8 +212,12 @@ export default function RoleDetailPage() {
             </div>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-lg font-bold text-text-primary">{roleLabels[roleKey]}</h2>
-                <span className="font-mono text-xs text-text-muted">({roleKey})</span>
+                <h2 className="text-lg font-bold text-text-primary">
+                  {roleLabels[roleKey]}
+                </h2>
+                <span className="font-mono text-xs text-text-muted">
+                  ({roleKey})
+                </span>
                 {isCustomized ? (
                   <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-amber-400">
                     <AlertTriangle className="size-3" /> Custom Overrides Active
@@ -197,12 +234,19 @@ export default function RoleDetailPage() {
               <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border-subtle pt-3 text-xs">
                 <div>
                   <span className="text-text-muted">Active Permissions: </span>
-                  <span className="font-bold text-primary">{activePermissions.length}</span>
-                  <span className="text-text-muted"> / {defaultPerms.length} default</span>
+                  <span className="font-bold text-primary">
+                    {activePermissions.length}
+                  </span>
+                  <span className="text-text-muted">
+                    {" "}
+                    / {defaultPerms.length} default
+                  </span>
                 </div>
                 <div>
                   <span className="text-text-muted">Assigned Accounts: </span>
-                  <span className="font-bold text-text-primary">{assignedUsers.length}</span>
+                  <span className="font-bold text-text-primary">
+                    {assignedUsers.length}
+                  </span>
                 </div>
               </div>
             </div>
@@ -215,12 +259,17 @@ export default function RoleDetailPage() {
             <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
               Assigned Accounts ({assignedUsers.length})
             </h3>
-            <Link href="/users" className="text-[11px] font-semibold text-primary hover:underline">
+            <Link
+              href="/users"
+              className="text-[11px] font-semibold text-primary hover:underline"
+            >
               View All Users →
             </Link>
           </div>
           {assignedUsers.length === 0 ? (
-            <p className="py-4 text-xs italic text-text-muted">No users currently hold this role.</p>
+            <p className="py-4 text-xs italic text-text-muted">
+              No users currently hold this role.
+            </p>
           ) : (
             <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
               {assignedUsers.map((u) => {
@@ -235,11 +284,11 @@ export default function RoleDetailPage() {
                         href={`/users/${u.id}`}
                         className="font-semibold text-text-primary hover:text-primary"
                       >
-                        {u.name}
+                        {u.name || `${(u as any).firstName || ""} ${(u as any).lastName || ""}`.trim() || u.email || "User"}
                       </Link>
                       <p className="text-[10px] text-text-muted">{u.email}</p>
                     </div>
-                    <StatusBadge status={u.status.toLowerCase() as "active" | "inactive" | "pending"} />
+                    <StatusBadge status={u.status} />
                   </div>
                 );
               })}
@@ -256,12 +305,14 @@ export default function RoleDetailPage() {
             <div className="text-xs">
               {isDirty && (
                 <p className="font-semibold text-text-primary">
-                  You have unsaved permission modifications ({draftPermissions.length} selected).
+                  You have unsaved permission modifications (
+                  {draftPermissions.length} selected).
                 </p>
               )}
               {!isDirty && isCustomized && (
                 <p className="text-text-secondary">
-                  This role has customized privileges that differ from the system baseline.
+                  This role has customized privileges that differ from the
+                  system baseline.
                 </p>
               )}
             </div>
@@ -310,7 +361,8 @@ export default function RoleDetailPage() {
           <div>
             <CardTitle>Permission Matrix</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Configure read, create, update, delete, and workflow permissions for this role.
+              Configure read, create, update, delete, and workflow permissions
+              for this role.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -331,38 +383,64 @@ export default function RoleDetailPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-t bg-surface-raised text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 <tr>
-                  <th className="px-5 py-3.5 min-w-[200px]">Module / Resource</th>
+                  <th className="px-5 py-3.5 min-w-[200px]">
+                    Module / Resource
+                  </th>
                   <th className="px-4 py-3.5 text-center w-24">Read</th>
                   <th className="px-4 py-3.5 text-center w-24">Create</th>
                   <th className="px-4 py-3.5 text-center w-24">Update</th>
                   <th className="px-4 py-3.5 text-center w-24">Delete</th>
-                  <th className="px-5 py-3.5 min-w-[280px]">Operational & Workflow Actions</th>
-                  <th className="px-4 py-3.5 text-right min-w-[120px]">Actions</th>
+                  <th className="px-5 py-3.5 min-w-[280px]">
+                    Operational & Workflow Actions
+                  </th>
+                  <th className="px-4 py-3.5 text-right min-w-[120px]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
                 {permissionModules.map((group) => {
                   const moduleAllPermKeys = group.permissions.map((p) => p.key);
-                  const readPerm = group.permissions.find((p) => p.action === "read");
-                  const createPerm = group.permissions.find((p) => p.action === "create");
-                  const updatePerm = group.permissions.find((p) => p.action === "update");
-                  const deletePerm = group.permissions.find((p) => p.action === "delete");
+                  const readPerm = group.permissions.find(
+                    (p) => p.action === "read",
+                  );
+                  const createPerm = group.permissions.find(
+                    (p) => p.action === "create",
+                  );
+                  const updatePerm = group.permissions.find(
+                    (p) => p.action === "update",
+                  );
+                  const deletePerm = group.permissions.find(
+                    (p) => p.action === "delete",
+                  );
                   const specialPerms = group.permissions.filter(
-                    (p) => !["read", "create", "update", "delete"].includes(p.action)
+                    (p) =>
+                      !["read", "create", "update", "delete"].includes(
+                        p.action,
+                      ),
                   );
 
                   const allSelectedInModule = moduleAllPermKeys.every((k) =>
-                    draftPermissions.includes(k)
+                    draftPermissions.includes(k),
                   );
 
                   return (
-                    <tr key={group.module} className="hover:bg-surface-raised/40 transition-colors">
+                    <tr
+                      key={group.module}
+                      className="hover:bg-surface-raised/40 transition-colors"
+                    >
                       {/* Module Title */}
                       <td className="px-5 py-4">
-                        <span className="font-semibold text-text-primary block">{group.module}</span>
+                        <span className="font-semibold text-text-primary block">
+                          {group.module}
+                        </span>
                         <span className="text-[10px] text-text-muted">
-                          {moduleAllPermKeys.filter((k) => draftPermissions.includes(k)).length} of{" "}
-                          {moduleAllPermKeys.length} enabled
+                          {
+                            moduleAllPermKeys.filter((k) =>
+                              draftPermissions.includes(k),
+                            ).length
+                          }{" "}
+                          of {moduleAllPermKeys.length} enabled
                         </span>
                       </td>
 
@@ -373,7 +451,9 @@ export default function RoleDetailPage() {
                             permission={readPerm.key}
                             isActive={draftPermissions.includes(readPerm.key)}
                             isDefault={defaultPerms.includes(readPerm.key)}
-                            isSavedActive={activePermissions.includes(readPerm.key)}
+                            isSavedActive={activePermissions.includes(
+                              readPerm.key,
+                            )}
                             onToggle={() => togglePermission(readPerm.key)}
                           />
                         ) : (
@@ -388,7 +468,9 @@ export default function RoleDetailPage() {
                             permission={createPerm.key}
                             isActive={draftPermissions.includes(createPerm.key)}
                             isDefault={defaultPerms.includes(createPerm.key)}
-                            isSavedActive={activePermissions.includes(createPerm.key)}
+                            isSavedActive={activePermissions.includes(
+                              createPerm.key,
+                            )}
                             onToggle={() => togglePermission(createPerm.key)}
                           />
                         ) : (
@@ -403,7 +485,9 @@ export default function RoleDetailPage() {
                             permission={updatePerm.key}
                             isActive={draftPermissions.includes(updatePerm.key)}
                             isDefault={defaultPerms.includes(updatePerm.key)}
-                            isSavedActive={activePermissions.includes(updatePerm.key)}
+                            isSavedActive={activePermissions.includes(
+                              updatePerm.key,
+                            )}
                             onToggle={() => togglePermission(updatePerm.key)}
                           />
                         ) : (
@@ -418,7 +502,9 @@ export default function RoleDetailPage() {
                             permission={deletePerm.key}
                             isActive={draftPermissions.includes(deletePerm.key)}
                             isDefault={defaultPerms.includes(deletePerm.key)}
-                            isSavedActive={activePermissions.includes(deletePerm.key)}
+                            isSavedActive={activePermissions.includes(
+                              deletePerm.key,
+                            )}
                             onToggle={() => togglePermission(deletePerm.key)}
                           />
                         ) : (
@@ -431,9 +517,13 @@ export default function RoleDetailPage() {
                         {specialPerms.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {specialPerms.map((sp) => {
-                              const isGranted = draftPermissions.includes(sp.key);
+                              const isGranted = draftPermissions.includes(
+                                sp.key,
+                              );
                               const isDef = defaultPerms.includes(sp.key);
-                              const isSaved = activePermissions.includes(sp.key);
+                              const isSaved = activePermissions.includes(
+                                sp.key,
+                              );
                               const isMod = isGranted !== isSaved;
 
                               return (
@@ -462,7 +552,9 @@ export default function RoleDetailPage() {
                             })}
                           </div>
                         ) : (
-                          <span className="text-text-muted/40 text-xs italic">Standard CRUD only</span>
+                          <span className="text-text-muted/40 text-xs italic">
+                            Standard CRUD only
+                          </span>
                         )}
                       </td>
 
@@ -471,7 +563,9 @@ export default function RoleDetailPage() {
                         {allSelectedInModule ? (
                           <button
                             type="button"
-                            onClick={() => handleDeselectAllModule(moduleAllPermKeys)}
+                            onClick={() =>
+                              handleDeselectAllModule(moduleAllPermKeys)
+                            }
                             className="text-[11px] font-medium text-text-muted hover:text-red-400 hover:underline"
                           >
                             Clear All
@@ -479,7 +573,9 @@ export default function RoleDetailPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => handleSelectAllModule(moduleAllPermKeys)}
+                            onClick={() =>
+                              handleSelectAllModule(moduleAllPermKeys)
+                            }
                             className="text-[11px] font-medium text-primary hover:underline"
                           >
                             Select All
@@ -539,7 +635,11 @@ function PermissionToggle({
         }`}
         title={`${isActive ? "Revoke" : "Grant"} ${permission}${isDefault ? " (Default)" : ""}`}
       >
-        {isActive ? <Check className="size-4 stroke-[2.5]" /> : <X className="size-3.5" />}
+        {isActive ? (
+          <Check className="size-4 stroke-[2.5]" />
+        ) : (
+          <X className="size-3.5" />
+        )}
       </button>
       {isModified && (
         <span className="mt-0.5 text-[9px] font-bold text-amber-400">

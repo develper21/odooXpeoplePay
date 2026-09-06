@@ -11,7 +11,18 @@ export type TimeOffUnit = "DAYS" | "HOURS";
 export type TimeOffTypeStatus = "ACTIVE" | "INACTIVE";
 export type AllocationStatus = "ACTIVE" | "EXPIRED" | "DRAFT" | "INACTIVE" | "PENDING" | "APPROVED" | "REFUSED";
 
-export interface TimeOffType { id: ID; name: string; unit: TimeOffUnit; allocationRequired: boolean; approvalRequired: boolean; payrollIntegration: boolean; status: TimeOffTypeStatus; }
+export interface TimeOffType {
+  id: ID;
+  name: string;
+  code?: string;
+  description?: string;
+  color?: string;
+  unit: TimeOffUnit;
+  allocationRequired: boolean;
+  approvalRequired: boolean;
+  payrollIntegration: boolean;
+  status: TimeOffTypeStatus;
+}
 
 export interface Employee { id: ID; employeeNumber: string; firstName: string; lastName: string; email: string; phone?: string; department: string; position: string; managerId?: ID; status: EmploymentStatus; employeeType: EmployeeType; contractId?: ID; scheduleId?: ID; salaryStructureId?: ID; bankAccount?: string; joinedOn: string; }
 export interface Contract { id: ID; employeeId: ID; reference: string; title: string; startDate: string; endDate?: string; department: string; position: string; salaryStructureId?: ID; status: ContractStatus; monthlySalary: number; }

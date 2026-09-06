@@ -2,13 +2,35 @@
 
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { Search, Eye, Edit3, Trash2, Plus, Building2, AlertTriangle } from "lucide-react";
+import {
+  Search,
+  Eye,
+  Edit3,
+  Trash2,
+  Plus,
+  Building2,
+  AlertTriangle,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useContracts, useDeleteSalaryStructure, useSalaryRules, useSalaryStructures } from "@/hooks/use-data";
+import {
+  useContracts,
+  useDeleteSalaryStructure,
+  useSalaryRules,
+  useSalaryStructures,
+} from "@/hooks/use-data";
 import { canAccess } from "@/lib/permissions";
 import { PageHeader } from "@/components/shared/page-header";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,9 +49,15 @@ export default function SalaryStructuresPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const canCreate = Boolean(user && canAccess(user.role, "salary_structure.create"));
-  const canEdit = Boolean(user && canAccess(user.role, "salary_structure.update"));
-  const canDelete = Boolean(user && canAccess(user.role, "salary_structure.delete"));
+  const canCreate = Boolean(
+    user && canAccess(user.role, "salary_structure.create"),
+  );
+  const canEdit = Boolean(
+    user && canAccess(user.role, "salary_structure.update"),
+  );
+  const canDelete = Boolean(
+    user && canAccess(user.role, "salary_structure.delete"),
+  );
 
   // Compute employee count per structure
   const structureContractCounts = useMemo(() => {
@@ -46,8 +74,10 @@ export default function SalaryStructuresPage() {
     return structures.filter((item) => {
       const matchSearch =
         item.name.toLowerCase().includes(search.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
-      const matchStatus = statusFilter === "ALL" || item.status === statusFilter;
+        (item.description &&
+          item.description.toLowerCase().includes(search.toLowerCase()));
+      const matchStatus =
+        statusFilter === "ALL" || item.status === statusFilter;
       return matchSearch && matchStatus;
     });
   }, [structures, search, statusFilter]);
@@ -64,7 +94,8 @@ export default function SalaryStructuresPage() {
   };
 
   if (isLoading) return <LoadingState />;
-  if (isError) return <ErrorState message="Unable to load salary structures." />;
+  if (isError)
+    return <ErrorState message="Unable to load salary structures." />;
 
   const structureToDelete = structures.find((s) => s.id === deletingId);
 
@@ -153,7 +184,8 @@ export default function SalaryStructuresPage() {
           <tbody>
             {filteredStructures.map((structure) => {
               const ruleCount = structure.ruleIds?.length ?? 0;
-              const assignedCount = structureContractCounts.get(structure.id) ?? 0;
+              const assignedCount =
+                structureContractCounts.get(structure.id) ?? 0;
 
               return (
                 <TableRow key={structure.id}>
@@ -181,12 +213,15 @@ export default function SalaryStructuresPage() {
 
                   <TableCell className="text-center">
                     <span className="inline-flex items-center rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
-                      {assignedCount} {assignedCount === 1 ? "employee" : "employees"}
+                      {assignedCount}{" "}
+                      {assignedCount === 1 ? "employee" : "employees"}
                     </span>
                   </TableCell>
 
                   <TableCell>
-                    <StatusBadge status={structure.status.toLowerCase() as any} />
+                    <StatusBadge
+                      status={structure.status}
+                    />
                   </TableCell>
 
                   <TableCell className="text-right">

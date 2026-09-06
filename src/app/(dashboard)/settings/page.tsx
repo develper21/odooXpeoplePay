@@ -38,7 +38,8 @@ export default function SettingsPage() {
   }, [settings]);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !formData) return <ErrorState message="System settings could not be loaded." />;
+  if (isError || !formData)
+    return <ErrorState message="System settings could not be loaded." />;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,32 +47,57 @@ export default function SettingsPage() {
     setToastMessage("System settings updated successfully.");
   };
 
-  const updateOrg = (field: keyof SystemSettings["organization"], value: any) => {
-    setFormData((prev) => prev ? {
-      ...prev,
-      organization: { ...prev.organization, [field]: value },
-    } : null);
+  const updateOrg = (
+    field: keyof SystemSettings["organization"],
+    value: any,
+  ) => {
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            organization: { ...prev.organization, [field]: value },
+          }
+        : null,
+    );
   };
 
   const updateGen = (field: keyof SystemSettings["general"], value: any) => {
-    setFormData((prev) => prev ? {
-      ...prev,
-      general: { ...prev.general, [field]: value },
-    } : null);
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            general: { ...prev.general, [field]: value },
+          }
+        : null,
+    );
   };
 
-  const updatePayroll = (field: keyof SystemSettings["payrollSecurity"], value: any) => {
-    setFormData((prev) => prev ? {
-      ...prev,
-      payrollSecurity: { ...prev.payrollSecurity, [field]: value },
-    } : null);
+  const updatePayroll = (
+    field: keyof SystemSettings["payrollSecurity"],
+    value: any,
+  ) => {
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            payrollSecurity: { ...prev.payrollSecurity, [field]: value },
+          }
+        : null,
+    );
   };
 
-  const updateNotif = (field: keyof SystemSettings["notifications"], value: any) => {
-    setFormData((prev) => prev ? {
-      ...prev,
-      notifications: { ...prev.notifications, [field]: value },
-    } : null);
+  const updateNotif = (
+    field: keyof SystemSettings["notifications"],
+    value: any,
+  ) => {
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            notifications: { ...prev.notifications, [field]: value },
+          }
+        : null,
+    );
   };
 
   return (
@@ -141,12 +167,15 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Organization Profile</CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Official entity details printed on generated payslips and compliance returns.
+                Official entity details printed on generated payslips and
+                compliance returns.
               </p>
             </CardHeader>
             <CardContent className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Company Name</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Company Name
+                </label>
                 <input
                   type="text"
                   value={formData.organization.companyName}
@@ -156,7 +185,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Legal Registered Name</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Legal Registered Name
+                </label>
                 <input
                   type="text"
                   value={formData.organization.legalName}
@@ -166,7 +197,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Work Email</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Work Email
+                </label>
                 <input
                   type="email"
                   value={formData.organization.email}
@@ -176,7 +209,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Support Phone</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Support Phone
+                </label>
                 <input
                   type="text"
                   value={formData.organization.phone}
@@ -186,7 +221,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Tax ID / GSTIN</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Tax ID / GSTIN
+                </label>
                 <input
                   type="text"
                   value={formData.organization.taxId}
@@ -196,7 +233,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Fiscal Year Starting Date</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Fiscal Year Starting Date
+                </label>
                 <input
                   type="date"
                   value={formData.organization.fiscalYearStart}
@@ -206,7 +245,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Default Currency</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Default Currency
+                </label>
                 <select
                   value={formData.organization.currency}
                   onChange={(e) => updateOrg("currency", e.target.value)}
@@ -220,16 +261,24 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Standard Timezone</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Standard Timezone
+                </label>
                 <select
                   value={formData.organization.timezone}
                   onChange={(e) => updateOrg("timezone", e.target.value)}
                   className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                 >
-                  <option value="Asia/Kolkata">Asia/Kolkata (IST +05:30)</option>
+                  <option value="Asia/Kolkata">
+                    Asia/Kolkata (IST +05:30)
+                  </option>
                   <option value="UTC">UTC (+00:00)</option>
-                  <option value="America/New_York">America/New_York (EST -05:00)</option>
-                  <option value="Europe/London">Europe/London (GMT +00:00)</option>
+                  <option value="America/New_York">
+                    America/New_York (EST -05:00)
+                  </option>
+                  <option value="Europe/London">
+                    Europe/London (GMT +00:00)
+                  </option>
                 </select>
               </div>
             </CardContent>
@@ -242,25 +291,32 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Regional & Working Defaults</CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Display formats and base calculations for schedules and attendance.
+                Display formats and base calculations for schedules and
+                attendance.
               </p>
             </CardHeader>
             <CardContent className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Date Display Format</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Date Display Format
+                </label>
                 <select
                   value={formData.general.dateFormat}
                   onChange={(e) => updateGen("dateFormat", e.target.value)}
                   className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                 >
-                  <option value="DD/MM/YYYY">DD/MM/YYYY (e.g. 21/09/2026)</option>
+                  <option value="DD/MM/YYYY">
+                    DD/MM/YYYY (e.g. 21/09/2026)
+                  </option>
                   <option value="YYYY-MM-DD">YYYY-MM-DD (ISO standard)</option>
                   <option value="MM/DD/YYYY">MM/DD/YYYY (US standard)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Time Format</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Time Format
+                </label>
                 <select
                   value={formData.general.timeFormat}
                   onChange={(e) => updateGen("timeFormat", e.target.value)}
@@ -272,25 +328,33 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Standard Working Days / Week</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Standard Working Days / Week
+                </label>
                 <input
                   type="number"
                   min="1"
                   max="7"
                   value={formData.general.workingDaysPerWeek}
-                  onChange={(e) => updateGen("workingDaysPerWeek", Number(e.target.value))}
+                  onChange={(e) =>
+                    updateGen("workingDaysPerWeek", Number(e.target.value))
+                  }
                   className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-secondary">Daily Working Hours Benchmark</label>
+                <label className="block text-xs font-medium text-text-secondary">
+                  Daily Working Hours Benchmark
+                </label>
                 <input
                   type="number"
                   min="1"
                   max="24"
                   value={formData.general.standardDailyHours}
-                  onChange={(e) => updateGen("standardDailyHours", Number(e.target.value))}
+                  onChange={(e) =>
+                    updateGen("standardDailyHours", Number(e.target.value))
+                  }
                   className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                 />
               </div>
@@ -310,40 +374,63 @@ export default function SettingsPage() {
             <CardContent className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary">Monthly Payroll Cut-off Day</label>
+                  <label className="block text-xs font-medium text-text-secondary">
+                    Monthly Payroll Cut-off Day
+                  </label>
                   <input
                     type="number"
                     min="1"
                     max="31"
                     value={formData.payrollSecurity.cutoffDay}
-                    onChange={(e) => updatePayroll("cutoffDay", Number(e.target.value))}
+                    onChange={(e) =>
+                      updatePayroll("cutoffDay", Number(e.target.value))
+                    }
                     className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                   />
-                  <p className="mt-1 text-[11px] text-text-muted">Day of each month when attendance logs freeze.</p>
+                  <p className="mt-1 text-[11px] text-text-muted">
+                    Day of each month when attendance logs freeze.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary">Overtime Hourly Multiplier</label>
+                  <label className="block text-xs font-medium text-text-secondary">
+                    Overtime Hourly Multiplier
+                  </label>
                   <input
                     type="number"
                     step="0.1"
                     min="1.0"
                     max="3.0"
                     value={formData.payrollSecurity.overtimeMultiplier}
-                    onChange={(e) => updatePayroll("overtimeMultiplier", Number(e.target.value))}
+                    onChange={(e) =>
+                      updatePayroll(
+                        "overtimeMultiplier",
+                        Number(e.target.value),
+                      )
+                    }
                     className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                   />
-                  <p className="mt-1 text-[11px] text-text-muted">Standard rate multiplier applied to overtime hours (e.g. 1.5x).</p>
+                  <p className="mt-1 text-[11px] text-text-muted">
+                    Standard rate multiplier applied to overtime hours (e.g.
+                    1.5x).
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary">Session Inactivity Timeout (Minutes)</label>
+                  <label className="block text-xs font-medium text-text-secondary">
+                    Session Inactivity Timeout (Minutes)
+                  </label>
                   <input
                     type="number"
                     min="5"
                     max="480"
                     value={formData.payrollSecurity.sessionTimeoutMinutes}
-                    onChange={(e) => updatePayroll("sessionTimeoutMinutes", Number(e.target.value))}
+                    onChange={(e) =>
+                      updatePayroll(
+                        "sessionTimeoutMinutes",
+                        Number(e.target.value),
+                      )
+                    }
                     className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -354,12 +441,19 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     checked={formData.payrollSecurity.requireTwoFactor}
-                    onChange={(e) => updatePayroll("requireTwoFactor", e.target.checked)}
+                    onChange={(e) =>
+                      updatePayroll("requireTwoFactor", e.target.checked)
+                    }
                     className="size-4 rounded border-border-strong bg-surface text-primary focus:ring-primary"
                   />
                   <div>
-                    <span className="text-sm font-semibold text-text-primary">Enforce Two-Factor Authentication (2FA)</span>
-                    <p className="text-xs text-text-muted">Requires TOTP confirmation for admin and payroll processing roles.</p>
+                    <span className="text-sm font-semibold text-text-primary">
+                      Enforce Two-Factor Authentication (2FA)
+                    </span>
+                    <p className="text-xs text-text-muted">
+                      Requires TOTP confirmation for admin and payroll
+                      processing roles.
+                    </p>
                   </div>
                 </label>
 
@@ -367,12 +461,18 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     checked={formData.payrollSecurity.autoPayslipEmail}
-                    onChange={(e) => updatePayroll("autoPayslipEmail", e.target.checked)}
+                    onChange={(e) =>
+                      updatePayroll("autoPayslipEmail", e.target.checked)
+                    }
                     className="size-4 rounded border-border-strong bg-surface text-primary focus:ring-primary"
                   />
                   <div>
-                    <span className="text-sm font-semibold text-text-primary">Automatic Payslip Emailing</span>
-                    <p className="text-xs text-text-muted">Automatically email payslips upon payrun Mark Paid action.</p>
+                    <span className="text-sm font-semibold text-text-primary">
+                      Automatic Payslip Emailing
+                    </span>
+                    <p className="text-xs text-text-muted">
+                      Automatically email payslips upon payrun Mark Paid action.
+                    </p>
                   </div>
                 </label>
               </div>
@@ -386,7 +486,8 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>System Notification Preferences</CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Configure event alerts for key HR, payroll, and compliance milestones.
+                Configure event alerts for key HR, payroll, and compliance
+                milestones.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -394,12 +495,19 @@ export default function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={formData.notifications.notifyOnPayrunFinalize}
-                  onChange={(e) => updateNotif("notifyOnPayrunFinalize", e.target.checked)}
+                  onChange={(e) =>
+                    updateNotif("notifyOnPayrunFinalize", e.target.checked)
+                  }
                   className="size-4 rounded border-border-strong bg-surface text-primary focus:ring-primary"
                 />
                 <div>
-                  <span className="text-sm font-semibold text-text-primary">Payrun Finalization Alerts</span>
-                  <p className="text-xs text-text-muted">Send email notification to Finance Admins when a payrun is validated or paid.</p>
+                  <span className="text-sm font-semibold text-text-primary">
+                    Payrun Finalization Alerts
+                  </span>
+                  <p className="text-xs text-text-muted">
+                    Send email notification to Finance Admins when a payrun is
+                    validated or paid.
+                  </p>
                 </div>
               </label>
 
@@ -407,12 +515,19 @@ export default function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={formData.notifications.notifyOnLeaveRequest}
-                  onChange={(e) => updateNotif("notifyOnLeaveRequest", e.target.checked)}
+                  onChange={(e) =>
+                    updateNotif("notifyOnLeaveRequest", e.target.checked)
+                  }
                   className="size-4 rounded border-border-strong bg-surface text-primary focus:ring-primary"
                 />
                 <div>
-                  <span className="text-sm font-semibold text-text-primary">Time Off Workflow Alerts</span>
-                  <p className="text-xs text-text-muted">Notify reporting managers when employees submit leave or allocation requests.</p>
+                  <span className="text-sm font-semibold text-text-primary">
+                    Time Off Workflow Alerts
+                  </span>
+                  <p className="text-xs text-text-muted">
+                    Notify reporting managers when employees submit leave or
+                    allocation requests.
+                  </p>
                 </div>
               </label>
 
@@ -420,12 +535,19 @@ export default function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={formData.notifications.notifyOnContractExpiry}
-                  onChange={(e) => updateNotif("notifyOnContractExpiry", e.target.checked)}
+                  onChange={(e) =>
+                    updateNotif("notifyOnContractExpiry", e.target.checked)
+                  }
                   className="size-4 rounded border-border-strong bg-surface text-primary focus:ring-primary"
                 />
                 <div>
-                  <span className="text-sm font-semibold text-text-primary">Contract Expiration Warnings</span>
-                  <p className="text-xs text-text-muted">Generate operational alerts when employee contracts are approaching renewal date.</p>
+                  <span className="text-sm font-semibold text-text-primary">
+                    Contract Expiration Warnings
+                  </span>
+                  <p className="text-xs text-text-muted">
+                    Generate operational alerts when employee contracts are
+                    approaching renewal date.
+                  </p>
                 </div>
               </label>
 
@@ -438,7 +560,12 @@ export default function SettingsPage() {
                   min="7"
                   max="180"
                   value={formData.notifications.contractExpiryWarningDays}
-                  onChange={(e) => updateNotif("contractExpiryWarningDays", Number(e.target.value))}
+                  onChange={(e) =>
+                    updateNotif(
+                      "contractExpiryWarningDays",
+                      Number(e.target.value),
+                    )
+                  }
                   className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
                 />
               </div>
@@ -447,7 +574,11 @@ export default function SettingsPage() {
         )}
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="submit" busy={updateMutation.isPending} className="gap-2">
+          <Button
+            type="submit"
+            busy={updateMutation.isPending}
+            className="gap-2"
+          >
             <Save className="size-4" /> Save System Settings
           </Button>
         </div>

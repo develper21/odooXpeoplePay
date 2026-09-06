@@ -2,9 +2,21 @@
 
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { Search, Eye, Edit3, Trash2, Plus, LockKeyhole, AlertTriangle } from "lucide-react";
+import {
+  Search,
+  Eye,
+  Edit3,
+  Trash2,
+  Plus,
+  LockKeyhole,
+  AlertTriangle,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useDeleteSalaryRule, useSalaryRules, useSalaryStructures } from "@/hooks/use-data";
+import {
+  useDeleteSalaryRule,
+  useSalaryRules,
+  useSalaryStructures,
+} from "@/hooks/use-data";
 import { canAccess } from "@/lib/permissions";
 import { sortRulesBySequence } from "@/lib/salary-calculator";
 import {
@@ -13,8 +25,17 @@ import {
   SALARY_RULE_CATEGORIES,
 } from "@/lib/salary-constants";
 import { PageHeader } from "@/components/shared/page-header";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,9 +66,12 @@ export default function SalaryRulesPage() {
       const matchSearch =
         rule.name.toLowerCase().includes(search.toLowerCase()) ||
         rule.code.toLowerCase().includes(search.toLowerCase());
-      const matchCategory = categoryFilter === "ALL" || rule.category === categoryFilter;
-      const matchType = typeFilter === "ALL" || rule.computationType === typeFilter;
-      const matchStatus = statusFilter === "ALL" || rule.status === statusFilter;
+      const matchCategory =
+        categoryFilter === "ALL" || rule.category === categoryFilter;
+      const matchType =
+        typeFilter === "ALL" || rule.computationType === typeFilter;
+      const matchStatus =
+        statusFilter === "ALL" || rule.status === statusFilter;
       return matchSearch && matchCategory && matchType && matchStatus;
     });
   }, [sortedRules, search, categoryFilter, typeFilter, statusFilter]);
@@ -130,7 +154,10 @@ export default function SalaryRulesPage() {
             <option value="DRAFT">Draft</option>
           </select>
 
-          {(search || categoryFilter !== "ALL" || typeFilter !== "ALL" || statusFilter !== "ALL") && (
+          {(search ||
+            categoryFilter !== "ALL" ||
+            typeFilter !== "ALL" ||
+            statusFilter !== "ALL") && (
             <Button
               variant="secondary"
               size="sm"
@@ -210,38 +237,51 @@ export default function SalaryRulesPage() {
                     <span
                       className={`inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                         isBasic
-                          ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
                           : isAllowance
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : isDeduction
-                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                          : rule.category === "GROSS"
-                          ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                          : "bg-green-500/10 text-green-400 border border-green-500/20"
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                            : isDeduction
+                              ? "bg-red-500/10 text-red-600 border border-red-500/20"
+                              : "bg-purple-500/10 text-purple-600 border border-purple-500/20"
                       }`}
                     >
-                      {CATEGORY_LABEL_MAP[rule.category as any] || rule.category}
+                      {CATEGORY_LABEL_MAP[rule.category] ||
+                        rule.category ||
+                        ((rule as any).type === "deduction"
+                          ? "Deduction"
+                          : "Allowance")}
                     </span>
                   </TableCell>
 
                   <TableCell className="text-xs text-text-secondary">
-                    {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] || rule.computationType}
+                    {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] ||
+                      rule.computationType ||
+                      (rule.percentage ? "Percentage" : "Fixed Amount")}
                   </TableCell>
 
                   <TableCell className="font-mono text-xs text-text-muted max-w-xs truncate">
-                    {rule.computationType === "FIXED" && (
-                      <span>₹{(rule.amount ?? 0).toLocaleString()}</span>
-                    )}
-                    {rule.computationType === "PERCENTAGE" && (
-                      <span>{rule.percentage}% of {(rule.basedOn || ["BASIC"]).join(" + ")}</span>
-                    )}
-                    {rule.computationType === "FORMULA" && (
-                      <span className="text-emerald-400 font-semibold">{rule.formula}</span>
+                    {rule.computationType === "PERCENTAGE" ||
+                    (rule.percentage && Number(rule.percentage) > 0) ? (
+                      <span>
+                        {Number(rule.percentage || 0)}% of{" "}
+                        {(rule.basedOn && rule.basedOn.length > 0
+                          ? rule.basedOn
+                          : ["BASIC"]
+                        ).join(" + ")}
+                      </span>
+                    ) : rule.computationType === "FORMULA" || rule.formula ? (
+                      <span className="text-emerald-600 font-semibold">
+                        {rule.formula}
+                      </span>
+                    ) : (
+                      <span>
+                        ₹{(Number(rule.amount) || 0).toLocaleString("en-IN")}
+                      </span>
                     )}
                   </TableCell>
 
                   <TableCell>
-                    <StatusBadge status={rule.status.toLowerCase() as any} />
+                    <StatusBadge status={rule.status} />
                   </TableCell>
 
                   <TableCell className="text-right">

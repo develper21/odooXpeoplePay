@@ -1,10 +1,22 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calculator, AlertTriangle, CheckCircle2, RotateCcw, Info } from "lucide-react";
+import {
+  Calculator,
+  AlertTriangle,
+  CheckCircle2,
+  RotateCcw,
+  Info,
+} from "lucide-react";
 import type { SalaryRule } from "@/types/domain";
-import { calculateSalary, validateRuleDependencies } from "@/lib/salary-calculator";
-import { CATEGORY_LABEL_MAP, COMPUTATION_TYPE_LABEL_MAP } from "@/lib/salary-constants";
+import {
+  calculateSalary,
+  validateRuleDependencies,
+} from "@/lib/salary-calculator";
+import {
+  CATEGORY_LABEL_MAP,
+  COMPUTATION_TYPE_LABEL_MAP,
+} from "@/lib/salary-constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,9 +70,13 @@ export function SalaryCalculationPreview({
         {/* Live Input Controls */}
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/40 bg-surface-raised/60 p-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-text-secondary">Base Salary (Input):</span>
+            <span className="text-xs font-medium text-text-secondary">
+              Base Salary (Input):
+            </span>
             <div className="relative w-36">
-              <span className="absolute left-2.5 top-2 text-xs font-semibold text-text-muted">₹</span>
+              <span className="absolute left-2.5 top-2 text-xs font-semibold text-text-muted">
+                ₹
+              </span>
               <Input
                 type="number"
                 value={baseSalary}
@@ -108,7 +124,9 @@ export function SalaryCalculationPreview({
           <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-400">
             <div className="flex items-center gap-2 font-semibold">
               <AlertTriangle className="size-4 shrink-0" />
-              <span>Rule Configuration Warnings ({dependencyIssues.length})</span>
+              <span>
+                Rule Configuration Warnings ({dependencyIssues.length})
+              </span>
             </div>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px]">
               {dependencyIssues.map((issue, idx) => (
@@ -123,7 +141,9 @@ export function SalaryCalculationPreview({
           <div className="rounded-md border border-danger/30 bg-danger/10 p-3.5 text-xs text-danger">
             <div className="flex items-center gap-2 font-semibold">
               <AlertTriangle className="size-4 shrink-0" />
-              <span>Calculation Errors ({calculationResult.errors.length})</span>
+              <span>
+                Calculation Errors ({calculationResult.errors.length})
+              </span>
             </div>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px]">
               {calculationResult.errors.map((err, idx) => (
@@ -154,12 +174,15 @@ export function SalaryCalculationPreview({
               <tbody className="divide-y divide-border/40 font-medium">
                 {calculationResult.rules.map((rule) => {
                   const isDeduction = rule.category === "DEDUCTION";
-                  const isTotal = rule.category === "GROSS" || rule.category === "NET";
+                  const isTotal =
+                    rule.category === "GROSS" || rule.category === "NET";
                   const isBasic = rule.category === "BASIC";
 
                   let rowBg = "hover:bg-surface-raised/40";
-                  if (rule.category === "GROSS") rowBg = "bg-primary/5 font-semibold";
-                  if (rule.category === "NET") rowBg = "bg-green-500/5 font-bold";
+                  if (rule.category === "GROSS")
+                    rowBg = "bg-primary/5 font-semibold";
+                  if (rule.category === "NET")
+                    rowBg = "bg-green-500/5 font-bold";
 
                   return (
                     <tr key={rule.ruleId || rule.code} className={rowBg}>
@@ -174,7 +197,10 @@ export function SalaryCalculationPreview({
                       <td className="px-3 py-2 text-text-primary">
                         {rule.name}
                         {rule.error && (
-                          <span className="ml-2 inline-block text-[10px] text-danger" title={rule.error}>
+                          <span
+                            className="ml-2 inline-block text-[10px] text-danger"
+                            title={rule.error}
+                          >
                             ⚠ Error
                           </span>
                         )}
@@ -185,30 +211,36 @@ export function SalaryCalculationPreview({
                             isBasic
                               ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                               : rule.category === "ALLOWANCE"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : isDeduction
-                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                              : rule.category === "GROSS"
-                              ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                              : "bg-green-500/10 text-green-400 border border-green-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : isDeduction
+                                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                  : rule.category === "GROSS"
+                                    ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                                    : "bg-green-500/10 text-green-400 border border-green-500/20"
                           }`}
                         >
                           {CATEGORY_LABEL_MAP[rule.category] || rule.category}
                         </span>
                       </td>
                       <td className="px-3 py-2 font-mono text-[11px] text-text-muted">
-                        <span className="text-text-secondary">{COMPUTATION_TYPE_LABEL_MAP[rule.computationType] || rule.computationType}: </span>
+                        <span className="text-text-secondary">
+                          {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] ||
+                            rule.computationType}
+                          :{" "}
+                        </span>
                         <span>{rule.expressionDisplay}</span>
                       </td>
-                      <td className={`px-3 py-2 text-right font-mono font-semibold ${
-                        isDeduction
-                          ? "text-red-400"
-                          : isTotal
-                          ? "text-text-primary"
-                          : "text-text-primary"
-                      }`}>
-                        {isDeduction && rule.amount > 0 ? "- " : ""}
-                        ₹{rule.amount.toLocaleString()}
+                      <td
+                        className={`px-3 py-2 text-right font-mono font-semibold ${
+                          isDeduction
+                            ? "text-red-400"
+                            : isTotal
+                              ? "text-text-primary"
+                              : "text-text-primary"
+                        }`}
+                      >
+                        {isDeduction && rule.amount > 0 ? "- " : ""}₹
+                        {rule.amount.toLocaleString()}
                       </td>
                     </tr>
                   );
@@ -221,13 +253,17 @@ export function SalaryCalculationPreview({
         {/* Totals Summary Cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="rounded-lg border border-border/60 bg-surface-raised/40 p-3 text-center">
-            <p className="text-[11px] font-medium text-text-muted">Basic Salary</p>
+            <p className="text-[11px] font-medium text-text-muted">
+              Basic Salary
+            </p>
             <p className="mt-1 text-sm font-bold text-text-primary font-mono">
               ₹{calculationResult.totals.basic.toLocaleString()}
             </p>
           </div>
           <div className="rounded-lg border border-border/60 bg-surface-raised/40 p-3 text-center">
-            <p className="text-[11px] font-medium text-text-muted">Allowances</p>
+            <p className="text-[11px] font-medium text-text-muted">
+              Allowances
+            </p>
             <p className="mt-1 text-sm font-bold text-emerald-400 font-mono">
               +₹{calculationResult.totals.allowances.toLocaleString()}
             </p>
@@ -239,7 +275,9 @@ export function SalaryCalculationPreview({
             </p>
           </div>
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-center">
-            <p className="text-[11px] font-medium text-red-400">Total Deductions</p>
+            <p className="text-[11px] font-medium text-red-400">
+              Total Deductions
+            </p>
             <p className="mt-1 text-sm font-bold text-red-400 font-mono">
               -₹{calculationResult.totals.deductions.toLocaleString()}
             </p>

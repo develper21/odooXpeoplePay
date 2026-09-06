@@ -18,7 +18,9 @@ export default function NewSalaryStructurePage() {
 
   if (rulesLoading) return <LoadingState />;
 
-  const canCreate = Boolean(user && canAccess(user.role, "salary_structure.create"));
+  const canCreate = Boolean(
+    user && canAccess(user.role, "salary_structure.create"),
+  );
   if (!canCreate) {
     return (
       <div className="rounded-lg border border-danger/30 bg-danger/10 p-6 text-center text-danger">

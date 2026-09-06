@@ -1,10 +1,22 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Inbox } from "lucide-react";
 
-export function SalaryChart({ data }: { data: { name: string; value: number }[] }) {
+export function SalaryChart({
+  data,
+}: {
+  data: { name: string; value: number }[];
+}) {
   const hasData = data && data.length > 0 && data.some((d) => d.value > 0);
 
   return (
@@ -31,8 +43,16 @@ export function SalaryChart({ data }: { data: { name: string; value: number }[] 
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} layout="vertical" margin={{ top: 8, left: 16, right: 24, bottom: 8 }}>
-                <CartesianGrid stroke="#263244" horizontal={false} strokeDasharray="3 3" />
+              <BarChart
+                data={data}
+                layout="vertical"
+                margin={{ top: 8, left: 16, right: 24, bottom: 8 }}
+              >
+                <CartesianGrid
+                  stroke="#263244"
+                  horizontal={false}
+                  strokeDasharray="3 3"
+                />
                 <XAxis
                   type="number"
                   stroke="#64748b"
@@ -63,7 +83,12 @@ export function SalaryChart({ data }: { data: { name: string; value: number }[] 
                   }}
                   cursor={{ fill: "#ffffff08" }}
                 />
-                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={18} />
+                <Bar
+                  dataKey="value"
+                  fill="#3b82f6"
+                  radius={[0, 4, 4, 0]}
+                  barSize={18}
+                />
               </BarChart>
             </ResponsiveContainer>
           )}

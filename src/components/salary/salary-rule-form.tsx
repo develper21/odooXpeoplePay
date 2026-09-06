@@ -3,9 +3,23 @@
 import { useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
-import { AlertTriangle, Check, CheckCircle2, HelpCircle, Plus } from "lucide-react";
-import type { ComputationType, SalaryRule, SalaryRuleCategory, SalaryRuleStatus } from "@/types/domain";
-import { validateFormulaSyntax, extractFormulaIdentifiers } from "@/lib/salary-calculator";
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  HelpCircle,
+  Plus,
+} from "lucide-react";
+import type {
+  ComputationType,
+  SalaryRule,
+  SalaryRuleCategory,
+  SalaryRuleStatus,
+} from "@/types/domain";
+import {
+  validateFormulaSyntax,
+  extractFormulaIdentifiers,
+} from "@/lib/salary-calculator";
 import {
   COMPUTATION_TYPES,
   SALARY_RULE_CATEGORIES,
@@ -20,7 +34,10 @@ const schema = z.object({
   code: z
     .string()
     .min(2, "Rule code is required")
-    .regex(/^[A-Z0-9_]+$/, "Code must contain only uppercase letters, numbers, and underscores (e.g. BASIC)"),
+    .regex(
+      /^[A-Z0-9_]+$/,
+      "Code must contain only uppercase letters, numbers, and underscores (e.g. BASIC)",
+    ),
   category: z.enum(["BASIC", "ALLOWANCE", "GROSS", "DEDUCTION", "NET"]),
   sequence: z.coerce.number().min(1, "Sequence must be at least 1"),
   computationType: z.enum(["FIXED", "PERCENTAGE", "FORMULA"]),
@@ -85,7 +102,8 @@ export function SalaryRuleForm({
   // Real-time formula syntax validation
   const formulaValidation = useMemo(() => {
     if (selectedComputationType !== "FORMULA") return { valid: true };
-    if (!currentFormula.trim()) return { valid: false, error: "Formula is required." };
+    if (!currentFormula.trim())
+      return { valid: false, error: "Formula is required." };
     return validateFormulaSyntax(currentFormula);
   }, [selectedComputationType, currentFormula]);
 
@@ -94,7 +112,7 @@ export function SalaryRuleForm({
     if (!currentCode) return null;
     const upper = currentCode.trim().toUpperCase();
     const existing = allRules.find(
-      (r) => r.code.toUpperCase() === upper && r.id !== initialValues?.id
+      (r) => r.code.toUpperCase() === upper && r.id !== initialValues?.id,
     );
     if (existing) {
       return `Rule code "${upper}" is already used by "${existing.name}". Codes must be unique.`;
@@ -116,7 +134,10 @@ export function SalaryRuleForm({
 
     let referencedCodes: string[] = [];
     if (selectedComputationType === "PERCENTAGE") {
-      referencedCodes = currentBasedOn.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+      referencedCodes = currentBasedOn
+        .split(",")
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean);
     } else if (selectedComputationType === "FORMULA") {
       referencedCodes = extractFormulaIdentifiers(currentFormula);
     }
@@ -124,16 +145,24 @@ export function SalaryRuleForm({
     referencedCodes.forEach((code) => {
       const found = otherRules.find((r) => r.code.toUpperCase() === code);
       if (!found) {
-        warnings.push(`Referenced rule "${code}" does not exist in the current rule set.`);
+        warnings.push(
+          `Referenced rule "${code}" does not exist in the current rule set.`,
+        );
       } else if (found.sequence >= thisSeq) {
         warnings.push(
-          `Sequence warning: "${code}" has sequence ${found.sequence}, which is ≥ this rule's sequence (${thisSeq}). Move this rule after "${code}" to avoid calculation errors.`
+          `Sequence warning: "${code}" has sequence ${found.sequence}, which is ≥ this rule's sequence (${thisSeq}). Move this rule after "${code}" to avoid calculation errors.`,
         );
       }
     });
 
     return warnings;
-  }, [selectedComputationType, currentBasedOn, currentFormula, currentSequence, otherRules]);
+  }, [
+    selectedComputationType,
+    currentBasedOn,
+    currentFormula,
+    currentSequence,
+    otherRules,
+  ]);
 
   // Helper to append token into formula
   const insertFormulaToken = (token: string) => {
@@ -156,8 +185,13 @@ export function SalaryRuleForm({
       return;
     }
 
-    if (values.computationType === "FIXED" && (values.amount === undefined || isNaN(values.amount))) {
-      setError("amount", { message: "Amount is required for fixed calculation." });
+    if (
+      values.computationType === "FIXED" &&
+      (values.amount === undefined || isNaN(values.amount))
+    ) {
+      setError("amount", {
+        message: "Amount is required for fixed calculation.",
+      });
       return;
     }
 
@@ -167,7 +201,9 @@ export function SalaryRuleForm({
         return;
       }
       if (!values.basedOn || !values.basedOn.trim()) {
-        setError("basedOn", { message: "Calculation basis rule code is required (e.g. BASIC)." });
+        setError("basedOn", {
+          message: "Calculation basis rule code is required (e.g. BASIC).",
+        });
         return;
       }
     }
@@ -179,13 +215,18 @@ export function SalaryRuleForm({
       }
       const syntax = validateFormulaSyntax(values.formula);
       if (!syntax.valid) {
-        setError("formula", { message: syntax.error || "Invalid formula syntax." });
+        setError("formula", {
+          message: syntax.error || "Invalid formula syntax.",
+        });
         return;
       }
     }
 
     const basedOnArray = values.basedOn
-      ? values.basedOn.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)
+      ? values.basedOn
+          .split(",")
+          .map((s) => s.trim().toUpperCase())
+          .filter(Boolean)
       : ["BASIC"];
 
     try {
@@ -197,10 +238,22 @@ export function SalaryRuleForm({
         computationType: values.computationType,
         status: values.status,
         description: values.description?.trim(),
-        amount: values.computationType === "FIXED" ? Number(values.amount) : undefined,
-        percentage: values.computationType === "PERCENTAGE" ? Number(values.percentage) : undefined,
-        basedOn: values.computationType === "PERCENTAGE" ? basedOnArray : undefined,
-        formula: values.computationType === "FORMULA" ? (values.formula ? values.formula.trim() : "") : undefined,
+        amount:
+          values.computationType === "FIXED"
+            ? Number(values.amount)
+            : undefined,
+        percentage:
+          values.computationType === "PERCENTAGE"
+            ? Number(values.percentage)
+            : undefined,
+        basedOn:
+          values.computationType === "PERCENTAGE" ? basedOnArray : undefined,
+        formula:
+          values.computationType === "FORMULA"
+            ? values.formula
+              ? values.formula.trim()
+              : ""
+            : undefined,
       });
     } catch (err: any) {
       setFormError(err.message || "Failed to save salary rule.");
@@ -219,23 +272,31 @@ export function SalaryRuleForm({
       {/* Basic Configuration Card */}
       <Card>
         <CardHeader className="border-b border-border/60 pb-4">
-          <CardTitle className="text-base font-semibold">General Information</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            General Information
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-text-muted">Rule Name *</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Rule Name *
+            </label>
             <Input
               className="mt-1.5"
               placeholder="e.g. House Rent Allowance"
               {...register("name")}
             />
             {errors.name && (
-              <span className="mt-1 block text-xs text-danger">{errors.name.message}</span>
+              <span className="mt-1 block text-xs text-danger">
+                {errors.name.message}
+              </span>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-text-muted">Rule Code *</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Rule Code *
+            </label>
             <Input
               className="mt-1.5 font-mono uppercase"
               placeholder="e.g. HRA"
@@ -246,9 +307,13 @@ export function SalaryRuleForm({
               })}
             />
             {errors.code ? (
-              <span className="mt-1 block text-xs text-danger">{errors.code.message}</span>
+              <span className="mt-1 block text-xs text-danger">
+                {errors.code.message}
+              </span>
             ) : codeUniqueError ? (
-              <span className="mt-1 block text-xs text-danger">{codeUniqueError}</span>
+              <span className="mt-1 block text-xs text-danger">
+                {codeUniqueError}
+              </span>
             ) : (
               <span className="mt-1 block text-[11px] text-text-muted">
                 Unique identifier used in formulas and payslip lines.
@@ -257,7 +322,9 @@ export function SalaryRuleForm({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-text-muted">Category *</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Category *
+            </label>
             <select
               className="mt-1.5 h-10 w-full rounded-md border border-border bg-surface-raised px-3 text-sm focus:border-primary focus:outline-none"
               {...register("category")}
@@ -269,7 +336,9 @@ export function SalaryRuleForm({
               ))}
             </select>
             {errors.category && (
-              <span className="mt-1 block text-xs text-danger">{errors.category.message}</span>
+              <span className="mt-1 block text-xs text-danger">
+                {errors.category.message}
+              </span>
             )}
           </div>
 
@@ -284,16 +353,21 @@ export function SalaryRuleForm({
               {...register("sequence")}
             />
             {errors.sequence ? (
-              <span className="mt-1 block text-xs text-danger">{errors.sequence.message}</span>
+              <span className="mt-1 block text-xs text-danger">
+                {errors.sequence.message}
+              </span>
             ) : (
               <span className="mt-1 block text-[11px] text-text-muted">
-                Rules execute in ascending sequence order (e.g. Basic = 10, HRA = 20, Gross = 40).
+                Rules execute in ascending sequence order (e.g. Basic = 10, HRA
+                = 20, Gross = 40).
               </span>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-text-muted">Status</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Status
+            </label>
             <select
               className="mt-1.5 h-10 w-full rounded-md border border-border bg-surface-raised px-3 text-sm focus:border-primary focus:outline-none"
               {...register("status")}
@@ -307,7 +381,9 @@ export function SalaryRuleForm({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-text-muted">Description</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Description
+            </label>
             <Input
               className="mt-1.5"
               placeholder="e.g. Standard tax or allowance description"
@@ -320,7 +396,9 @@ export function SalaryRuleForm({
       {/* Computation Configuration Card */}
       <Card>
         <CardHeader className="border-b border-border/60 pb-4">
-          <CardTitle className="text-base font-semibold">Computation Logic</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Computation Logic
+          </CardTitle>
           <p className="mt-1 text-xs text-text-muted">
             Choose how this rule is evaluated during salary computation.
           </p>
@@ -364,7 +442,9 @@ export function SalaryRuleForm({
                 Fixed Amount (₹) *
               </label>
               <div className="relative max-w-xs">
-                <span className="absolute left-3 top-2.5 text-sm font-semibold text-text-muted">₹</span>
+                <span className="absolute left-3 top-2.5 text-sm font-semibold text-text-muted">
+                  ₹
+                </span>
                 <Input
                   type="number"
                   className="pl-7 font-mono text-sm"
@@ -373,10 +453,13 @@ export function SalaryRuleForm({
                 />
               </div>
               {errors.amount && (
-                <span className="block text-xs text-danger">{errors.amount.message}</span>
+                <span className="block text-xs text-danger">
+                  {errors.amount.message}
+                </span>
               )}
               <p className="text-[11px] text-text-muted">
-                Fixed amount added to the payslip. For basic salary, this serves as the contract standard.
+                Fixed amount added to the payslip. For basic salary, this serves
+                as the contract standard.
               </p>
             </div>
           )}
@@ -397,10 +480,14 @@ export function SalaryRuleForm({
                       placeholder="20"
                       {...register("percentage")}
                     />
-                    <span className="absolute right-3 top-2.5 text-sm font-semibold text-text-muted">%</span>
+                    <span className="absolute right-3 top-2.5 text-sm font-semibold text-text-muted">
+                      %
+                    </span>
                   </div>
                   {errors.percentage && (
-                    <span className="mt-1 block text-xs text-danger">{errors.percentage.message}</span>
+                    <span className="mt-1 block text-xs text-danger">
+                      {errors.percentage.message}
+                    </span>
                   )}
                 </div>
 
@@ -414,7 +501,9 @@ export function SalaryRuleForm({
                     {...register("basedOn")}
                   />
                   {errors.basedOn && (
-                    <span className="mt-1 block text-xs text-danger">{errors.basedOn.message}</span>
+                    <span className="mt-1 block text-xs text-danger">
+                      {errors.basedOn.message}
+                    </span>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-text-muted">
                     <span>Quick Select:</span>
@@ -448,7 +537,8 @@ export function SalaryRuleForm({
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-[11px] text-danger font-medium">
-                      <AlertTriangle className="size-3" /> {formulaValidation.error}
+                      <AlertTriangle className="size-3" />{" "}
+                      {formulaValidation.error}
                     </span>
                   )}
                 </div>
@@ -458,7 +548,9 @@ export function SalaryRuleForm({
                   {...register("formula")}
                 />
                 {errors.formula && (
-                  <span className="mt-1 block text-xs text-danger">{errors.formula.message}</span>
+                  <span className="mt-1 block text-xs text-danger">
+                    {errors.formula.message}
+                  </span>
                 )}
               </div>
 
@@ -481,7 +573,9 @@ export function SalaryRuleForm({
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[11px] text-text-muted">Operators:</span>
+                  <span className="text-[11px] text-text-muted">
+                    Operators:
+                  </span>
                   {["+", "-", "*", "/", "(", ")"].map((op) => (
                     <button
                       key={op}
@@ -505,7 +599,9 @@ export function SalaryRuleForm({
               <div className="flex items-start gap-2 rounded-md border border-blue-500/20 bg-blue-500/5 p-3 text-xs text-text-secondary">
                 <HelpCircle className="size-4 shrink-0 text-blue-400 mt-0.5" />
                 <span>
-                  Safe controlled evaluation strictly supports arithmetic (+, -, *, /), parentheses, numbers, and rule codes. Arbitrary JavaScript execution is completely prohibited.
+                  Safe controlled evaluation strictly supports arithmetic (+, -,
+                  *, /), parentheses, numbers, and rule codes. Arbitrary
+                  JavaScript execution is completely prohibited.
                 </span>
               </div>
             </div>

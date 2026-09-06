@@ -66,7 +66,7 @@ Sprint 4 completed Working Schedules and Attendance.
 
 Status: **Complete**
 
-### Completed Work
+Completed Work
 
 - Time Off Types: full CRUD, list, details with live metrics, policy configuration (unit, allocationRequired, approvalRequired, payrollIntegration, status), search, unit filter, and safe deletion.
 - Allocations: full CRUD, list, details with visual `LeaveBalanceCard` progress bar, employee relationship, active/expired validity period validation, search, filters, and employee-scoped visibility for privacy.
@@ -79,7 +79,7 @@ Status: **Complete**
 - Navigation: dedicated Time Off navigation section with Requests, Allocations, Types, and Overview tabs.
 - Production Build & Types: `tsc --noEmit` and `next build --webpack` (all 30 routes) succeed with 0 errors.
 
-### Exact Next Task
+Exact Next Task
 
 Sprint 6 completed Salary Structures and Salary Rules.
 
@@ -87,7 +87,7 @@ Sprint 6 completed Salary Structures and Salary Rules.
 
 Status: **Complete**
 
-### Completed Work
+Completed Work
 
 - Domain Models: Centralized `SalaryRuleCategory` ("BASIC", "ALLOWANCE", "GROSS", "DEDUCTION", "NET"), `ComputationType` ("FIXED", "PERCENTAGE", "FORMULA"), `SalaryStructureStatus` ("ACTIVE", "INACTIVE", "DRAFT"), and `SalaryRuleStatus`.
 - Calculation Engine & Safe Formula Parser: Built `src/lib/salary-calculator.ts` with strict recursive descent arithmetic parser without arbitrary JavaScript execution (`eval` and `new Function()` strictly prohibited).
@@ -104,7 +104,7 @@ Status: **Complete**
 - Navigation: Added `SalaryTabs` component for seamless switching between Salary Structures and Salary Rules.
 - Production Build & Quality: TypeScript passed with 0 errors; production build succeeded with all 32 routes compiled.
 
-### Exact Next Task
+Exact Next Task
 
 Sprint 7 completed Payruns, Payslips, and Payroll Processing.
 
@@ -112,7 +112,7 @@ Sprint 7 completed Payruns, Payslips, and Payroll Processing.
 
 Status: **Complete**
 
-### Completed Work
+Completed Work
 
 - Payrun Lifecycle Workflow: Full progression through DRAFT -> COMPUTED -> CONFIRMED -> PAID with state validations, automated payslip generation, and re-computation safety.
 - Payroll Calculation Engine: Integrated dynamic rule sequencing, contract wage resolution, attendance worked days computation, and rule breakdown into payslip lines.
@@ -123,7 +123,7 @@ Status: **Complete**
 - RBAC & Permissions: Enforced `payruns:create`, `payruns:compute`, `payruns:validate`, `payruns:pay`, and `payslips:view` with employee self-view restrictions.
 - Production Build & Quality: TypeScript passed with 0 errors (`npx tsc --noEmit`); all routes compiled successfully.
 
-### Exact Next Task
+Exact Next Task
 
 Sprint 8 completed Final Dashboard, Reports, Full Integration, and Polish.
 
@@ -131,7 +131,7 @@ Sprint 8 completed Final Dashboard, Reports, Full Integration, and Polish.
 
 Status: **Complete**
 
-### Completed Work
+Completed Work
 
 - Dynamic Derived Dashboard: Completely replaced static placeholder metrics with 100% application-record derived KPIs, charts, alerts, and overviews using centralized selectors in `src/lib/services/dashboard-service.ts`.
 - Unified Dashboard Filters: Built `DashboardFiltersBar` with Period, Department, and Employment Type filters, active filter indicator, and instant Reset capability affecting all widgets synchronously.

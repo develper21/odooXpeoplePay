@@ -24,7 +24,10 @@ import {
 } from "@/hooks/use-data";
 import { canAccess } from "@/lib/permissions";
 import { sortRulesBySequence } from "@/lib/salary-calculator";
-import { CATEGORY_LABEL_MAP, COMPUTATION_TYPE_LABEL_MAP } from "@/lib/salary-constants";
+import {
+  CATEGORY_LABEL_MAP,
+  COMPUTATION_TYPE_LABEL_MAP,
+} from "@/lib/salary-constants";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState, ErrorState } from "@/components/shared/states";
 import { StatusBadge } from "@/components/ui/badge";
@@ -49,16 +52,21 @@ export default function SalaryStructureDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const canEdit = Boolean(user && canAccess(user.role, "salary_structure.update"));
-  const canDelete = Boolean(user && canAccess(user.role, "salary_structure.delete"));
+  const canEdit = Boolean(
+    user && canAccess(user.role, "salary_structure.update"),
+  );
+  const canDelete = Boolean(
+    user && canAccess(user.role, "salary_structure.delete"),
+  );
 
   // Ordered rules for this structure
   const orderedRules = useMemo(() => {
-    if (!structure || !structure.ruleIds) return [];
+    if (!structure) return [];
     const ruleMap = new Map(allRules.map((r) => [r.id, r]));
-    const list = structure.ruleIds
+    const rawIds: string[] = structure.ruleIds || (structure as any).rules?.map((r: any) => String(r.id || r)) || [];
+    const list = rawIds
       .map((rId) => ruleMap.get(rId))
-      .filter((r): r is typeof allRules[0] => Boolean(r));
+      .filter((r): r is (typeof allRules)[0] => Boolean(r));
     return sortRulesBySequence(list);
   }, [structure, allRules]);
 
@@ -83,7 +91,9 @@ export default function SalaryStructureDetailPage() {
 
   if (isLoading) return <LoadingState />;
   if (isError || !structure) {
-    return <ErrorState message="Salary structure was not found or has been deleted." />;
+    return (
+      <ErrorState message="Salary structure was not found or has been deleted." />
+    );
   }
 
   return (
@@ -99,7 +109,10 @@ export default function SalaryStructureDetailPage() {
 
       <PageHeader
         title={structure.name}
-        description={structure.description || "Configured salary structure and execution sequence."}
+        description={
+          structure.description ||
+          "Configured salary structure and execution sequence."
+        }
         action={
           canEdit
             ? { label: "Edit Structure", href: `/salary-structures/${id}/edit` }
@@ -121,7 +134,7 @@ export default function SalaryStructureDetailPage() {
         <Card className="p-4">
           <p className="text-xs text-text-muted">Status</p>
           <div className="mt-2">
-            <StatusBadge status={structure.status.toLowerCase() as any} />
+            <StatusBadge status={structure.status} />
           </div>
         </Card>
 
@@ -138,7 +151,9 @@ export default function SalaryStructureDetailPage() {
           <p className="mt-1 font-mono text-xl font-bold text-primary">
             {assignedContracts.length}
           </p>
-          <p className="text-[11px] text-text-muted">Workforce members linked</p>
+          <p className="text-[11px] text-text-muted">
+            Workforce members linked
+          </p>
         </Card>
 
         <Card className="p-4 flex flex-col justify-between">
@@ -173,7 +188,9 @@ export default function SalaryStructureDetailPage() {
                   Rule Execution Sequence ({orderedRules.length})
                 </CardTitle>
                 <p className="mt-1 text-xs text-text-muted">
-                  Rules execute deterministically from lowest to highest sequence. Dependent formulas reference earlier sequence outputs.
+                  Rules execute deterministically from lowest to highest
+                  sequence. Dependent formulas reference earlier sequence
+                  outputs.
                 </p>
               </div>
               <span className="rounded bg-surface-raised border border-border/60 px-2.5 py-1 text-xs font-mono text-text-secondary">
@@ -185,7 +202,8 @@ export default function SalaryStructureDetailPage() {
           <CardContent className="pt-4">
             {orderedRules.length === 0 ? (
               <div className="p-6 text-center text-xs text-text-muted">
-                No salary rules are included in this structure. Edit the structure to add rules.
+                No salary rules are included in this structure. Edit the
+                structure to add rules.
               </div>
             ) : (
               <div className="overflow-x-auto rounded-md border border-border/60">
@@ -197,14 +215,19 @@ export default function SalaryStructureDetailPage() {
                       <th className="px-3 py-2.5">Code</th>
                       <th className="px-3 py-2.5">Category</th>
                       <th className="px-3 py-2.5">Computation</th>
-                      <th className="px-3 py-2.5">Configuration / Expression</th>
+                      <th className="px-3 py-2.5">
+                        Configuration / Expression
+                      </th>
                       <th className="px-3 py-2.5 text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40 font-medium">
                     {orderedRules.map((rule, idx) => {
                       return (
-                        <tr key={rule.id} className="hover:bg-surface-raised/40 transition-colors">
+                        <tr
+                          key={rule.id}
+                          className="hover:bg-surface-raised/40 transition-colors"
+                        >
                           <td className="px-3 py-2.5 font-mono text-[11px]">
                             <span className="inline-flex items-center justify-center rounded bg-surface-raised border border-border/60 px-2 py-0.5 font-bold text-primary">
                               {rule.sequence}
@@ -223,21 +246,29 @@ export default function SalaryStructureDetailPage() {
                           </td>
                           <td className="px-3 py-2.5">
                             <span className="rounded bg-surface-raised border border-border/40 px-2 py-0.5 text-[10px] font-semibold">
-                              {CATEGORY_LABEL_MAP[rule.category as any] || rule.category}
+                              {CATEGORY_LABEL_MAP[rule.category as any] ||
+                                rule.category}
                             </span>
                           </td>
                           <td className="px-3 py-2.5 text-text-secondary">
-                            {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] || rule.computationType}
+                            {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] ||
+                              rule.computationType}
                           </td>
                           <td className="px-3 py-2.5 font-mono text-[11px] text-text-muted">
-                            {rule.computationType === "FIXED" && `₹${(rule.amount ?? 0).toLocaleString()}`}
-                            {rule.computationType === "PERCENTAGE" && `${rule.percentage}% of ${(rule.basedOn || ["BASIC"]).join(" + ")}`}
+                            {rule.computationType === "FIXED" &&
+                              `₹${(rule.amount ?? 0).toLocaleString()}`}
+                            {rule.computationType === "PERCENTAGE" &&
+                              `${rule.percentage}% of ${(rule.basedOn || ["BASIC"]).join(" + ")}`}
                             {rule.computationType === "FORMULA" && (
-                              <span className="text-emerald-400 font-semibold">{rule.formula}</span>
+                              <span className="text-emerald-400 font-semibold">
+                                {rule.formula}
+                              </span>
                             )}
                           </td>
                           <td className="px-3 py-2.5 text-right">
-                            <StatusBadge status={rule.status.toLowerCase() as any} />
+                            <StatusBadge
+                              status={rule.status}
+                            />
                           </td>
                         </tr>
                       );
@@ -265,7 +296,8 @@ export default function SalaryStructureDetailPage() {
                   Assigned Contracts & Workforce ({assignedContracts.length})
                 </CardTitle>
                 <p className="mt-1 text-xs text-text-muted">
-                  Employees whose active employment contract utilizes this salary structure for pay calculations.
+                  Employees whose active employment contract utilizes this
+                  salary structure for pay calculations.
                 </p>
               </div>
             </div>
@@ -274,7 +306,8 @@ export default function SalaryStructureDetailPage() {
           <CardContent className="pt-4">
             {assignedContracts.length === 0 ? (
               <p className="p-4 text-xs text-text-muted">
-                No active employment contracts are currently assigned to this salary structure.
+                No active employment contracts are currently assigned to this
+                salary structure.
               </p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -293,12 +326,16 @@ export default function SalaryStructureDetailPage() {
                           >
                             {contract.reference}
                           </Link>
-                          <StatusBadge status={contract.status.toLowerCase() as any} />
+                          <StatusBadge
+                            status={contract.status}
+                          />
                         </div>
                         <p className="mt-1 text-sm font-semibold text-text-primary">
                           {employeeName(emp)}
                         </p>
-                        <p className="text-xs text-text-muted">{contract.position} · {contract.department}</p>
+                        <p className="text-xs text-text-muted">
+                          {contract.position} · {contract.department}
+                        </p>
                       </div>
 
                       <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-xs">

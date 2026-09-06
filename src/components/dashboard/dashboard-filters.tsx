@@ -70,7 +70,9 @@ export function DashboardFiltersBar({
           <select
             id="dashboard-dept"
             value={currentDepartment}
-            onChange={(e) => onChange({ ...filters, department: e.target.value })}
+            onChange={(e) =>
+              onChange({ ...filters, department: e.target.value })
+            }
             className="rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="ALL">All Departments</option>
@@ -84,13 +86,18 @@ export function DashboardFiltersBar({
 
         {/* Employee Type Filter */}
         <div className="flex items-center gap-1.5">
-          <label htmlFor="dashboard-emp-type" className="text-xs text-text-muted">
+          <label
+            htmlFor="dashboard-emp-type"
+            className="text-xs text-text-muted"
+          >
             Type:
           </label>
           <select
             id="dashboard-emp-type"
             value={currentEmployeeType}
-            onChange={(e) => onChange({ ...filters, employeeType: e.target.value })}
+            onChange={(e) =>
+              onChange({ ...filters, employeeType: e.target.value })
+            }
             className="rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="ALL">All Employment Types</option>

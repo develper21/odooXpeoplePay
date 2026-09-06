@@ -3,12 +3,27 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Filter, Eye, ExternalLink, Printer } from "lucide-react";
-import { usePayslips, usePayruns, useEmployees, useContracts } from "@/hooks/use-data";
+import {
+  usePayslips,
+  usePayruns,
+  useEmployees,
+  useContracts,
+} from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/shared/page-header";
-import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
+import {
+  DataTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import { matchesEmployee } from "@/lib/utils";
 
 export default function PayslipsPage() {
   const { user } = useAuth();
@@ -26,7 +41,7 @@ export default function PayslipsPage() {
   const [deliveryFilter, setDeliveryFilter] = useState<string>("ALL");
   const [payrunFilter, setPayrunFilter] = useState<string>("ALL");
   const [employeeFilter, setEmployeeFilter] = useState<string>(
-    isEmployeeRole && userEmpId ? userEmpId : "ALL"
+    isEmployeeRole && userEmpId ? userEmpId : "ALL",
   );
 
   const employeeMap = useMemo(() => {
@@ -46,27 +61,50 @@ export default function PayslipsPage() {
 
     return payslips.filter((slip) => {
       // RBAC: EMPLOYEE can only see their own payslips
-      if (isEmployeeRole && userEmpId && slip.employeeId !== userEmpId) {
+      if (
+        isEmployeeRole &&
+        userEmpId &&
+        !matchesEmployee(slip.employeeId, userEmpId)
+      ) {
         return false;
       }
 
-      const emp = employeeMap.get(slip.employeeId);
+      const emp = (employees || []).find((e) =>
+        matchesEmployee(e.id, slip.employeeId),
+      );
       const empName = emp ? `${emp.firstName} ${emp.lastName}` : "";
       const empNumber = emp?.employeeNumber || "";
+      const slipRef =
+        slip.reference || `PSL-${String(slip.id).padStart(3, "0")}`;
 
       const matchesSearch =
-        slip.reference.toLowerCase().includes(search.toLowerCase()) ||
+        slipRef.toLowerCase().includes(search.toLowerCase()) ||
         empName.toLowerCase().includes(search.toLowerCase()) ||
         empNumber.toLowerCase().includes(search.toLowerCase()) ||
-        (slip.period && slip.period.toLowerCase().includes(search.toLowerCase()));
+        (slip.period &&
+          slip.period.toLowerCase().includes(search.toLowerCase()));
 
-      const matchesStatus = statusFilter === "ALL" || slip.status === statusFilter;
-      const matchesDelivery = deliveryFilter === "ALL" || (slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) === deliveryFilter;
-      const matchesPayrun = payrunFilter === "ALL" || slip.payrunId === payrunFilter;
-      const matchesEmployee =
-        employeeFilter === "ALL" || slip.employeeId === employeeFilter;
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        slip.status?.toUpperCase() === statusFilter.toUpperCase();
+      const matchesDelivery =
+        deliveryFilter === "ALL" ||
+        (slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) ===
+          deliveryFilter;
+      const matchesPayrun =
+        payrunFilter === "ALL" ||
+        String(slip.payrunId) === String(payrunFilter);
+      const matchesEmpFilter =
+        employeeFilter === "ALL" ||
+        matchesEmployee(slip.employeeId, employeeFilter);
 
-      return matchesSearch && matchesStatus && matchesDelivery && matchesPayrun && matchesEmployee;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesDelivery &&
+        matchesPayrun &&
+        matchesEmpFilter
+      );
     });
   }, [
     payslips,
@@ -77,7 +115,7 @@ export default function PayslipsPage() {
     employeeFilter,
     isEmployeeRole,
     userEmpId,
-    employeeMap,
+    employees,
   ]);
 
   if (isLoading) return <LoadingState />;
@@ -108,12 +146,13 @@ export default function PayslipsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-            <Filter className="size-3.5" /> Status:
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <Filter className="size-3.5 text-primary" />
+            <span className="font-medium">Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+              className="h-9 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors"
             >
               <option value="ALL">All Statuses</option>
               <option value="DRAFT">Draft</option>
@@ -123,12 +162,12 @@ export default function PayslipsPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-            Delivery:
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <span className="font-medium">Delivery:</span>
             <select
               value={deliveryFilter}
               onChange={(e) => setDeliveryFilter(e.target.value)}
-              className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+              className="h-9 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors"
             >
               <option value="ALL">All Delivery</option>
               <option value="PENDING">Pending</option>
@@ -136,12 +175,12 @@ export default function PayslipsPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-            Payrun:
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <span className="font-medium">Payrun:</span>
             <select
               value={payrunFilter}
               onChange={(e) => setPayrunFilter(e.target.value)}
-              className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary max-w-[160px] truncate"
+              className="h-9 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary max-w-[180px] cursor-pointer transition-colors truncate"
             >
               <option value="ALL">All Payruns</option>
               {(payruns || []).map((p) => (
@@ -153,12 +192,12 @@ export default function PayslipsPage() {
           </div>
 
           {!isEmployeeRole && (
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-              Employee:
+            <div className="flex items-center gap-2 text-xs text-text-secondary">
+              <span className="font-medium">Employee:</span>
               <select
                 value={employeeFilter}
                 onChange={(e) => setEmployeeFilter(e.target.value)}
-                className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary max-w-[160px] truncate"
+                className="h-9 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary max-w-[180px] cursor-pointer transition-colors truncate"
               >
                 <option value="ALL">All Employees</option>
                 {(employees || []).map((e) => (
@@ -201,7 +240,9 @@ export default function PayslipsPage() {
             {filteredPayslips.map((slip) => {
               const emp = employeeMap.get(slip.employeeId);
               const payrun = payrunMap.get(slip.payrunId);
-              const fullName = emp ? `${emp.firstName} ${emp.lastName}` : `EMP ${slip.employeeId}`;
+              const fullName = emp
+                ? `${emp.firstName} ${emp.lastName}`
+                : `EMP ${slip.employeeId}`;
 
               return (
                 <TableRow key={slip.id}>
@@ -212,7 +253,8 @@ export default function PayslipsPage() {
                       </span>
                       {slip.sentAt && (
                         <span className="text-[10px] text-green-400">
-                          Dispatched {new Date(slip.sentAt).toLocaleDateString()}
+                          Dispatched{" "}
+                          {new Date(slip.sentAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -220,7 +262,9 @@ export default function PayslipsPage() {
 
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-foreground">{fullName}</span>
+                      <span className="font-semibold text-foreground">
+                        {fullName}
+                      </span>
                       <span className="text-[11px] text-text-muted">
                         {emp?.department} • {emp?.position}
                       </span>
@@ -239,7 +283,9 @@ export default function PayslipsPage() {
                   </TableCell>
 
                   <TableCell className="text-center font-medium">
-                    {slip.workedDays !== undefined ? `${slip.workedDays} d` : "22 d"}
+                    {slip.workedDays !== undefined
+                      ? `${slip.workedDays} d`
+                      : "22 d"}
                   </TableCell>
 
                   <TableCell className="text-right font-medium">
@@ -256,9 +302,19 @@ export default function PayslipsPage() {
 
                   <TableCell className="text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <StatusBadge status={slip.status.toLowerCase() as any} />
-                      {((slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) === "SENT") && <span className="text-[10px] text-success">Delivered</span>}
-                      {((slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) === "FAILED") && <span className="text-[10px] text-danger">Delivery failed</span>}
+                      <StatusBadge status={slip.status} />
+                      {(slip.deliveryStatus ??
+                        (slip.sentAt ? "SENT" : "PENDING")) === "SENT" && (
+                        <span className="text-[10px] text-success">
+                          Delivered
+                        </span>
+                      )}
+                      {(slip.deliveryStatus ??
+                        (slip.sentAt ? "SENT" : "PENDING")) === "FAILED" && (
+                        <span className="text-[10px] text-danger">
+                          Delivery failed
+                        </span>
+                      )}
                     </div>
                   </TableCell>
 

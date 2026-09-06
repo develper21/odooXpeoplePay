@@ -24,16 +24,22 @@ const roles: Role[] = [
   "EMPLOYEE",
 ];
 
-export function UserForm({ initialData, onSubmit, isSubmitting = false }: UserFormProps) {
+export function UserForm({
+  initialData,
+  onSubmit,
+  isSubmitting = false,
+}: UserFormProps) {
   const router = useRouter();
   const { data: employees = [] } = useEmployees();
 
   const [name, setName] = useState(initialData?.name ?? "");
   const [email, setEmail] = useState(initialData?.email ?? "");
   const [role, setRole] = useState<Role>(initialData?.role ?? "EMPLOYEE");
-  const [employeeId, setEmployeeId] = useState<string>(initialData?.employeeId ?? "");
+  const [employeeId, setEmployeeId] = useState<string>(
+    initialData?.employeeId ?? "",
+  );
   const [status, setStatus] = useState<"ACTIVE" | "INVITED" | "INACTIVE">(
-    initialData?.status ?? "ACTIVE"
+    initialData?.status ?? "ACTIVE",
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +87,9 @@ export function UserForm({ initialData, onSubmit, isSubmitting = false }: UserFo
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-text-secondary">Full Name *</label>
+              <label className="block text-xs font-medium text-text-secondary">
+                Full Name *
+              </label>
               <input
                 type="text"
                 value={name}
@@ -93,7 +101,9 @@ export function UserForm({ initialData, onSubmit, isSubmitting = false }: UserFo
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-text-secondary">Email Address *</label>
+              <label className="block text-xs font-medium text-text-secondary">
+                Email Address *
+              </label>
               <input
                 type="email"
                 value={email}
@@ -108,7 +118,9 @@ export function UserForm({ initialData, onSubmit, isSubmitting = false }: UserFo
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-text-secondary">Assigned Role *</label>
+              <label className="block text-xs font-medium text-text-secondary">
+                Assigned Role *
+              </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
@@ -123,10 +135,14 @@ export function UserForm({ initialData, onSubmit, isSubmitting = false }: UserFo
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-text-secondary">Account Status *</label>
+              <label className="block text-xs font-medium text-text-secondary">
+                Account Status *
+              </label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as "ACTIVE" | "INVITED" | "INACTIVE")}
+                onChange={(e) =>
+                  setStatus(e.target.value as "ACTIVE" | "INVITED" | "INACTIVE")
+                }
                 className="mt-1.5 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm text-text-primary focus:border-primary focus:outline-none"
               >
                 <option value="ACTIVE">Active</option>
@@ -147,12 +163,14 @@ export function UserForm({ initialData, onSubmit, isSubmitting = false }: UserFo
                 <option value="">-- No Employee Linked --</option>
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.employeeNumber} · {employeeName(emp)} ({emp.department} - {emp.position})
+                    {emp.employeeNumber} · {employeeName(emp)} ({emp.department}{" "}
+                    - {emp.position})
                   </option>
                 ))}
               </select>
               <p className="mt-1 text-[11px] text-text-muted">
-                Associates this login identity with an active HR employee profile for self-service operations.
+                Associates this login identity with an active HR employee
+                profile for self-service operations.
               </p>
             </div>
           </div>

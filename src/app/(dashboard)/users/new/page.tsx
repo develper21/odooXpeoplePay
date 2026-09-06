@@ -29,7 +29,10 @@ export default function NewUserPage() {
         description="Register a new system user identity and configure their operational role."
       />
 
-      <UserForm onSubmit={handleSubmit} isSubmitting={createUserMutation.isPending} />
+      <UserForm
+        onSubmit={handleSubmit}
+        isSubmitting={createUserMutation.isPending}
+      />
     </>
   );
 }

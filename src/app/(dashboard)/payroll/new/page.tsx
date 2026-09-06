@@ -26,7 +26,12 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
+import {
+  DataTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { LoadingState } from "@/components/shared/states";
 import { findApplicableContract } from "@/lib/services/payroll-service";
@@ -34,7 +39,8 @@ import type { Employee } from "@/types/domain";
 
 export default function NewPayrunWizardPage() {
   const router = useRouter();
-  const { data: structures, isLoading: loadingStructures } = useSalaryStructures();
+  const { data: structures, isLoading: loadingStructures } =
+    useSalaryStructures();
   const { data: employees, isLoading: loadingEmployees } = useEmployees();
   const { data: contracts, isLoading: loadingContracts } = useContracts();
   const createPayrunMutation = useCreatePayrun();
@@ -75,14 +81,17 @@ export default function NewPayrunWizardPage() {
         emp.id,
         periodStart,
         periodEnd,
-        contracts
+        contracts,
       );
 
       const contract = contractResolution.contract;
-      const hasActiveContract = contract !== undefined && contract.status === "ACTIVE";
+      const hasActiveContract =
+        contract !== undefined && contract.status === "ACTIVE";
 
       // 3. Banking details
-      const hasBank = Boolean(emp.bankAccount && emp.bankAccount.trim().length > 0);
+      const hasBank = Boolean(
+        emp.bankAccount && emp.bankAccount.trim().length > 0,
+      );
 
       // Eligibility Status determination
       let eligibility: "ELIGIBLE" | "WARNING" | "INELIGIBLE" = "ELIGIBLE";
@@ -90,7 +99,7 @@ export default function NewPayrunWizardPage() {
 
       if (!isActive) {
         eligibility = "INELIGIBLE";
-        statusMessage = `Employee is ${emp.status.toLowerCase()}`;
+        statusMessage = `Employee is ${(emp.status || "inactive").toLowerCase()}`;
       } else if (!contract) {
         eligibility = "WARNING";
         statusMessage = "Missing Active Contract for Period";
@@ -119,12 +128,15 @@ export default function NewPayrunWizardPage() {
       if (emp.status === "INACTIVE") return false;
 
       const matchesSearch =
-        `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+        `${emp.firstName} ${emp.lastName}`
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
         emp.employeeNumber.toLowerCase().includes(search.toLowerCase()) ||
         emp.department.toLowerCase().includes(search.toLowerCase());
 
       const matchesDept = deptFilter === "ALL" || emp.department === deptFilter;
-      const matchesType = typeFilter === "ALL" || emp.employeeType === typeFilter;
+      const matchesType =
+        typeFilter === "ALL" || emp.employeeType === typeFilter;
 
       return matchesSearch && matchesDept && matchesType;
     });
@@ -195,7 +207,9 @@ export default function NewPayrunWizardPage() {
   const handleCreatePayrun = async () => {
     setCreationError(null);
     if (selectedIds.length === 0) {
-      setCreationError("Please select at least one employee to include in this payrun.");
+      setCreationError(
+        "Please select at least one employee to include in this payrun.",
+      );
       return;
     }
 
@@ -218,7 +232,12 @@ export default function NewPayrunWizardPage() {
       } as any);
 
       // Navigate to Payrun Processing Workspace
-      router.push(`/payroll/${created.id}`);
+      const targetId = created?.id || (created as any)?.payrun?.id;
+      if (targetId) {
+        router.push(`/payroll/${targetId}`);
+      } else {
+        router.push("/payroll");
+      }
     } catch (err: any) {
       setCreationError(err.message || "Failed to create payrun cycle.");
     }
@@ -241,7 +260,9 @@ export default function NewPayrunWizardPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             Payroll Workflow
           </p>
-          <h1 className="text-2xl font-bold tracking-tight">Create Payrun Wizard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Create Payrun Wizard
+          </h1>
         </div>
       </div>
 
@@ -250,7 +271,9 @@ export default function NewPayrunWizardPage() {
         <div className="flex items-center gap-3">
           <span
             className={`flex size-8 items-center justify-center rounded-full text-xs font-bold ${
-              step === 1 ? "bg-primary text-white" : "bg-green-500/20 text-green-400"
+              step === 1
+                ? "bg-primary text-white"
+                : "bg-green-500/20 text-green-400"
             }`}
           >
             {step > 1 ? "✓" : "1"}
@@ -259,7 +282,9 @@ export default function NewPayrunWizardPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Step 1
             </p>
-            <p className="text-sm font-bold text-foreground">Setup & Structure</p>
+            <p className="text-sm font-bold text-foreground">
+              Setup & Structure
+            </p>
           </div>
         </div>
 
@@ -268,7 +293,9 @@ export default function NewPayrunWizardPage() {
         <div className="flex items-center gap-3">
           <span
             className={`flex size-8 items-center justify-center rounded-full text-xs font-bold ${
-              step === 2 ? "bg-primary text-white" : "bg-surface-raised text-text-muted"
+              step === 2
+                ? "bg-primary text-white"
+                : "bg-surface-raised text-text-muted"
             }`}
           >
             2
@@ -277,7 +304,9 @@ export default function NewPayrunWizardPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Step 2
             </p>
-            <p className="text-sm font-bold text-foreground">Employee Selection</p>
+            <p className="text-sm font-bold text-foreground">
+              Employee Selection
+            </p>
           </div>
         </div>
       </div>
@@ -333,7 +362,7 @@ export default function NewPayrunWizardPage() {
               >
                 {activeStructures.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.ruleIds.length} Rules)
+                    {s.name} ({s.ruleIds?.length ?? (s as any).rules?.length ?? 0} Rules)
                   </option>
                 ))}
               </select>
@@ -380,7 +409,9 @@ export default function NewPayrunWizardPage() {
         <div className="rounded-xl border border-border bg-surface p-6 shadow-xl space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-foreground">Select Eligible Employees</h2>
+              <h2 className="text-lg font-bold text-foreground">
+                Select Eligible Employees
+              </h2>
               <p className="text-xs text-text-secondary">
                 Only checked employees will be included in the payrun batch.
               </p>
@@ -471,74 +502,82 @@ export default function NewPayrunWizardPage() {
               </tr>
             </TableHeader>
             <tbody>
-              {displayedEmployees.map(({ employee: emp, contract, eligibility, statusMessage }) => {
-                const isSelected = selectedIds.includes(emp.id);
+              {displayedEmployees.map(
+                ({ employee: emp, contract, eligibility, statusMessage }) => {
+                  const isSelected = selectedIds.includes(emp.id);
 
-                return (
-                  <TableRow
-                    key={emp.id}
-                    className={isSelected ? "bg-surface-soft/60" : ""}
-                  >
-                    <TableCell className="text-center">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleEmployee(emp.id)}
-                        className="size-4 rounded border-border bg-surface-raised text-primary focus:ring-primary cursor-pointer"
-                      />
-                    </TableCell>
+                  return (
+                    <TableRow
+                      key={emp.id}
+                      className={isSelected ? "bg-surface-soft/60" : ""}
+                    >
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleEmployee(emp.id)}
+                          className="size-4 rounded border-border bg-surface-raised text-primary focus:ring-primary cursor-pointer"
+                        />
+                      </TableCell>
 
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-foreground">
-                          {emp.firstName} {emp.lastName}
-                        </span>
-                        <span className="text-[11px] font-mono text-text-muted">
-                          {emp.employeeNumber}
-                        </span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="text-xs">{emp.department}</TableCell>
-
-                    <TableCell>
-                      <div className="flex flex-col text-xs">
-                        <span>{emp.position}</span>
-                        <span className="text-[10px] text-text-muted uppercase">
-                          {emp.employeeType.replace(/_/g, " ")}
-                        </span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      {contract ? (
-                        <div className="flex flex-col text-xs">
-                          <span className="font-medium text-foreground">{contract.reference}</span>
-                          <span className="text-[11px] text-text-muted font-mono">
-                            ₹{contract.monthlySalary.toLocaleString()}/mo
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground">
+                            {emp.firstName} {emp.lastName}
+                          </span>
+                          <span className="text-[11px] font-mono text-text-muted">
+                            {emp.employeeNumber}
                           </span>
                         </div>
-                      ) : (
-                        <span className="text-xs text-danger inline-flex items-center">
-                          <AlertCircle className="size-3 mr-1" /> No Contract
-                        </span>
-                      )}
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      {eligibility === "ELIGIBLE" ? (
-                        <span className="inline-flex items-center text-xs font-semibold text-green-400">
-                          <CheckCircle2 className="size-3.5 mr-1 text-success" /> Eligible
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center text-xs font-medium text-warning">
-                          <AlertTriangle className="size-3.5 mr-1 text-warning" /> {statusMessage}
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      <TableCell className="text-xs">
+                        {emp.department}
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex flex-col text-xs">
+                          <span>{emp.position}</span>
+                          <span className="text-[10px] text-text-muted uppercase">
+                            {(emp.employeeType || "Full Time").replace(/_/g, " ")}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        {contract ? (
+                          <div className="flex flex-col text-xs">
+                            <span className="font-medium text-foreground">
+                              {contract.reference}
+                            </span>
+                            <span className="text-[11px] text-text-muted font-mono">
+                              ₹{contract.monthlySalary.toLocaleString()}/mo
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-danger inline-flex items-center">
+                            <AlertCircle className="size-3 mr-1" /> No Contract
+                          </span>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        {eligibility === "ELIGIBLE" ? (
+                          <span className="inline-flex items-center text-xs font-semibold text-green-400">
+                            <CheckCircle2 className="size-3.5 mr-1 text-success" />{" "}
+                            Eligible
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-xs font-medium text-warning">
+                            <AlertTriangle className="size-3.5 mr-1 text-warning" />{" "}
+                            {statusMessage}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                },
+              )}
             </tbody>
           </DataTable>
 
@@ -556,7 +595,9 @@ export default function NewPayrunWizardPage() {
             <Button
               type="button"
               variant="primary"
-              disabled={selectedIds.length === 0 || createPayrunMutation.isPending}
+              disabled={
+                selectedIds.length === 0 || createPayrunMutation.isPending
+              }
               onClick={handleCreatePayrun}
               className="gap-2"
             >

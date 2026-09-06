@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { ArrowRight, Building2, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
+import {
+  DataTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "@/components/shared/table";
 import type { DepartmentBreakdownItem } from "@/types/domain";
 
 interface DepartmentBreakdownProps {
@@ -11,9 +16,13 @@ interface DepartmentBreakdownProps {
 }
 
 export function DepartmentBreakdown({ breakdown }: DepartmentBreakdownProps) {
-  const totalEmployees = breakdown.reduce((s, d) => s + d.headcount, 0);
-  const totalNet = breakdown.reduce((s, d) => s + d.totalNet, 0);
-  const totalGross = breakdown.reduce((s, d) => s + d.totalGross, 0);
+  const safeBreakdown = breakdown || [];
+  const totalEmployees = safeBreakdown.reduce(
+    (s, d) => s + (Number(d.headcount) || 0),
+    0,
+  );
+  const totalNet = safeBreakdown.reduce((s, d) => s + (Number(d.totalNet) || 0), 0);
+  const totalGross = safeBreakdown.reduce((s, d) => s + (Number(d.totalGross) || 0), 0);
 
   return (
     <Card>
@@ -21,7 +30,8 @@ export function DepartmentBreakdown({ breakdown }: DepartmentBreakdownProps) {
         <div>
           <CardTitle>Department Headcount & Payroll Expenditure</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Aggregated staffing headcount and total salary commitment by department
+            Aggregated staffing headcount and total salary commitment by
+            department
           </p>
         </div>
         <Link
@@ -44,14 +54,17 @@ export function DepartmentBreakdown({ breakdown }: DepartmentBreakdownProps) {
             </tr>
           </TableHeader>
           <tbody>
-            {breakdown.length === 0 ? (
+            {safeBreakdown.length === 0 ? (
               <TableRow>
-                <TableCell className="text-center text-text-muted" aria-colspan={6}>
+                <TableCell
+                  className="text-center text-text-muted"
+                  aria-colspan={6}
+                >
                   No department records found for the selected filter.
                 </TableCell>
               </TableRow>
             ) : (
-              breakdown.map((item) => (
+              safeBreakdown.map((item) => (
                 <TableRow key={item.department}>
                   <TableCell className="font-medium text-text-primary">
                     <div className="flex items-center gap-2">
@@ -81,11 +94,15 @@ export function DepartmentBreakdown({ breakdown }: DepartmentBreakdownProps) {
               ))
             )}
           </tbody>
-          {breakdown.length > 0 && (
+          {safeBreakdown.length > 0 && (
             <tfoot>
               <tr className="border-t border-border-subtle bg-surface-raised/40 font-semibold">
-                <td className="px-4 py-3 text-xs text-text-primary">Total Summary</td>
-                <td className="px-4 py-3 text-right text-xs text-text-primary">{totalEmployees}</td>
+                <td className="px-4 py-3 text-xs text-text-primary">
+                  Total Summary
+                </td>
+                <td className="px-4 py-3 text-right text-xs text-text-primary">
+                  {totalEmployees}
+                </td>
                 <td className="px-4 py-3 text-right font-mono text-xs text-text-primary">
                   ₹{totalGross.toLocaleString("en-IN")}
                 </td>
@@ -96,7 +113,12 @@ export function DepartmentBreakdown({ breakdown }: DepartmentBreakdownProps) {
                   ₹{totalNet.toLocaleString("en-IN")}
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-xs text-text-muted">
-                  ₹{totalEmployees > 0 ? Math.round(totalNet / totalEmployees).toLocaleString("en-IN") : 0}
+                  ₹
+                  {totalEmployees > 0
+                    ? Math.round(totalNet / totalEmployees).toLocaleString(
+                        "en-IN",
+                      )
+                    : 0}
                 </td>
               </tr>
             </tfoot>

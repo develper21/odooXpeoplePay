@@ -11,12 +11,20 @@ export function SalaryTabs() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const canViewStructures = user ? canAccess(user.role, "salary_structure.read") : false;
+  const canViewStructures = user
+    ? canAccess(user.role, "salary_structure.read")
+    : false;
   const canViewRules = user ? canAccess(user.role, "salary_rule.read") : false;
 
   const tabs = [
     ...(canViewStructures
-      ? [{ label: "Salary Structures", href: "/salary-structures", icon: Building2 }]
+      ? [
+          {
+            label: "Salary Structures",
+            href: "/salary-structures",
+            icon: Building2,
+          },
+        ]
       : []),
     ...(canViewRules
       ? [{ label: "Salary Rules", href: "/salary-rules", icon: LockKeyhole }]
@@ -30,8 +38,10 @@ export function SalaryTabs() {
       {tabs.map((tab) => {
         const isActive =
           tab.href === "/salary-structures"
-            ? pathname === "/salary-structures" || pathname.startsWith("/salary-structures/")
-            : pathname === "/salary-rules" || pathname.startsWith("/salary-rules/");
+            ? pathname === "/salary-structures" ||
+              pathname.startsWith("/salary-structures/")
+            : pathname === "/salary-rules" ||
+              pathname.startsWith("/salary-rules/");
         const Icon = tab.icon;
         return (
           <Link
@@ -41,7 +51,7 @@ export function SalaryTabs() {
               "flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
               isActive
                 ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:border-border hover:text-text-secondary"
+                : "border-transparent text-text-muted hover:border-border hover:text-text-secondary",
             )}
           >
             <Icon className="size-4" />

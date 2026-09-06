@@ -5,7 +5,12 @@ import { Shield, ShieldAlert, ShieldCheck, Users } from "lucide-react";
 import { useRoles, useUsers } from "@/hooks/use-data";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function RolesPage() {
@@ -28,7 +33,9 @@ export default function RolesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-muted">Defined Roles</p>
-              <p className="mt-1 text-2xl font-bold text-text-primary">{roles.length}</p>
+              <p className="mt-1 text-2xl font-bold text-text-primary">
+                {roles.length}
+              </p>
             </div>
             <div className="rounded-lg bg-blue-500/10 p-2 text-primary">
               <Shield className="size-5" />
@@ -40,7 +47,9 @@ export default function RolesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-muted">Assigned Users</p>
-              <p className="mt-1 text-2xl font-bold text-green-400">{users.length}</p>
+              <p className="mt-1 text-2xl font-bold text-green-400">
+                {users.length}
+              </p>
             </div>
             <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
               <Users className="size-5" />
@@ -52,8 +61,12 @@ export default function RolesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-muted">Security Model</p>
-              <p className="mt-1 text-sm font-bold text-primary">Role-Based Access Control</p>
-              <p className="text-[10px] text-text-muted">Canonical Inheritance</p>
+              <p className="mt-1 text-sm font-bold text-primary">
+                Role-Based Access Control
+              </p>
+              <p className="text-[10px] text-text-muted">
+                Canonical Inheritance
+              </p>
             </div>
             <div className="rounded-lg bg-primary/10 p-2 text-primary">
               <ShieldCheck className="size-5" />
@@ -88,7 +101,9 @@ export default function RolesPage() {
                     >
                       {role.name}
                     </Link>
-                    <span className="block text-[10px] text-text-muted font-mono">{role.id}</span>
+                    <span className="block text-[10px] text-text-muted font-mono">
+                      {role.id}
+                    </span>
                   </div>
                 </div>
               </TableCell>

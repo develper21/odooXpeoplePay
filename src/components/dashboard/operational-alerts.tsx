@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle, AlertTriangle, ArrowUpRight, CheckCircle2, Info } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Info,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ActionableAlert } from "@/types/domain";
 
@@ -23,7 +29,7 @@ export function OperationalAlerts({ alerts }: OperationalAlertsProps) {
           {alerts.length} {alerts.length === 1 ? "item" : "items"}
         </span>
       </CardHeader>
-      <CardContent className="flex-1 space-y-2.5 p-4 pt-0">
+      <CardContent className="flex-1 space-y-2.5 p-5 pt-4">
         {alerts.length === 0 ? (
           <div className="flex h-36 flex-col items-center justify-center rounded-lg border border-dashed border-success/30 bg-success/5 p-4 text-center">
             <CheckCircle2 className="mb-2 size-6 text-success" />
@@ -50,8 +56,8 @@ export function OperationalAlerts({ alerts }: OperationalAlertsProps) {
                       isError
                         ? "bg-danger/10 text-danger"
                         : isWarning
-                        ? "bg-warning/10 text-warning"
-                        : "bg-primary/10 text-primary"
+                          ? "bg-warning/10 text-warning"
+                          : "bg-primary/10 text-primary"
                     }`}
                   >
                     {isError ? (

@@ -7,8 +7,17 @@ import { useTimeOffTypes } from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { PageHeader } from "@/components/shared/page-header";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { TimeOffTabs } from "@/components/time-off/time-off-tabs";
@@ -21,7 +30,9 @@ export default function TimeOffTypesPage() {
 
   const filtered = useMemo(() => {
     return types.filter((type) => {
-      const matchSearch = type.name.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = type.name
+        .toLowerCase()
+        .includes(search.toLowerCase());
       const matchUnit = unitFilter === "ALL" || type.unit === unitFilter;
       return matchSearch && matchUnit;
     });
@@ -79,7 +90,10 @@ export default function TimeOffTypesPage() {
       </Card>
 
       {filtered.length === 0 ? (
-        <EmptyState title="No leave types found" message="Try adjusting your search filter or create a new type." />
+        <EmptyState
+          title="No leave types found"
+          message="Try adjusting your search filter or create a new type."
+        />
       ) : (
         <DataTable>
           <TableHeader>
@@ -97,19 +111,35 @@ export default function TimeOffTypesPage() {
             {filtered.map((type) => (
               <TableRow key={type.id}>
                 <TableCell>
-                  <Link href={`/time-off/types/${type.id}`} className="font-semibold hover:text-primary">
+                  <Link
+                    href={`/time-off/types/${type.id}`}
+                    className="font-semibold hover:text-primary"
+                  >
                     {type.name}
                   </Link>
                 </TableCell>
-                <TableCell className="text-xs text-text-secondary">{type.unit}</TableCell>
-                <TableCell className="text-xs">{type.allocationRequired ? "Yes" : "No"}</TableCell>
-                <TableCell className="text-xs">{type.approvalRequired ? "Yes" : "No"}</TableCell>
-                <TableCell className="text-xs">{type.payrollIntegration ? "Yes" : "No"}</TableCell>
-                <TableCell>
-                  <StatusBadge status={type.status.toLowerCase() as "active" | "inactive"} />
+                <TableCell className="text-xs text-text-secondary">
+                  {type.unit}
+                </TableCell>
+                <TableCell className="text-xs">
+                  {type.allocationRequired ? "Yes" : "No"}
+                </TableCell>
+                <TableCell className="text-xs">
+                  {type.approvalRequired ? "Yes" : "No"}
+                </TableCell>
+                <TableCell className="text-xs">
+                  {type.payrollIntegration ? "Yes" : "No"}
                 </TableCell>
                 <TableCell>
-                  <Link href={`/time-off/types/${type.id}`} className="text-xs font-medium text-primary hover:underline">
+                  <StatusBadge
+                    status={type.status.toLowerCase() as "active" | "inactive"}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/time-off/types/${type.id}`}
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
                     View
                   </Link>
                 </TableCell>

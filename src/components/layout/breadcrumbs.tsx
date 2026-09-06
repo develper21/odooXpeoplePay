@@ -14,9 +14,11 @@ interface Crumb {
 }
 
 export function Breadcrumbs() {
-  const pathname = usePathname();
-  const { data: users = [] } = useUsers();
-  const { data: employees = [] } = useEmployees();
+  const pathname = usePathname() || "";
+  const isUsersRoute = pathname.startsWith("/users");
+  const isEmployeesRoute = pathname.startsWith("/employees");
+  const { data: users = [] } = useUsers({ enabled: isUsersRoute });
+  const { data: employees = [] } = useEmployees({ enabled: isEmployeesRoute } as any);
 
   const getCrumbs = (): Crumb[] => {
     if (!pathname || pathname === "/dashboard") {
@@ -97,10 +99,7 @@ export function Breadcrumbs() {
       ];
     }
     if (pathname === "/time-off/requests") {
-      return [
-        { label: "Time Off", href: "/time-off" },
-        { label: "Requests" },
-      ];
+      return [{ label: "Time Off", href: "/time-off" }, { label: "Requests" }];
     }
     if (pathname === "/time-off/requests/new") {
       return [
@@ -187,18 +186,27 @@ export function Breadcrumbs() {
     const segments = pathname.split("/").filter(Boolean);
     return segments.map((s, idx) => ({
       label: s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, " "),
-      href: idx < segments.length - 1 ? `/${segments.slice(0, idx + 1).join("/")}` : undefined,
+      href:
+        idx < segments.length - 1
+          ? `/${segments.slice(0, idx + 1).join("/")}`
+          : undefined,
     }));
   };
 
   const crumbs = getCrumbs();
 
   return (
-    <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 text-xs sm:flex">
+    <nav
+      aria-label="Breadcrumb"
+      className="hidden items-center gap-1.5 text-xs sm:flex"
+    >
       {crumbs.map((crumb, idx) => {
         const isLast = idx === crumbs.length - 1;
         return (
-          <div key={`${crumb.label}-${idx}`} className="flex items-center gap-1.5">
+          <div
+            key={`${crumb.label}-${idx}`}
+            className="flex items-center gap-1.5"
+          >
             {idx > 0 && <ChevronRight className="size-3 text-text-muted/60" />}
             {crumb.href && !isLast ? (
               <Link
@@ -208,7 +216,11 @@ export function Breadcrumbs() {
                 {crumb.label}
               </Link>
             ) : (
-              <span className={isLast ? "font-semibold text-text-primary" : "text-text-muted"}>
+              <span
+                className={
+                  isLast ? "font-semibold text-text-primary" : "text-text-muted"
+                }
+              >
                 {crumb.label}
               </span>
             )}

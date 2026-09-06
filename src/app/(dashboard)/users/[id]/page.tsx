@@ -3,9 +3,25 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Calendar, CheckCircle2, Clock, Edit3, Mail, Shield, Trash2, User, UserCheck } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Edit3,
+  Mail,
+  Shield,
+  Trash2,
+  User,
+  UserCheck,
+} from "lucide-react";
 import { useUser, useEmployee, useDeleteUser } from "@/hooks/use-data";
-import { roleLabels, roleDescriptions, rolePermissions, permissionModules } from "@/lib/permissions";
+import {
+  roleLabels,
+  roleDescriptions,
+  rolePermissions,
+  permissionModules,
+} from "@/lib/permissions";
+import type { Role } from "@/lib/auth/auth-types";
 import { employeeName } from "@/lib/hr-utils";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState, ErrorState } from "@/components/shared/states";
@@ -26,7 +42,8 @@ export default function UserDetailPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !userItem) return <ErrorState message="User record not found." />;
+  if (isError || !userItem)
+    return <ErrorState message="User record not found." />;
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync(id);
@@ -36,13 +53,23 @@ export default function UserDetailPage() {
     }, 600);
   };
 
-  const activePermissions = rolePermissions[userItem.role] || [];
-  const initials = userItem.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
+  const userRole: Role = (userItem.role || (userItem as any).roleCode || "EMPLOYEE") as Role;
+  const roleName = roleLabels[userRole] || (userItem as any).roleName || userRole;
+  const roleDesc = roleDescriptions[userRole] || "Enterprise system user profile and access privileges.";
+  const displayName =
+    userItem.name ||
+    `${(userItem as any).firstName || ""} ${(userItem as any).lastName || ""}`.trim() ||
+    userItem.email ||
+    "User";
+  const activePermissions = rolePermissions[userRole] || [];
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase() || "U";
 
   const formatDateTime = (iso?: string) => {
     if (!iso) return "—";
@@ -64,7 +91,7 @@ export default function UserDetailPage() {
       {toastMessage && <Toast message={toastMessage} />}
 
       <PageHeader
-        title={userItem.name}
+        title={displayName}
         description={`User Account · ${userItem.email}`}
         action={{
           label: "Edit User",
@@ -74,10 +101,10 @@ export default function UserDetailPage() {
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <StatusBadge status={userItem.status.toLowerCase() as "active" | "inactive" | "pending"} />
+          <StatusBadge status={userItem.status} />
           <span className="inline-flex items-center gap-1.5 rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
             <Shield className="size-3.5" />
-            {roleLabels[userItem.role]}
+            {roleName}
           </span>
         </div>
 
@@ -99,12 +126,15 @@ export default function UserDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="flex size-14 items-center justify-center rounded-full bg-blue-500/20 text-lg font-bold text-primary">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-base font-bold text-primary">
                 {initials}
               </span>
               <div>
-                <h3 className="text-base font-bold text-text-primary">{userItem.name}</h3>
+                <p className="font-semibold text-text-primary">{displayName}</p>
                 <p className="text-xs text-text-muted">{userItem.email}</p>
+                {(userItem as any).phone && (
+                  <p className="text-xs text-text-muted">{(userItem as any).phone}</p>
+                )}
               </div>
             </div>
 
@@ -113,34 +143,41 @@ export default function UserDetailPage() {
                 <p className="text-xs text-text-muted">Account Role</p>
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-sm font-semibold text-text-primary">
-                    {roleLabels[userItem.role]}
+                    {roleName}
                   </span>
                   <Link
-                    href={`/roles/${userItem.role}`}
+                    href={`/roles/${userRole}`}
                     className="text-xs font-medium text-primary hover:underline"
                   >
                     View Role Matrix →
                   </Link>
                 </div>
                 <p className="mt-1 text-[11px] text-text-muted leading-relaxed">
-                  {roleDescriptions[userItem.role]}
+                  {roleDesc}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-text-muted">Linked Employee Profile</p>
+                <p className="text-xs text-text-muted">
+                  Linked Employee Profile
+                </p>
                 {employee ? (
                   <Link
                     href={`/employees/${employee.id}`}
                     className="mt-1 block rounded-md border bg-surface-raised p-2.5 hover:border-primary"
                   >
-                    <p className="text-xs font-semibold text-primary">{employeeName(employee)}</p>
+                    <p className="text-xs font-semibold text-primary">
+                      {employeeName(employee)}
+                    </p>
                     <p className="text-[11px] text-text-muted">
-                      {employee.employeeNumber} · {employee.department} · {employee.position}
+                      {employee.employeeNumber} · {employee.department} ·{" "}
+                      {employee.position}
                     </p>
                   </Link>
                 ) : (
-                  <p className="mt-1 text-xs text-text-muted italic">No employee profile linked.</p>
+                  <p className="mt-1 text-xs text-text-muted italic">
+                    No employee profile linked.
+                  </p>
                 )}
               </div>
 
@@ -167,11 +204,13 @@ export default function UserDetailPage() {
             <div>
               <CardTitle>Role & Inherited Permissions</CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Effective access privileges inherited from <strong>{roleLabels[userItem.role]}</strong> ({activePermissions.length} total granted)
+                Effective access privileges inherited from{" "}
+                <strong>{roleName}</strong> (
+                {activePermissions.length} total granted)
               </p>
             </div>
             <Link
-              href={`/roles/${userItem.role}`}
+              href={`/roles/${userRole}`}
               className="text-xs font-medium text-primary hover:underline"
             >
               Configure Role →
@@ -181,7 +220,7 @@ export default function UserDetailPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               {permissionModules.map((group) => {
                 const grantedInModule = group.permissions.filter((p) =>
-                  activePermissions.includes(p.key)
+                  activePermissions.includes(p.key),
                 );
                 const hasFullAccess =
                   grantedInModule.length === group.permissions.length &&
@@ -193,7 +232,9 @@ export default function UserDetailPage() {
                     className="rounded-lg border border-border-subtle bg-surface-raised p-3.5"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-text-primary">{group.module}</span>
+                      <span className="text-xs font-bold text-text-primary">
+                        {group.module}
+                      </span>
                       <span
                         className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${
                           grantedInModule.length > 0
@@ -201,7 +242,8 @@ export default function UserDetailPage() {
                             : "bg-slate-500/10 text-slate-400"
                         }`}
                       >
-                        {grantedInModule.length} / {group.permissions.length} granted
+                        {grantedInModule.length} / {group.permissions.length}{" "}
+                        granted
                       </span>
                     </div>
 

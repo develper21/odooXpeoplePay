@@ -18,7 +18,8 @@ export default function EditTimeOffTypePage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !type) return <ErrorState message="Leave type was not found." />;
+  if (isError || !type)
+    return <ErrorState message="Leave type was not found." />;
 
   return (
     <>
@@ -35,7 +36,10 @@ export default function EditTimeOffTypePage() {
             submitLabel="Update Leave Type"
             onCancel={() => router.push(`/time-off/types/${id}`)}
             onSubmit={async (values) => {
-              await mutation.mutateAsync({ id, input: values as Partial<TimeOffType> });
+              await mutation.mutateAsync({
+                id,
+                input: values as Partial<TimeOffType>,
+              });
               setToastMessage("Time Off Type updated successfully.");
               setTimeout(() => {
                 router.push(`/time-off/types/${id}`);

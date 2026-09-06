@@ -4,9 +4,16 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ArrowDown, ArrowUp, Check, Layers, AlertTriangle } from "lucide-react";
-import type { SalaryRule, SalaryStructure, SalaryStructureStatus } from "@/types/domain";
+import type {
+  SalaryRule,
+  SalaryStructure,
+  SalaryStructureStatus,
+} from "@/types/domain";
 import { sortRulesBySequence } from "@/lib/salary-calculator";
-import { CATEGORY_LABEL_MAP, SALARY_STRUCTURE_STATUSES } from "@/lib/salary-constants";
+import {
+  CATEGORY_LABEL_MAP,
+  SALARY_STRUCTURE_STATUSES,
+} from "@/lib/salary-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +46,7 @@ export function SalaryStructureForm({
   submitLabel = "Save Structure",
 }: SalaryStructureFormProps) {
   const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>(
-    initialValues?.ruleIds ?? allRules.slice(0, 7).map((r) => r.id)
+    initialValues?.ruleIds ?? allRules.slice(0, 7).map((r) => r.id),
   );
 
   const {
@@ -76,7 +83,9 @@ export function SalaryStructureForm({
   // Toggle rule inclusion
   const toggleRule = (ruleId: string) => {
     setSelectedRuleIds((prev) =>
-      prev.includes(ruleId) ? prev.filter((id) => id !== ruleId) : [...prev, ruleId]
+      prev.includes(ruleId)
+        ? prev.filter((id) => id !== ruleId)
+        : [...prev, ruleId],
     );
   };
 
@@ -91,7 +100,9 @@ export function SalaryStructureForm({
   const submit = async (values: FormValues) => {
     setFormError(null);
     if (selectedRuleIds.length === 0) {
-      setFormError("At least one salary rule must be selected for this salary structure.");
+      setFormError(
+        "At least one salary rule must be selected for this salary structure.",
+      );
       return;
     }
 
@@ -106,7 +117,10 @@ export function SalaryStructureForm({
   };
 
   // Sort all available rules by sequence for selection table
-  const sortedAllRules = useMemo(() => sortRulesBySequence(allRules), [allRules]);
+  const sortedAllRules = useMemo(
+    () => sortRulesBySequence(allRules),
+    [allRules],
+  );
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-6">
@@ -120,7 +134,9 @@ export function SalaryStructureForm({
       {/* Structure Meta Card */}
       <Card>
         <CardHeader className="border-b border-border/60 pb-4">
-          <CardTitle className="text-base font-semibold">Structure Information</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Structure Information
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4 sm:grid-cols-2">
           <div>
@@ -133,12 +149,16 @@ export function SalaryStructureForm({
               {...register("name")}
             />
             {errors.name && (
-              <span className="mt-1 block text-xs text-danger">{errors.name.message}</span>
+              <span className="mt-1 block text-xs text-danger">
+                {errors.name.message}
+              </span>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-text-muted">Status</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Status
+            </label>
             <select
               className="mt-1.5 h-10 w-full rounded-md border border-border bg-surface-raised px-3 text-sm focus:border-primary focus:outline-none"
               {...register("status")}
@@ -152,7 +172,9 @@ export function SalaryStructureForm({
           </div>
 
           <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-text-muted">Description</label>
+            <label className="block text-xs font-semibold text-text-muted">
+              Description
+            </label>
             <Input
               className="mt-1.5"
               placeholder="e.g. Standard corporate salary structure with statutory deductions..."
@@ -167,19 +189,34 @@ export function SalaryStructureForm({
         <CardHeader className="border-b border-border/60 pb-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base font-semibold">Included Salary Rules</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Included Salary Rules
+              </CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Select and verify rules included in this structure. Rules execute in ascending sequence order.
+                Select and verify rules included in this structure. Rules
+                execute in ascending sequence order.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                 {selectedRuleIds.length} of {allRules.length} rules selected
               </span>
-              <Button type="button" variant="secondary" size="sm" onClick={selectAll} className="h-8 text-xs">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={selectAll}
+                className="h-8 text-xs"
+              >
                 Select All
               </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-8 text-xs text-text-muted">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                className="h-8 text-xs text-text-muted"
+              >
                 Clear
               </Button>
             </div>
@@ -229,16 +266,22 @@ export function SalaryStructureForm({
                       <td className="px-3 py-2.5 font-mono font-semibold text-primary">
                         {rule.code}
                       </td>
-                      <td className="px-3 py-2.5 text-text-primary">{rule.name}</td>
+                      <td className="px-3 py-2.5 text-text-primary">
+                        {rule.name}
+                      </td>
                       <td className="px-3 py-2.5">
                         <span className="text-[10px] font-semibold text-text-muted">
-                          {CATEGORY_LABEL_MAP[rule.category as any] || rule.category}
+                          {CATEGORY_LABEL_MAP[rule.category as any] ||
+                            rule.category}
                         </span>
                       </td>
                       <td className="px-3 py-2.5 text-text-muted">
-                        {rule.computationType === "FIXED" && `Fixed (₹${(rule.amount ?? 0).toLocaleString()})`}
-                        {rule.computationType === "PERCENTAGE" && `${rule.percentage}% of ${(rule.basedOn || ["BASIC"]).join(", ")}`}
-                        {rule.computationType === "FORMULA" && `Formula: ${rule.formula}`}
+                        {rule.computationType === "FIXED" &&
+                          `Fixed (₹${(rule.amount ?? 0).toLocaleString()})`}
+                        {rule.computationType === "PERCENTAGE" &&
+                          `${rule.percentage}% of ${(rule.basedOn || ["BASIC"]).join(", ")}`}
+                        {rule.computationType === "FORMULA" &&
+                          `Formula: ${rule.formula}`}
                       </td>
                       <td className="px-3 py-2.5">
                         <span

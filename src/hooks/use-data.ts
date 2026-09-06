@@ -39,25 +39,26 @@ import type {
 } from "@/types/domain";
 import type { Role } from "@/lib/auth/auth-types";
 import type { Permission } from "@/lib/permissions";
+import { matchesEmployee } from "@/lib/utils";
 
 export function useDashboard(filters?: DashboardFilters) { return useQuery({ queryKey: ["dashboard", filters], queryFn: () => dashboardService.get(filters) }); }
-export function useEmployees() { return useQuery({ queryKey: ["employees"], queryFn: employeeService.list }); }
+export function useEmployees(options?: { enabled?: boolean }) { return useQuery({ queryKey: ["employees"], queryFn: employeeService.list, enabled: options?.enabled ?? true }); }
 export function useEmployee(id: string) { return useQuery({ queryKey: ["employees", id], queryFn: () => employeeService.get(id), enabled: Boolean(id) }); }
 export function useContracts() { return useQuery({ queryKey: ["contracts"], queryFn: contractService.list }); }
 export function useContract(id: string) { return useQuery({ queryKey: ["contracts", id], queryFn: () => contractService.get(id), enabled: Boolean(id) }); }
 export function useEmployeeContracts(employeeId: string) { return useQuery({ queryKey: ["contracts", "employee", employeeId], queryFn: () => contractService.listByEmployee(employeeId), enabled: Boolean(employeeId) }); }
 export function useSchedules() { return useQuery({ queryKey: ["schedules"], queryFn: scheduleService.list }); }
 export function useSchedule(id: string) { return useQuery({ queryKey: ["schedules", id], queryFn: () => scheduleService.get(id), enabled: Boolean(id) }); }
-export function useAttendance(employeeId?: string) { return useQuery({ queryKey: ["attendance", employeeId ?? "all"], queryFn: attendanceService.list, select: (records) => employeeId ? records.filter((record) => record.employeeId === employeeId) : records }); }
+export function useAttendance(employeeId?: string) { return useQuery({ queryKey: ["attendance", employeeId ?? "all"], queryFn: attendanceService.list, select: (records) => employeeId ? (records || []).filter((record) => matchesEmployee(record.employeeId, employeeId)) : (records || []) }); }
 export function useAttendanceRecord(id: string) { return useQuery({ queryKey: ["attendance", id], queryFn: () => attendanceService.get(id), enabled: Boolean(id) }); }
 
-export function useTimeOff(employeeId?: string) { return useQuery({ queryKey: ["time-off", employeeId ?? "all"], queryFn: timeOffService.list, select: (records) => employeeId ? records.filter((record) => record.employeeId === employeeId) : records }); }
+export function useTimeOff(employeeId?: string) { return useQuery({ queryKey: ["time-off", employeeId ?? "all"], queryFn: timeOffService.list, select: (records) => employeeId ? (records || []).filter((record) => matchesEmployee(record.employeeId, employeeId)) : (records || []) }); }
 export function useTimeOffRequest(id: string) { return useQuery({ queryKey: ["time-off", id], queryFn: () => timeOffService.get(id), enabled: Boolean(id) }); }
 
 export function useTimeOffTypes() { return useQuery({ queryKey: ["time-off-types"], queryFn: timeOffTypeService.list }); }
 export function useTimeOffType(id: string) { return useQuery({ queryKey: ["time-off-types", id], queryFn: () => timeOffTypeService.get(id), enabled: Boolean(id) }); }
 
-export function useTimeOffAllocations(employeeId?: string) { return useQuery({ queryKey: ["time-off-allocations", employeeId ?? "all"], queryFn: allocationService.list, select: (records) => employeeId ? records.filter((record) => record.employeeId === employeeId) : records }); }
+export function useTimeOffAllocations(employeeId?: string) { return useQuery({ queryKey: ["time-off-allocations", employeeId ?? "all"], queryFn: allocationService.list, select: (records) => employeeId ? (records || []).filter((record) => matchesEmployee(record.employeeId, employeeId)) : (records || []) }); }
 export function useTimeOffAllocation(id: string) { return useQuery({ queryKey: ["time-off-allocations", id], queryFn: () => allocationService.get(id), enabled: Boolean(id) }); }
 
 export function useSalaryStructures() { return useQuery({ queryKey: ["salary-structures"], queryFn: salaryStructureService.list }); }
@@ -78,7 +79,7 @@ export function useSalaryCalculationPreview(structureId: string, baseSalary?: nu
 
 export function usePayruns() { return useQuery({ queryKey: ["payruns"], queryFn: payrunService.list }); }
 export function usePayslips() { return useQuery({ queryKey: ["payslips"], queryFn: payslipService.list }); }
-export function useUsers() { return useQuery({ queryKey: ["users"], queryFn: userService.list }); }
+export function useUsers(options?: { enabled?: boolean }) { return useQuery({ queryKey: ["users"], queryFn: userService.list, enabled: options?.enabled ?? true }); }
 
 export function useCreateEmployee() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<Employee, "id">) => employeeService.create(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employees"] }) }); }
 export function useUpdateEmployee() { const queryClient = useQueryClient(); return useMutation({ mutationFn: ({ id, input }: { id: string; input: Partial<Employee> }) => employeeService.update(id, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employees"] }) }); }
@@ -108,11 +109,10 @@ export function useDeleteTimeOffRequest() { const queryClient = useQueryClient()
 export function useApproveTimeOff() { const queryClient = useQueryClient(); return useMutation({ mutationFn: timeOffWorkflow.approve, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["time-off"] }); queryClient.invalidateQueries({ queryKey: ["time-off-allocations"] }); queryClient.invalidateQueries({ queryKey: ["dashboard"] }); } }); }
 export function useRefuseTimeOff() { const queryClient = useQueryClient(); return useMutation({ mutationFn: timeOffWorkflow.refuse, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["time-off"] }); queryClient.invalidateQueries({ queryKey: ["dashboard"] }); } }); }
 
-export function usePayrun(id: string) { return useQuery({ queryKey: ["payruns", id], queryFn: () => payrunService.get(id), enabled: Boolean(id) }); }
-export function usePayslip(id: string) { return useQuery({ queryKey: ["payslips", id], queryFn: () => payslipService.get(id), enabled: Boolean(id) }); }
-export function useEmployeePayslips(employeeId?: string) { return useQuery({ queryKey: ["payslips", "employee", employeeId ?? "all"], queryFn: payslipService.list, select: (slips) => employeeId ? slips.filter((s) => s.employeeId === employeeId) : slips }); }
+export function usePayslip(id: string) { return useQuery({ queryKey: ["payslips", id], queryFn: () => payslipService.get(id), enabled: Boolean(id && id !== "undefined") }); }
+export function useEmployeePayslips(employeeId?: string) { return useQuery({ queryKey: ["payslips", "employee", employeeId ?? "all"], queryFn: payslipService.list, select: (slips) => employeeId ? (slips || []).filter((s) => matchesEmployee(s.employeeId, employeeId)) : (slips || []) }); }
 export function useGeneratePayslipPdf() { return useMutation({ mutationFn: payslipService.generatePdf }); }
-
+export function usePayrun(id: string) { return useQuery({ queryKey: ["payruns", id], queryFn: () => payrunService.get(id), enabled: Boolean(id && id !== "undefined") }); }
 export function useCreatePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: (input: Omit<Payrun, "id">) => payrunService.create(input), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["payruns"] }); queryClient.invalidateQueries({ queryKey: ["dashboard"] }); } }); }
 export function useComputePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.compute, onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["payruns"] }); queryClient.invalidateQueries({ queryKey: ["payruns", variables] }); queryClient.invalidateQueries({ queryKey: ["payslips"] }); queryClient.invalidateQueries({ queryKey: ["dashboard"] }); } }); }
 export function useValidatePayrun() { const queryClient = useQueryClient(); return useMutation({ mutationFn: payrunWorkflow.validate, onSuccess: (_data, variables) => { queryClient.invalidateQueries({ queryKey: ["payruns"] }); queryClient.invalidateQueries({ queryKey: ["payruns", variables] }); queryClient.invalidateQueries({ queryKey: ["payslips"] }); queryClient.invalidateQueries({ queryKey: ["dashboard"] }); } }); }
@@ -121,7 +121,7 @@ export function useSendPayslips() { const queryClient = useQueryClient(); return
 
 // User Management Hooks
 export function useUser(id: string) {
-  return useQuery({ queryKey: ["users", id], queryFn: () => userService.get(id), enabled: Boolean(id) });
+  return useQuery({ queryKey: ["users", id], queryFn: () => userService.get(id), enabled: Boolean(id && id !== "undefined") });
 }
 export function useCreateUser() {
   const queryClient = useQueryClient();
@@ -153,10 +153,10 @@ export function useRoles() {
   return useQuery({ queryKey: ["roles"], queryFn: roleService.listRoles });
 }
 export function useRole(role: Role) {
-  return useQuery({ queryKey: ["roles", role], queryFn: () => roleService.getRole(role), enabled: Boolean(role) });
+  return useQuery({ queryKey: ["roles", role], queryFn: () => roleService.getRole(role), enabled: Boolean(role && role !== ("undefined" as any)) });
 }
 export function useRolePermissions(role: Role) {
-  return useQuery({ queryKey: ["roles", role, "permissions"], queryFn: () => roleService.getPermissions(role), enabled: Boolean(role) });
+  return useQuery({ queryKey: ["roles", role, "permissions"], queryFn: () => roleService.getPermissions(role), enabled: Boolean(role && role !== ("undefined" as any)) });
 }
 export function useUpdateRolePermissions() {
   const queryClient = useQueryClient();
