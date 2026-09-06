@@ -1,71 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// app/api/employees/route.js
-// Employee collection API: list and create employees.
-//
-// Contract (snake_case fields, mirroring the employees table columns):
-//   GET    -> 200 { employees: [...], pagination: { page, limit, total, totalPages } }
-//   POST   -> 201 { employee: {...} } | 400 invalid | 409 duplicate code
-//   401 -> not authenticated (middleware) | 403 -> missing permission
-//
-// Authorization (existing permission system):
-// - GET  requires 'employees:read'  - today only ADMIN passes via '*'
-// - POST requires 'employees:write' - ADMIN-only in the seeded demo.
-//
-// Scope: every query is filtered to the company_id of the seeded company.
-
 import { asc, eq, ilike, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -229,8 +161,14 @@ export async function GET(request) {
       .where(where);
 
     const rows = await db
-      .select(employeeColumns)
+      .select({
+        ...employeeColumns,
+        department: departments.name,
+        position: jobPositions.title,
+      })
       .from(employees)
+      .leftJoin(departments, eq(employees.departmentId, departments.id))
+      .leftJoin(jobPositions, eq(employees.jobPositionId, jobPositions.id))
       .where(where)
       .orderBy(asc(employees.id))
       .limit(limit)
