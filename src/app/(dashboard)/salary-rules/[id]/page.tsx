@@ -67,7 +67,9 @@ export default function SalaryRuleDetailPage() {
     }
 
     return codes.map((c) => {
-      const target = allRules.find((r) => r.code.toUpperCase() === c.toUpperCase());
+      const target = allRules.find(
+        (r) => r.code.toUpperCase() === c.toUpperCase(),
+      );
       const isSequenceValid = target ? target.sequence < rule.sequence : false;
       return {
         code: c,
@@ -106,7 +108,10 @@ export default function SalaryRuleDetailPage() {
 
       <PageHeader
         title={rule.name}
-        description={rule.description || "Detailed configuration and dependency analysis for this salary rule."}
+        description={
+          rule.description ||
+          "Detailed configuration and dependency analysis for this salary rule."
+        }
         action={
           canEdit
             ? { label: "Edit Rule", href: `/salary-rules/${id}/edit` }
@@ -153,7 +158,7 @@ export default function SalaryRuleDetailPage() {
           <div>
             <p className="text-xs text-text-muted">Status</p>
             <div className="mt-2">
-              <StatusBadge status={rule.status.toLowerCase() as any} />
+              <StatusBadge status={rule.status} />
             </div>
           </div>
           {canDelete && (
@@ -176,24 +181,30 @@ export default function SalaryRuleDetailPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader className="border-b border-border/60 pb-4">
-              <CardTitle className="text-base font-semibold">Computation Logic</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Computation Logic
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 pt-5">
               <div>
                 <p className="text-xs text-text-muted">Computation Method</p>
                 <p className="mt-1 text-sm font-semibold text-text-primary">
-                  {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] || rule.computationType}
+                  {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] ||
+                    rule.computationType}
                 </p>
               </div>
 
               {rule.computationType === "FIXED" && (
                 <div className="rounded-lg border border-border/60 bg-surface-raised/40 p-4">
-                  <p className="text-xs text-text-muted">Fixed Monetary Value</p>
+                  <p className="text-xs text-text-muted">
+                    Fixed Monetary Value
+                  </p>
                   <p className="mt-1 font-mono text-2xl font-bold text-text-primary">
                     ₹{(rule.amount ?? 0).toLocaleString()}
                   </p>
                   <p className="mt-2 text-xs text-text-secondary">
-                    This amount is evaluated as a static fixed numerical value during payroll calculation.
+                    This amount is evaluated as a static fixed numerical value
+                    during payroll calculation.
                   </p>
                 </div>
               )}
@@ -207,7 +218,9 @@ export default function SalaryRuleDetailPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-text-muted">Calculated on Basis Rule(s)</p>
+                    <p className="text-xs text-text-muted">
+                      Calculated on Basis Rule(s)
+                    </p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {(rule.basedOn || ["BASIC"]).map((b) => (
                         <span
@@ -220,7 +233,8 @@ export default function SalaryRuleDetailPage() {
                     </div>
                   </div>
                   <p className="text-xs text-text-secondary pt-1">
-                    Evaluated as ({rule.percentage}% × sum of basis rules) during rule sequence execution.
+                    Evaluated as ({rule.percentage}% × sum of basis rules)
+                    during rule sequence execution.
                   </p>
                 </div>
               )}
@@ -233,7 +247,10 @@ export default function SalaryRuleDetailPage() {
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-text-muted pt-1">
                     <CheckCircle2 className="size-3.5 text-green-400" />
-                    <span>Safe arithmetic expression evaluated against prior rule sequence values.</span>
+                    <span>
+                      Safe arithmetic expression evaluated against prior rule
+                      sequence values.
+                    </span>
                   </div>
                 </div>
               )}
@@ -241,7 +258,9 @@ export default function SalaryRuleDetailPage() {
               {rule.description && (
                 <div>
                   <p className="text-xs text-text-muted">Rule Description</p>
-                  <p className="mt-1 text-sm text-text-secondary">{rule.description}</p>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    {rule.description}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -250,15 +269,20 @@ export default function SalaryRuleDetailPage() {
           {/* Dependency Verification */}
           <Card>
             <CardHeader className="border-b border-border/60 pb-4">
-              <CardTitle className="text-base font-semibold">Rule Dependencies ({dependencies.length})</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Rule Dependencies ({dependencies.length})
+              </CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Referenced rule codes that must execute before this rule in sequence.
+                Referenced rule codes that must execute before this rule in
+                sequence.
               </p>
             </CardHeader>
             <CardContent className="pt-4">
               {dependencies.length === 0 ? (
                 <p className="p-4 text-xs text-text-muted">
-                  This rule has no external dependencies. It computes independently based on static configuration or contract base salary.
+                  This rule has no external dependencies. It computes
+                  independently based on static configuration or contract base
+                  salary.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -280,7 +304,8 @@ export default function SalaryRuleDetailPage() {
 
                       {dep.isValid && dep.isSequenceValid ? (
                         <span className="inline-flex items-center gap-1 rounded bg-green-500/10 border border-green-500/20 px-2 py-0.5 text-[10px] font-semibold text-green-400">
-                          <CheckCircle2 className="size-3" /> Valid (Seq {dep.rule?.sequence} &lt; {rule.sequence})
+                          <CheckCircle2 className="size-3" /> Valid (Seq{" "}
+                          {dep.rule?.sequence} &lt; {rule.sequence})
                         </span>
                       ) : !dep.isValid ? (
                         <span className="inline-flex items-center gap-1 rounded bg-danger/10 border border-danger/20 px-2 py-0.5 text-[10px] font-semibold text-danger">
@@ -288,7 +313,8 @@ export default function SalaryRuleDetailPage() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                          <AlertTriangle className="size-3" /> Sequence Violation
+                          <AlertTriangle className="size-3" /> Sequence
+                          Violation
                         </span>
                       )}
                     </div>
@@ -307,13 +333,15 @@ export default function SalaryRuleDetailPage() {
                 Associated Salary Structures ({referencingStructures.length})
               </CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Salary structures that currently include this rule in their execution set.
+                Salary structures that currently include this rule in their
+                execution set.
               </p>
             </CardHeader>
             <CardContent className="pt-4">
               {referencingStructures.length === 0 ? (
                 <p className="p-4 text-xs text-text-muted">
-                  This rule is currently unassigned to any salary structure. You can include it when creating or editing a structure.
+                  This rule is currently unassigned to any salary structure. You
+                  can include it when creating or editing a structure.
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -327,7 +355,9 @@ export default function SalaryRuleDetailPage() {
                         <p className="text-sm font-semibold text-text-primary">
                           {structure.name}
                         </p>
-                        <StatusBadge status={structure.status.toLowerCase() as any} />
+                        <StatusBadge
+                          status={structure.status}
+                        />
                       </div>
                       <p className="mt-1 text-xs text-text-muted">
                         Contains {structure.ruleIds?.length ?? 0} rules
@@ -341,17 +371,35 @@ export default function SalaryRuleDetailPage() {
 
           <Card>
             <CardHeader className="border-b border-border/60 pb-4">
-              <CardTitle className="text-base font-semibold">Configuration Summary</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Configuration Summary
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 text-xs text-text-secondary space-y-2 font-mono">
               <p>Rule: {rule.name}</p>
               <p>Code: {rule.code}</p>
-              <p>Category: {CATEGORY_LABEL_MAP[rule.category as any] || rule.category}</p>
+              <p>
+                Category:{" "}
+                {CATEGORY_LABEL_MAP[rule.category as any] || rule.category}
+              </p>
               <p>Sequence: {rule.sequence}</p>
-              <p>Computation: {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] || rule.computationType}</p>
-              {rule.computationType === "FIXED" && <p>Amount: ₹{(rule.amount ?? 0).toLocaleString()}</p>}
-              {rule.computationType === "PERCENTAGE" && <p>Rate: {rule.percentage}% of {(rule.basedOn || ["BASIC"]).join(", ")}</p>}
-              {rule.computationType === "FORMULA" && <p>Expression: {rule.formula}</p>}
+              <p>
+                Computation:{" "}
+                {COMPUTATION_TYPE_LABEL_MAP[rule.computationType] ||
+                  rule.computationType}
+              </p>
+              {rule.computationType === "FIXED" && (
+                <p>Amount: ₹{(rule.amount ?? 0).toLocaleString()}</p>
+              )}
+              {rule.computationType === "PERCENTAGE" && (
+                <p>
+                  Rate: {rule.percentage}% of{" "}
+                  {(rule.basedOn || ["BASIC"]).join(", ")}
+                </p>
+              )}
+              {rule.computationType === "FORMULA" && (
+                <p>Expression: {rule.formula}</p>
+              )}
             </CardContent>
           </Card>
         </div>
