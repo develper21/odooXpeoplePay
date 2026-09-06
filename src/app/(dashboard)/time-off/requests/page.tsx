@@ -9,20 +9,32 @@ import { canAccess } from "@/lib/permissions";
 import { employeeName } from "@/lib/hr-utils";
 import { formatTimeOffDate } from "@/lib/time-off-utils";
 import { PageHeader } from "@/components/shared/page-header";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { TimeOffTabs } from "@/components/time-off/time-off-tabs";
+import { matchesEmployee } from "@/lib/utils";
 
 export default function TimeOffRequestsPage() {
   const { user } = useAuth();
   const isEmployeeRole = user?.role === "EMPLOYEE";
   const currentUserEmpId = user?.employeeId ?? "emp-001";
 
-  const { data: requests = [], isLoading, isError } = useTimeOff(
-    isEmployeeRole ? currentUserEmpId : undefined
-  );
+  const {
+    data: requests = [],
+    isLoading,
+    isError,
+  } = useTimeOff(isEmployeeRole ? currentUserEmpId : undefined);
   const { data: employees = [] } = useEmployees();
   const { data: types = [] } = useTimeOffTypes();
 
@@ -33,31 +45,37 @@ export default function TimeOffRequestsPage() {
 
   const filtered = useMemo(() => {
     return requests.filter((req) => {
-      const emp = employees.find((e) => e.id === req.employeeId);
+      const emp = employees.find((e) => matchesEmployee(e.id, req.employeeId));
       const name = emp ? employeeName(emp).toLowerCase() : "";
-      const code = emp ? emp.employeeNumber.toLowerCase() : "";
+      const code = emp ? (emp.employeeNumber || "").toLowerCase() : "";
+      const reqType = (req.type || "").toLowerCase();
+      const reqReason = (req.reason || "").toLowerCase();
       const matchSearch =
         name.includes(search.toLowerCase()) ||
         code.includes(search.toLowerCase()) ||
-        req.type.toLowerCase().includes(search.toLowerCase()) ||
-        req.reason.toLowerCase().includes(search.toLowerCase());
+        reqType.includes(search.toLowerCase()) ||
+        reqReason.includes(search.toLowerCase());
 
       const matchType =
         typeFilter === "ALL" ||
-        req.typeId === typeFilter ||
-        req.type.toLowerCase() === typeFilter.toLowerCase();
+        String(req.typeId) === String(typeFilter) ||
+        reqType === typeFilter.toLowerCase();
 
-      const matchStatus = statusFilter === "ALL" || req.status === statusFilter;
+      const matchStatus =
+        statusFilter === "ALL" ||
+        req.status?.toUpperCase() === statusFilter.toUpperCase();
 
       const matchEmployee =
-        employeeFilter === "ALL" || req.employeeId === employeeFilter;
+        employeeFilter === "ALL" ||
+        matchesEmployee(req.employeeId, employeeFilter);
 
       return matchSearch && matchType && matchStatus && matchEmployee;
     });
   }, [requests, employees, search, typeFilter, statusFilter, employeeFilter]);
 
   if (isLoading) return <LoadingState />;
-  if (isError) return <ErrorState message="Time Off requests could not be loaded." />;
+  if (isError)
+    return <ErrorState message="Time Off requests could not be loaded." />;
 
   const canCreate = Boolean(user && canAccess(user.role, "timeoff.create"));
 
@@ -90,7 +108,7 @@ export default function TimeOffRequestsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 rounded-md border bg-surface-raised px-3 text-xs text-text-secondary"
+            className="h-10 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors"
           >
             <option value="ALL">All Statuses</option>
             <option value="PENDING">Pending</option>
@@ -102,7 +120,7 @@ export default function TimeOffRequestsPage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-10 rounded-md border bg-surface-raised px-3 text-xs text-text-secondary"
+            className="h-10 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors"
           >
             <option value="ALL">All Leave Types</option>
             {types.map((t) => (
@@ -116,7 +134,7 @@ export default function TimeOffRequestsPage() {
             <select
               value={employeeFilter}
               onChange={(e) => setEmployeeFilter(e.target.value)}
-              className="h-10 rounded-md border bg-surface-raised px-3 text-xs text-text-secondary"
+              className="h-10 rounded-lg border border-border bg-surface-raised pl-3 pr-8 text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer transition-colors max-w-[200px] truncate"
             >
               <option value="ALL">All Employees</option>
               {employees.map((emp) => (
@@ -142,7 +160,10 @@ export default function TimeOffRequestsPage() {
       </Card>
 
       {filtered.length === 0 ? (
-        <EmptyState title="No requests found" message="Try adjusting search or filters, or submit a new request." />
+        <EmptyState
+          title="No requests found"
+          message="Try adjusting search or filters, or submit a new request."
+        />
       ) : (
         <DataTable>
           <TableHeader>
@@ -162,22 +183,39 @@ export default function TimeOffRequestsPage() {
               return (
                 <TableRow key={req.id}>
                   <TableCell>
-                    <Link href={`/employees/${req.employeeId}`} className="font-semibold hover:text-primary">
+                    <Link
+                      href={`/employees/${req.employeeId}`}
+                      className="font-semibold hover:text-primary"
+                    >
                       {emp ? employeeName(emp) : req.employeeId}
                     </Link>
                   </TableCell>
-                  <TableCell className="font-medium text-text-primary">{req.type}</TableCell>
+                  <TableCell className="font-medium text-text-primary">
+                    {req.type}
+                  </TableCell>
                   <TableCell className="text-xs text-text-secondary">
-                    {formatTimeOffDate(req.startDate)} → {formatTimeOffDate(req.endDate)}
+                    {formatTimeOffDate(req.startDate)} →{" "}
+                    {formatTimeOffDate(req.endDate)}
                   </TableCell>
                   <TableCell className="font-semibold">
                     {req.days} {unitLabel}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={req.status.toLowerCase() as "pending" | "approved" | "refused" | "cancelled"} />
+                    <StatusBadge
+                      status={
+                        req.status.toLowerCase() as
+                          | "pending"
+                          | "approved"
+                          | "refused"
+                          | "cancelled"
+                      }
+                    />
                   </TableCell>
                   <TableCell>
-                    <Link href={`/time-off/requests/${req.id}`} className="text-xs font-medium text-primary hover:underline">
+                    <Link
+                      href={`/time-off/requests/${req.id}`}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
                       View
                     </Link>
                   </TableCell>
