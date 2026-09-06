@@ -2,7 +2,11 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { useCreateAllocation, useEmployees, useTimeOffTypes } from "@/hooks/use-data";
+import {
+  useCreateAllocation,
+  useEmployees,
+  useTimeOffTypes,
+} from "@/hooks/use-data";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState } from "@/components/shared/states";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,19 +36,23 @@ function NewAllocationContent() {
       <Card>
         <CardContent className="p-5 sm:p-7">
           <AllocationForm
-            initialValues={paramEmployeeId ? { employeeId: paramEmployeeId } : undefined}
+            initialValues={
+              paramEmployeeId ? { employeeId: paramEmployeeId } : undefined
+            }
             employees={employees}
             types={types}
             submitting={mutation.isPending}
             onCancel={() => router.back()}
             onSubmit={async (values) => {
-              await mutation.mutateAsync(values as Omit<TimeOffAllocation, "id">);
+              await mutation.mutateAsync(
+                values as Omit<TimeOffAllocation, "id">,
+              );
               setToastMessage("Allocation created successfully.");
               setTimeout(() => {
                 router.push(
                   paramEmployeeId
                     ? `/employees/${paramEmployeeId}/allocations`
-                    : "/time-off/allocations"
+                    : "/time-off/allocations",
                 );
               }, 600);
             }}
