@@ -8,8 +8,17 @@ import { roleLabels } from "@/lib/permissions";
 import { employeeName } from "@/lib/hr-utils";
 import type { Role } from "@/lib/auth/auth-types";
 import { PageHeader } from "@/components/shared/page-header";
-import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import { DataTable, TableCell, TableHeader, TableRow } from "@/components/shared/table";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/shared/states";
+import {
+  DataTable,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,10 +37,11 @@ export default function UsersPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
+    const q = (search || "").toLowerCase().trim();
     return users.filter((u) => {
-      const matchSearch =
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase());
+      const uName = (u.name || `${(u as any).firstName || ""} ${(u as any).lastName || ""}`.trim() || u.email || "").toLowerCase();
+      const uEmail = (u.email || "").toLowerCase();
+      const matchSearch = !q || uName.includes(q) || uEmail.includes(q);
       const matchRole = roleFilter === "ALL" || u.role === roleFilter;
       const matchStatus = statusFilter === "ALL" || u.status === statusFilter;
       return matchSearch && matchRole && matchStatus;
@@ -82,7 +92,9 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-muted">Total Accounts</p>
-              <p className="mt-1 text-2xl font-bold text-text-primary">{users.length}</p>
+              <p className="mt-1 text-2xl font-bold text-text-primary">
+                {users.length}
+              </p>
             </div>
             <div className="rounded-lg bg-blue-500/10 p-2 text-primary">
               <UserCheck className="size-5" />
@@ -190,12 +202,19 @@ export default function UsersPage() {
           <tbody>
             {filtered.map((userItem) => {
               const emp = employees.find((e) => e.id === userItem.employeeId);
-              const initials = userItem.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .substring(0, 2)
-                .toUpperCase();
+              const displayName =
+                userItem.name ||
+                `${(userItem as any).firstName || ""} ${(userItem as any).lastName || ""}`.trim() ||
+                userItem.email ||
+                "User";
+              const initials =
+                displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .substring(0, 2)
+                  .toUpperCase() || "U";
 
               return (
                 <TableRow key={userItem.id}>
@@ -209,15 +228,17 @@ export default function UsersPage() {
                           href={`/users/${userItem.id}`}
                           className="font-semibold text-text-primary hover:text-primary"
                         >
-                          {userItem.name}
+                          {displayName}
                         </Link>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-text-secondary">{userItem.email}</TableCell>
+                  <TableCell className="text-xs text-text-secondary">
+                    {userItem.email}
+                  </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      {roleLabels[userItem.role]}
+                      {roleLabels[userItem.role] || userItem.role || (userItem as any).roleName || "User"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -233,9 +254,7 @@ export default function UsersPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge
-                      status={userItem.status.toLowerCase() as "active" | "inactive" | "pending"}
-                    />
+                    <StatusBadge status={userItem.status} />
                   </TableCell>
                   <TableCell className="text-xs text-text-muted">
                     {formatActivity(userItem.lastActivity)}
