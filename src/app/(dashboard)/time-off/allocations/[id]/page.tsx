@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Clock, Trash2, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import {
   useTimeOffAllocation,
   useDeleteAllocation,
@@ -16,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { employeeName } from "@/lib/hr-utils";
 import { formatTimeOffDate } from "@/lib/time-off-utils";
+import { matchesEmployee } from "@/lib/utils";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingState, ErrorState } from "@/components/shared/states";
 import { StatusBadge } from "@/components/ui/badge";
@@ -41,11 +48,14 @@ export default function AllocationDetailPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !allocation) return <ErrorState message="Allocation record was not found." />;
+  if (isError || !allocation)
+    return <ErrorState message="Allocation record was not found." />;
 
   // Employee role can only view their own allocation
   if (user?.role === "EMPLOYEE" && allocation.employeeId !== user.employeeId) {
-    return <ErrorState message="You are not authorized to view this leave allocation." />;
+    return (
+      <ErrorState message="You are not authorized to view this leave allocation." />
+    );
   }
 
   const canEdit = Boolean(user && canAccess(user.role, "timeoff.approve"));
@@ -53,18 +63,25 @@ export default function AllocationDetailPage() {
 
   const matchingRequests = requests.filter(
     (r) =>
-      r.employeeId === allocation.employeeId &&
-      (r.allocationId === allocation.id || r.type.toLowerCase() === allocation.type.toLowerCase())
+      matchesEmployee(r.employeeId, allocation.employeeId) &&
+      (String(r.allocationId) === String(allocation.id) ||
+        (r.typeId && String(r.typeId) === String(allocation.typeId)) ||
+        (Boolean(r.type && allocation.type) &&
+          r.type.toLowerCase() === allocation.type.toLowerCase())),
   );
 
   const handleApprove = async () => {
     await approveMutation.mutateAsync(id);
-    setToastMessage("Allocation approved! Balance is now available for leave requests.");
+    setToastMessage(
+      "Allocation approved! Balance is now available for leave requests.",
+    );
   };
 
   const handleRefuse = async () => {
     await refuseMutation.mutateAsync({ id });
-    setToastMessage("Allocation refused. It will not contribute to employee balances.");
+    setToastMessage(
+      "Allocation refused. It will not contribute to employee balances.",
+    );
     setConfirmRefuseOpen(false);
   };
 
@@ -77,7 +94,8 @@ export default function AllocationDetailPage() {
   };
 
   const isPending = allocation.status === "PENDING";
-  const isApproved = allocation.status === "APPROVED" || allocation.status === "ACTIVE";
+  const isApproved =
+    allocation.status === "APPROVED" || allocation.status === "ACTIVE";
   const isRefused = allocation.status === "REFUSED";
 
   return (
@@ -88,7 +106,10 @@ export default function AllocationDetailPage() {
         description={`${employee ? employeeName(employee) : allocation.employeeId}`}
         action={
           canEdit
-            ? { label: "Edit Allocation", href: `/time-off/allocations/${id}/edit` }
+            ? {
+                label: "Edit Allocation",
+                href: `/time-off/allocations/${id}/edit`,
+              }
             : undefined
         }
       />
@@ -138,7 +159,11 @@ export default function AllocationDetailPage() {
           )}
 
           {canDelete && (
-            <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
               <Trash2 className="size-4 text-text-muted hover:text-red-400" />
             </Button>
           )}
@@ -150,11 +175,15 @@ export default function AllocationDetailPage() {
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-300">
           <Clock className="size-5 shrink-0 text-amber-400" />
           <div className="text-xs leading-relaxed">
-            <p className="font-semibold text-amber-200">Allocation Pending Approval</p>
+            <p className="font-semibold text-amber-200">
+              Allocation Pending Approval
+            </p>
             <p className="mt-0.5 text-amber-300/90">
-              This quota of {allocation.allocatedDays} {allocation.unit ?? "DAYS"} has been submitted
-              for approval. Per enterprise policy, it does <strong>not</strong> contribute to the
-              employee’s usable leave balance until an authorized manager approves it.
+              This quota of {allocation.allocatedDays}{" "}
+              {allocation.unit ?? "DAYS"} has been submitted for approval. Per
+              enterprise policy, it does <strong>not</strong> contribute to the
+              employee’s usable leave balance until an authorized manager
+              approves it.
             </p>
           </div>
         </div>
@@ -166,8 +195,9 @@ export default function AllocationDetailPage() {
           <div className="text-xs leading-relaxed">
             <p className="font-semibold text-red-200">Allocation Refused</p>
             <p className="mt-0.5 text-red-300/90">
-              This allocation was refused and has not contributed to the employee’s leave balance.
-              If this was done in error, please submit a new allocation request.
+              This allocation was refused and has not contributed to the
+              employee’s leave balance. If this was done in error, please submit
+              a new allocation request.
             </p>
           </div>
         </div>
@@ -177,10 +207,13 @@ export default function AllocationDetailPage() {
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-300">
           <CheckCircle2 className="size-5 shrink-0 text-green-400" />
           <div className="text-xs leading-relaxed">
-            <p className="font-semibold text-green-200">Allocation Approved & Active</p>
+            <p className="font-semibold text-green-200">
+              Allocation Approved & Active
+            </p>
             <p className="mt-0.5 text-green-300/90">
-              This allocation is active. Employees may submit leave requests against the {allocation.remainingDays}{" "}
-              {allocation.unit ?? "DAYS"} remaining balance within the validity window.
+              This allocation is active. Employees may submit leave requests
+              against the {allocation.remainingDays} {allocation.unit ?? "DAYS"}{" "}
+              remaining balance within the validity window.
             </p>
           </div>
         </div>
@@ -228,12 +261,15 @@ export default function AllocationDetailPage() {
             <div>
               <p className="text-xs text-text-muted">Validity Period</p>
               <p className="mt-1 text-sm font-medium">
-                {formatTimeOffDate(allocation.validFrom)} → {formatTimeOffDate(allocation.validTo)}
+                {formatTimeOffDate(allocation.validFrom)} →{" "}
+                {formatTimeOffDate(allocation.validTo)}
               </p>
             </div>
             <div>
               <p className="text-xs text-text-muted">Related Requests</p>
-              <p className="mt-1 text-sm font-medium">{matchingRequests.length} submitted</p>
+              <p className="mt-1 text-sm font-medium">
+                {matchingRequests.length} submitted
+              </p>
             </div>
           </CardContent>
         </Card>
