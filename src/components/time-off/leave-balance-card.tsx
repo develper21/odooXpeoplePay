@@ -4,16 +4,25 @@ import { formatTimeOffDate } from "@/lib/time-off-utils";
 import type { TimeOffAllocation } from "@/types/domain";
 import { Clock, AlertCircle } from "lucide-react";
 
-export function LeaveBalanceCard({ allocation }: { allocation: TimeOffAllocation }) {
+export function LeaveBalanceCard({
+  allocation,
+}: {
+  allocation: TimeOffAllocation;
+}) {
   const isPending = allocation.status === "PENDING";
   const isRefused = allocation.status === "REFUSED";
-  const isAvailable = allocation.status === "APPROVED" || allocation.status === "ACTIVE";
+  const isAvailable =
+    allocation.status === "APPROVED" || allocation.status === "ACTIVE";
 
   const unitLabel = allocation.unit === "HOURS" ? "hours" : "days";
 
-  const percentage = isAvailable && allocation.allocatedDays > 0
-    ? Math.min(100, Math.round((allocation.usedDays / allocation.allocatedDays) * 100))
-    : 0;
+  const percentage =
+    isAvailable && allocation.allocatedDays > 0
+      ? Math.min(
+          100,
+          Math.round((allocation.usedDays / allocation.allocatedDays) * 100),
+        )
+      : 0;
 
   return (
     <Card className="p-5">
@@ -21,7 +30,8 @@ export function LeaveBalanceCard({ allocation }: { allocation: TimeOffAllocation
         <div>
           <h3 className="font-semibold text-text-primary">{allocation.type}</h3>
           <p className="mt-1 text-xs text-text-muted">
-            Valid {formatTimeOffDate(allocation.validFrom)} → {formatTimeOffDate(allocation.validTo)}
+            Valid {formatTimeOffDate(allocation.validFrom)} →{" "}
+            {formatTimeOffDate(allocation.validTo)}
           </p>
         </div>
         <StatusBadge
@@ -44,7 +54,9 @@ export function LeaveBalanceCard({ allocation }: { allocation: TimeOffAllocation
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-bold text-amber-400">0</span>
-                <span className="text-xs font-semibold text-amber-400">usable {unitLabel}</span>
+                <span className="text-xs font-semibold text-amber-400">
+                  usable {unitLabel}
+                </span>
               </div>
               <p className="mt-0.5 flex items-center gap-1 text-[11px] text-amber-400/90">
                 <Clock className="size-3" />
@@ -55,7 +67,9 @@ export function LeaveBalanceCard({ allocation }: { allocation: TimeOffAllocation
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-bold text-red-400">0</span>
-                <span className="text-xs font-semibold text-red-400">usable {unitLabel}</span>
+                <span className="text-xs font-semibold text-red-400">
+                  usable {unitLabel}
+                </span>
               </div>
               <p className="mt-0.5 flex items-center gap-1 text-[11px] text-red-400/90">
                 <AlertCircle className="size-3" />
@@ -64,18 +78,20 @@ export function LeaveBalanceCard({ allocation }: { allocation: TimeOffAllocation
             </div>
           ) : (
             <div>
-              <span className="text-2xl font-bold text-text-primary">{allocation.remainingDays}</span>
-              <span className="ml-1 text-xs text-text-muted">{unitLabel} remaining</span>
+              <span className="text-2xl font-bold text-text-primary">
+                {allocation.remainingDays}
+              </span>
+              <span className="ml-1 text-xs text-text-muted">
+                {unitLabel} remaining
+              </span>
             </div>
           )}
         </div>
 
         <span className="text-xs text-text-secondary">
-          {isAvailable ? (
-            `Used ${allocation.usedDays} / ${allocation.allocatedDays} ${unitLabel}`
-          ) : (
-            `Total Quota: ${allocation.allocatedDays} ${unitLabel}`
-          )}
+          {isAvailable
+            ? `Used ${allocation.usedDays} / ${allocation.allocatedDays} ${unitLabel}`
+            : `Total Quota: ${allocation.allocatedDays} ${unitLabel}`}
         </span>
       </div>
 
@@ -85,8 +101,8 @@ export function LeaveBalanceCard({ allocation }: { allocation: TimeOffAllocation
             isPending
               ? "bg-amber-500/50"
               : isRefused
-              ? "bg-red-500/50"
-              : "bg-primary"
+                ? "bg-red-500/50"
+                : "bg-primary"
           }`}
           style={{ width: isPending ? "100%" : `${percentage}%` }}
         />
