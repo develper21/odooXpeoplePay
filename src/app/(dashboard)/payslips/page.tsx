@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { LoadingState, EmptyState, ErrorState } from "@/components/shared/states";
-import type { PayslipStatus } from "@/types/domain";
 
 export default function PayslipsPage() {
   const { user } = useAuth();
@@ -24,6 +23,7 @@ export default function PayslipsPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [deliveryFilter, setDeliveryFilter] = useState<string>("ALL");
   const [payrunFilter, setPayrunFilter] = useState<string>("ALL");
   const [employeeFilter, setEmployeeFilter] = useState<string>(
     isEmployeeRole && userEmpId ? userEmpId : "ALL"
@@ -61,16 +61,18 @@ export default function PayslipsPage() {
         (slip.period && slip.period.toLowerCase().includes(search.toLowerCase()));
 
       const matchesStatus = statusFilter === "ALL" || slip.status === statusFilter;
+      const matchesDelivery = deliveryFilter === "ALL" || (slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) === deliveryFilter;
       const matchesPayrun = payrunFilter === "ALL" || slip.payrunId === payrunFilter;
       const matchesEmployee =
         employeeFilter === "ALL" || slip.employeeId === employeeFilter;
 
-      return matchesSearch && matchesStatus && matchesPayrun && matchesEmployee;
+      return matchesSearch && matchesStatus && matchesDelivery && matchesPayrun && matchesEmployee;
     });
   }, [
     payslips,
     search,
     statusFilter,
+    deliveryFilter,
     payrunFilter,
     employeeFilter,
     isEmployeeRole,
@@ -118,7 +120,19 @@ export default function PayslipsPage() {
               <option value="COMPUTED">Computed</option>
               <option value="VALIDATED">Validated</option>
               <option value="PAID">Paid</option>
-              <option value="SENT">Sent</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+            Delivery:
+            <select
+              value={deliveryFilter}
+              onChange={(e) => setDeliveryFilter(e.target.value)}
+              className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+            >
+              <option value="ALL">All Delivery</option>
+              <option value="PENDING">Pending</option>
+              <option value="FAILED">Failed</option>
             </select>
           </div>
 
@@ -241,7 +255,11 @@ export default function PayslipsPage() {
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <StatusBadge status={slip.status.toLowerCase() as any} />
+                    <div className="flex flex-col items-center gap-1">
+                      <StatusBadge status={slip.status.toLowerCase() as any} />
+                      {((slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) === "SENT") && <span className="text-[10px] text-success">Delivered</span>}
+                      {((slip.deliveryStatus ?? (slip.sentAt ? "SENT" : "PENDING")) === "FAILED") && <span className="text-[10px] text-danger">Delivery failed</span>}
+                    </div>
                   </TableCell>
 
                   <TableCell className="text-right">
