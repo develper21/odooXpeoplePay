@@ -1,9 +1,19 @@
 import Link from "next/link";
-import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
+import {
+  DataTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "@/components/shared/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/states";
 import type { Employee, Contract, Payslip } from "@/types/domain";
-import { AlertCircle, AlertTriangle, ArrowRight, ExternalLink } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  ExternalLink,
+} from "lucide-react";
 
 interface PayrunEmployeeTableProps {
   payslips: Payslip[];
@@ -50,31 +60,47 @@ export function PayrunEmployeeTable({
       <tbody>
         {payslips.map((slip, idx) => {
           const emp = employeeMap.get(slip.employeeId);
-          const contract = slip.contractId ? contractMap.get(slip.contractId) : undefined;
-          const fullName = emp ? `${emp.firstName} ${emp.lastName}` : `Employee ${slip.employeeId}`;
+          const contract = slip.contractId
+            ? contractMap.get(slip.contractId)
+            : undefined;
+          const fullName = emp
+            ? `${emp.firstName} ${emp.lastName}`
+            : `Employee ${slip.employeeId}`;
           const warningCount = slip.warnings?.length || 0;
           const hasError = slip.warnings?.some((w) => w.severity === "ERROR");
 
           return (
             <TableRow key={slip.id}>
-              <TableCell className="text-text-muted text-xs font-mono">{idx + 1}</TableCell>
+              <TableCell className="text-text-muted text-xs font-mono">
+                {idx + 1}
+              </TableCell>
               <TableCell>
                 <div className="flex flex-col">
-                  <span className="font-semibold text-foreground">{fullName}</span>
-                  <span className="text-[11px] text-text-muted font-mono">{emp?.employeeNumber || slip.employeeId}</span>
+                  <span className="font-semibold text-foreground">
+                    {fullName}
+                  </span>
+                  <span className="text-[11px] text-text-muted font-mono">
+                    {emp?.employeeNumber || slip.employeeId}
+                  </span>
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex flex-col text-xs">
                   <span>{emp?.department || "—"}</span>
-                  <span className="text-text-muted">{emp?.position || "—"}</span>
+                  <span className="text-text-muted">
+                    {emp?.position || "—"}
+                  </span>
                 </div>
               </TableCell>
               <TableCell>
                 {contract ? (
                   <div className="flex flex-col text-xs">
-                    <span className="font-medium text-text-secondary">{contract.reference}</span>
-                    <span className="text-[11px] text-text-muted">₹{contract.monthlySalary.toLocaleString()}/mo</span>
+                    <span className="font-medium text-text-secondary">
+                      {contract.reference}
+                    </span>
+                    <span className="text-[11px] text-text-muted">
+                      ₹{contract.monthlySalary.toLocaleString()}/mo
+                    </span>
                   </div>
                 ) : (
                   <span className="inline-flex items-center text-xs text-danger">
@@ -95,7 +121,7 @@ export function PayrunEmployeeTable({
                 ₹{slip.net ? slip.net.toLocaleString() : "0"}
               </TableCell>
               <TableCell className="text-center">
-                <StatusBadge status={slip.status.toLowerCase() as any} />
+                <StatusBadge status={slip.status} />
               </TableCell>
               <TableCell>
                 {warningCount > 0 ? (
