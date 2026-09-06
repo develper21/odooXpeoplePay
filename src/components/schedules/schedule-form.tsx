@@ -4,14 +4,264 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ScheduleDay, WorkingSchedule } from "@/types/domain";
-import { calculateDuration, calculateWeeklyMinutes, formatDuration } from "@/lib/time-utils";
+import {
+  calculateDuration,
+  calculateWeeklyMinutes,
+  formatDuration,
+} from "@/lib/time-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const daySchema = z.object({ day: z.string(), enabled: z.boolean(), startTime: z.string(), endTime: z.string(), breakMinutes: z.coerce.number().min(0) });
-const schema = z.object({ name: z.string().min(2, "Schedule name is required"), type: z.enum(["STANDARD", "FLEXIBLE", "SHIFT", "PART_TIME"]), status: z.enum(["ACTIVE", "INACTIVE", "DRAFT"]), timezone: z.string().min(1), days: z.array(daySchema).refine((days) => days.some((day) => day.enabled), "Enable at least one working day").superRefine((days, context) => days.forEach((day, index) => { if (!day.enabled) return; if (!day.startTime) context.addIssue({ code: "custom", path: [index, "startTime"], message: "Required" }); if (!day.endTime) context.addIssue({ code: "custom", path: [index, "endTime"], message: "Required" }); if (day.startTime && day.endTime && calculateDuration(day.startTime, day.endTime, day.breakMinutes) <= 0) context.addIssue({ code: "custom", path: [index, "endTime"], message: "End must be after start and break must leave working time" }); })) });
+const daySchema = z.object({
+  day: z.string(),
+  enabled: z.boolean(),
+  startTime: z.string(),
+  endTime: z.string(),
+  breakMinutes: z.coerce.number().min(0),
+});
+const schema = z.object({
+  name: z.string().min(2, "Schedule name is required"),
+  type: z.enum(["STANDARD", "FLEXIBLE", "SHIFT", "PART_TIME"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "DRAFT"]),
+  timezone: z.string().min(1),
+  days: z
+    .array(daySchema)
+    .refine(
+      (days) => days.some((day) => day.enabled),
+      "Enable at least one working day",
+    )
+    .superRefine((days, context) =>
+      days.forEach((day, index) => {
+        if (!day.enabled) return;
+        if (!day.startTime)
+          context.addIssue({
+            code: "custom",
+            path: [index, "startTime"],
+            message: "Required",
+          });
+        if (!day.endTime)
+          context.addIssue({
+            code: "custom",
+            path: [index, "endTime"],
+            message: "Required",
+          });
+        if (
+          day.startTime &&
+          day.endTime &&
+          calculateDuration(day.startTime, day.endTime, day.breakMinutes) <= 0
+        )
+          context.addIssue({
+            code: "custom",
+            path: [index, "endTime"],
+            message:
+              "End must be after start and break must leave working time",
+          });
+      }),
+    ),
+});
 type FormValues = z.infer<typeof schema>;
-const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const defaultDays: ScheduleDay[] = dayNames.map((day, index) => ({ day, enabled: index < 5, startTime: index < 5 ? "09:00" : "", endTime: index < 5 ? "18:00" : "", breakMinutes: index < 5 ? 60 : 0 }));
+const dayNames = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+const defaultDays: ScheduleDay[] = dayNames.map((day, index) => ({
+  day,
+  enabled: index < 5,
+  startTime: index < 5 ? "09:00" : "",
+  endTime: index < 5 ? "18:00" : "",
+  breakMinutes: index < 5 ? 60 : 0,
+}));
 
-export function ScheduleForm({ initialValues, onSubmit, onCancel, submitting, submitLabel = "Save Schedule" }: { initialValues?: Partial<WorkingSchedule>; onSubmit: (values: Omit<WorkingSchedule, "id">) => Promise<void>; onCancel: () => void; submitting?: boolean; submitLabel?: string }) { const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormValues>({ defaultValues: { name: initialValues?.name ?? "", type: initialValues?.type ?? "STANDARD", status: initialValues?.status ?? "DRAFT", timezone: initialValues?.timezone ?? "America/New_York", days: initialValues?.days ?? defaultDays } }); const days = watch("days"); const weeklyMinutes = useMemo(() => calculateWeeklyMinutes(days ?? []), [days]); const submit = async (values: FormValues) => { const result = schema.safeParse(values); if (!result.success) { result.error.issues.forEach((issue) => setError(issue.path.join(".") as keyof FormValues, { message: issue.message })); return; } await onSubmit({ ...result.data, weeklyHours: result.data.days.reduce((total, day) => total + calculateDuration(day.startTime, day.endTime, day.breakMinutes), 0) / 60 }); }; return <form onSubmit={handleSubmit(submit)} className="space-y-6"><section><h2 className="border-b pb-3 text-sm font-semibold">Schedule information</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><label className="block text-sm font-medium">Name *<Input className="mt-2" {...register("name")} />{errors.name && <span className="mt-1 block text-xs text-danger">{errors.name.message}</span>}</label><label className="block text-sm font-medium">Type<select className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm" {...register("type")}><option value="STANDARD">Standard</option><option value="FLEXIBLE">Flexible</option><option value="SHIFT">Shift</option><option value="PART_TIME">Part time</option></select></label><label className="block text-sm font-medium">Status<select className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm" {...register("status")}><option value="DRAFT">Draft</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label><label className="block text-sm font-medium">Timezone<select className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm" {...register("timezone")}><option>America/New_York</option><option>America/Chicago</option><option>America/Los_Angeles</option></select></label></div></section><section><div className="flex items-end justify-between border-b pb-3"><div><h2 className="text-sm font-semibold">Weekly pattern</h2><p className="mt-1 text-xs text-text-muted">Expected working time. Weekly hours calculate automatically.</p></div><div className="text-right"><p className="text-xs text-text-muted">Weekly hours</p><p className="text-xl font-bold text-primary">{formatDuration(weeklyMinutes)}</p></div></div><div className="mt-4 overflow-x-auto"><div className="min-w-[720px] space-y-2">{days.map((day, index) => <div key={day.day} className="grid grid-cols-[130px_70px_1fr_1fr_110px_90px] items-center gap-3 rounded-md border bg-surface-raised p-3"><label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" className="accent-primary" {...register(`days.${index}.enabled`)} />{day.day}</label><span className="text-xs text-text-muted">{day.enabled ? "Working" : "Off"}</span><Input type="time" disabled={!day.enabled} {...register(`days.${index}.startTime`)} /> <Input type="time" disabled={!day.enabled} {...register(`days.${index}.endTime`)} /><label className="text-xs text-text-secondary">Break <Input className="mt-1" type="number" min="0" disabled={!day.enabled} {...register(`days.${index}.breakMinutes`)} /></label><span className="text-right text-xs font-semibold text-text-secondary">{formatDuration(calculateDuration(day.startTime, day.endTime, day.breakMinutes))}</span></div>)}</div></div>{errors.days && <p className="mt-2 text-xs text-danger">{errors.days.message as string}</p>}</section><div className="flex justify-end gap-3 border-t pt-5"><Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button><Button type="submit" disabled={submitting}>{submitting ? "Saving..." : submitLabel}</Button></div></form>; }
+export function ScheduleForm({
+  initialValues,
+  onSubmit,
+  onCancel,
+  submitting,
+  submitLabel = "Save Schedule",
+}: {
+  initialValues?: Partial<WorkingSchedule>;
+  onSubmit: (values: Omit<WorkingSchedule, "id">) => Promise<void>;
+  onCancel: () => void;
+  submitting?: boolean;
+  submitLabel?: string;
+}) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setError,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues: {
+      name: initialValues?.name ?? "",
+      type: initialValues?.type ?? "STANDARD",
+      status: initialValues?.status ?? "DRAFT",
+      timezone: initialValues?.timezone ?? "America/New_York",
+      days: initialValues?.days ?? defaultDays,
+    },
+  });
+  const days = watch("days");
+  const weeklyMinutes = useMemo(
+    () => calculateWeeklyMinutes(days ?? []),
+    [days],
+  );
+  const submit = async (values: FormValues) => {
+    const result = schema.safeParse(values);
+    if (!result.success) {
+      result.error.issues.forEach((issue) =>
+        setError(issue.path.join(".") as keyof FormValues, {
+          message: issue.message,
+        }),
+      );
+      return;
+    }
+    await onSubmit({
+      ...result.data,
+      weeklyHours:
+        result.data.days.reduce(
+          (total, day) =>
+            total +
+            calculateDuration(day.startTime, day.endTime, day.breakMinutes),
+          0,
+        ) / 60,
+    });
+  };
+  return (
+    <form onSubmit={handleSubmit(submit)} className="space-y-6">
+      <section>
+        <h2 className="border-b pb-3 text-sm font-semibold">
+          Schedule information
+        </h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="block text-sm font-medium">
+            Name *<Input className="mt-2" {...register("name")} />
+            {errors.name && (
+              <span className="mt-1 block text-xs text-danger">
+                {errors.name.message}
+              </span>
+            )}
+          </label>
+          <label className="block text-sm font-medium">
+            Type
+            <select
+              className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm"
+              {...register("type")}
+            >
+              <option value="STANDARD">Standard</option>
+              <option value="FLEXIBLE">Flexible</option>
+              <option value="SHIFT">Shift</option>
+              <option value="PART_TIME">Part time</option>
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            Status
+            <select
+              className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm"
+              {...register("status")}
+            >
+              <option value="DRAFT">Draft</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            Timezone
+            <select
+              className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm"
+              {...register("timezone")}
+            >
+              <option>America/New_York</option>
+              <option>America/Chicago</option>
+              <option>America/Los_Angeles</option>
+            </select>
+          </label>
+        </div>
+      </section>
+      <section>
+        <div className="flex items-end justify-between border-b pb-3">
+          <div>
+            <h2 className="text-sm font-semibold">Weekly pattern</h2>
+            <p className="mt-1 text-xs text-text-muted">
+              Expected working time. Weekly hours calculate automatically.
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-text-muted">Weekly hours</p>
+            <p className="text-xl font-bold text-primary">
+              {formatDuration(weeklyMinutes)}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 overflow-x-auto">
+          <div className="min-w-[720px] space-y-2">
+            {days.map((day, index) => (
+              <div
+                key={day.day}
+                className="grid grid-cols-[130px_70px_1fr_1fr_110px_90px] items-center gap-3 rounded-md border bg-surface-raised p-3"
+              >
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    className="accent-primary"
+                    {...register(`days.${index}.enabled`)}
+                  />
+                  {day.day}
+                </label>
+                <span className="text-xs text-text-muted">
+                  {day.enabled ? "Working" : "Off"}
+                </span>
+                <Input
+                  type="time"
+                  disabled={!day.enabled}
+                  {...register(`days.${index}.startTime`)}
+                />{" "}
+                <Input
+                  type="time"
+                  disabled={!day.enabled}
+                  {...register(`days.${index}.endTime`)}
+                />
+                <label className="text-xs text-text-secondary">
+                  Break{" "}
+                  <Input
+                    className="mt-1"
+                    type="number"
+                    min="0"
+                    disabled={!day.enabled}
+                    {...register(`days.${index}.breakMinutes`)}
+                  />
+                </label>
+                <span className="text-right text-xs font-semibold text-text-secondary">
+                  {formatDuration(
+                    calculateDuration(
+                      day.startTime,
+                      day.endTime,
+                      day.breakMinutes,
+                    ),
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {errors.days && (
+          <p className="mt-2 text-xs text-danger">
+            {errors.days.message as string}
+          </p>
+        )}
+      </section>
+      <div className="flex justify-end gap-3 border-t pt-5">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Saving..." : submitLabel}
+        </Button>
+      </div>
+    </form>
+  );
+}
