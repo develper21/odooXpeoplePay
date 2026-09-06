@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { useTimeOffType, useDeleteTimeOffType, useTimeOffAllocations, useTimeOff } from "@/hooks/use-data";
+import {
+  useTimeOffType,
+  useDeleteTimeOffType,
+  useTimeOffAllocations,
+  useTimeOff,
+} from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth";
 import { canAccess } from "@/lib/permissions";
 import { PageHeader } from "@/components/shared/page-header";
@@ -28,13 +33,24 @@ export default function TimeOffTypeDetailPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !type) return <ErrorState message="Leave type was not found." />;
+  if (isError || !type)
+    return <ErrorState message="Leave type was not found." />;
 
   const canEdit = Boolean(user && canAccess(user.role, "timeoff.approve"));
   const canDelete = Boolean(user && canAccess(user.role, "timeoff.delete"));
 
-  const matchingAllocations = allocations.filter((a) => a.typeId === id || a.type.toLowerCase() === type.name.toLowerCase());
-  const matchingRequests = requests.filter((r) => r.typeId === id || r.type.toLowerCase() === type.name.toLowerCase());
+  const matchingAllocations = allocations.filter(
+    (a) =>
+      String(a.typeId) === String(id) ||
+      (Boolean(a.type && type?.name) &&
+        a.type.toLowerCase() === type.name.toLowerCase()),
+  );
+  const matchingRequests = requests.filter(
+    (r) =>
+      String(r.typeId) === String(id) ||
+      (Boolean(r.type && type?.name) &&
+        r.type.toLowerCase() === type.name.toLowerCase()),
+  );
 
   const remove = async () => {
     await deleteMutation.mutateAsync(id);
@@ -58,9 +74,15 @@ export default function TimeOffTypeDetailPage() {
       />
 
       <div className="mb-6 flex items-center gap-3">
-        <StatusBadge status={type.status.toLowerCase() as "active" | "inactive"} />
+        <StatusBadge
+          status={type.status.toLowerCase() as "active" | "inactive"}
+        />
         {canDelete && (
-          <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setConfirmOpen(true)}
+          >
             <Trash2 className="size-3.5" /> Delete
           </Button>
         )}
@@ -82,15 +104,21 @@ export default function TimeOffTypeDetailPage() {
             </div>
             <div>
               <p className="text-xs text-text-muted">Allocation Required</p>
-              <p className="mt-1 text-sm font-medium">{type.allocationRequired ? "Yes" : "No"}</p>
+              <p className="mt-1 text-sm font-medium">
+                {type.allocationRequired ? "Yes" : "No"}
+              </p>
             </div>
             <div>
               <p className="text-xs text-text-muted">Approval Required</p>
-              <p className="mt-1 text-sm font-medium">{type.approvalRequired ? "Yes" : "No"}</p>
+              <p className="mt-1 text-sm font-medium">
+                {type.approvalRequired ? "Yes" : "No"}
+              </p>
             </div>
             <div>
               <p className="text-xs text-text-muted">Payroll Integration</p>
-              <p className="mt-1 text-sm font-medium">{type.payrollIntegration ? "Yes" : "No"}</p>
+              <p className="mt-1 text-sm font-medium">
+                {type.payrollIntegration ? "Yes" : "No"}
+              </p>
             </div>
             <div>
               <p className="text-xs text-text-muted">Status</p>
@@ -107,19 +135,31 @@ export default function TimeOffTypeDetailPage() {
             <div className="flex items-center justify-between rounded-md border bg-surface-raised p-4">
               <div>
                 <p className="text-xs text-text-muted">Active Allocations</p>
-                <p className="mt-1 text-2xl font-bold text-primary">{matchingAllocations.length}</p>
+                <p className="mt-1 text-2xl font-bold text-primary">
+                  {matchingAllocations.length}
+                </p>
               </div>
-              <Link href="/time-off/allocations" className="text-xs text-primary font-medium hover:underline">
+              <Link
+                href="/time-off/allocations"
+                className="text-xs text-primary font-medium hover:underline"
+              >
                 View Allocations
               </Link>
             </div>
 
             <div className="flex items-center justify-between rounded-md border bg-surface-raised p-4">
               <div>
-                <p className="text-xs text-text-muted">Total Requests Submitted</p>
-                <p className="mt-1 text-2xl font-bold text-success">{matchingRequests.length}</p>
+                <p className="text-xs text-text-muted">
+                  Total Requests Submitted
+                </p>
+                <p className="mt-1 text-2xl font-bold text-success">
+                  {matchingRequests.length}
+                </p>
               </div>
-              <Link href="/time-off/requests" className="text-xs text-primary font-medium hover:underline">
+              <Link
+                href="/time-off/requests"
+                className="text-xs text-primary font-medium hover:underline"
+              >
                 View Requests
               </Link>
             </div>
