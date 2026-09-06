@@ -164,17 +164,16 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '25', 10) || 25));
+    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '200', 10) || 200));
     const offset = (page - 1) * limit;
     const filters = [eq(employees.companyId, companyId)];
 
-    const employeeId = searchParams.get('employee_id');
+    const employeeId = searchParams.get('employee_id') || searchParams.get('employeeId');
     if (employeeId) {
-      const parsedEmployeeId = Number(employeeId);
-      if (!Number.isInteger(parsedEmployeeId) || parsedEmployeeId <= 0) {
-        return NextResponse.json({ error: 'employee_id must be a positive integer.' }, { status: 400 });
+      const numPart = Number(String(employeeId).replace(/\D/g, ''));
+      if (Number.isInteger(numPart) && numPart > 0) {
+        filters.push(eq(attendances.employeeId, numPart));
       }
-      filters.push(eq(attendances.employeeId, parsedEmployeeId));
     }
 
     const exactDate = searchParams.get('date');
