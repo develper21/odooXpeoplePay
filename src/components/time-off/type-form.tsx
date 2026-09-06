@@ -50,7 +50,7 @@ export function TimeOffTypeForm({
     const result = schema.safeParse(raw);
     if (!result.success) {
       result.error.issues.forEach((issue) =>
-        setError(issue.path[0] as keyof FormValues, { message: issue.message })
+        setError(issue.path[0] as keyof FormValues, { message: issue.message }),
       );
       return;
     }
@@ -62,13 +62,24 @@ export function TimeOffTypeForm({
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block text-sm font-medium">
           Name *
-          <Input className="mt-2" {...register("name")} placeholder="e.g. Annual Leave" />
-          {errors.name && <span className="mt-1 block text-xs text-danger">{errors.name.message}</span>}
+          <Input
+            className="mt-2"
+            {...register("name")}
+            placeholder="e.g. Annual Leave"
+          />
+          {errors.name && (
+            <span className="mt-1 block text-xs text-danger">
+              {errors.name.message}
+            </span>
+          )}
         </label>
 
         <label className="block text-sm font-medium">
           Unit *
-          <select className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm" {...register("unit")}>
+          <select
+            className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm"
+            {...register("unit")}
+          >
             <option value="DAYS">Days</option>
             <option value="HOURS">Hours</option>
           </select>
@@ -76,7 +87,10 @@ export function TimeOffTypeForm({
 
         <label className="block text-sm font-medium">
           Status *
-          <select className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm" {...register("status")}>
+          <select
+            className="mt-2 h-10 w-full rounded-md border bg-surface-raised px-3 text-sm"
+            {...register("status")}
+          >
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
           </select>
@@ -84,20 +98,36 @@ export function TimeOffTypeForm({
       </div>
 
       <div className="space-y-3 rounded-md border bg-surface-raised p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">Policy Settings</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+          Policy Settings
+        </h3>
         <label className="flex items-center gap-3 text-sm font-medium">
-          <input type="checkbox" className="size-4 accent-primary" {...register("allocationRequired")} />
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            {...register("allocationRequired")}
+          />
           Allocation Required (Employees must be granted a leave balance)
         </label>
 
         <label className="flex items-center gap-3 text-sm font-medium">
-          <input type="checkbox" className="size-4 accent-primary" {...register("approvalRequired")} />
-          Approval Required (Manager/HR approval required before leave is confirmed)
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            {...register("approvalRequired")}
+          />
+          Approval Required (Manager/HR approval required before leave is
+          confirmed)
         </label>
 
         <label className="flex items-center gap-3 text-sm font-medium">
-          <input type="checkbox" className="size-4 accent-primary" {...register("payrollIntegration")} />
-          Payroll Integration (Include in payroll computations and payslip deductions)
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            {...register("payrollIntegration")}
+          />
+          Payroll Integration (Include in payroll computations and payslip
+          deductions)
         </label>
       </div>
 
