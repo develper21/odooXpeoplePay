@@ -32,7 +32,12 @@ import { usableAllocationRemaining } from "@/lib/time-off-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { DataTable, TableHeader, TableRow, TableCell } from "@/components/shared/table";
+import {
+  DataTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+} from "@/components/shared/table";
 import { LoadingState } from "@/components/shared/states";
 
 type ReportTab = "payroll" | "department" | "attendance" | "timeoff";
@@ -56,20 +61,31 @@ export default function ReportsPage() {
   const { data: payslips = [], isLoading: psLoading } = usePayslips();
   const { data: attendance = [], isLoading: attLoading } = useAttendance();
   const { data: timeOffRequests = [], isLoading: torLoading } = useTimeOff();
-  const { data: allocations = [], isLoading: allocLoading } = useTimeOffAllocations();
+  const { data: allocations = [], isLoading: allocLoading } =
+    useTimeOffAllocations();
   const { data: leaveTypes = [] } = useTimeOffTypes();
 
   const isLoading =
-    authLoading || empLoading || prLoading || psLoading || attLoading || torLoading || allocLoading;
+    authLoading ||
+    empLoading ||
+    prLoading ||
+    psLoading ||
+    attLoading ||
+    torLoading ||
+    allocLoading;
 
   // Available Filter Options
   const availablePeriods = useMemo(() => {
-    const raw = Array.from(new Set(payruns.map((p) => p.period))).filter(Boolean);
+    const raw = Array.from(new Set(payruns.map((p) => p.period))).filter(
+      Boolean,
+    );
     return raw.sort((a, b) => b.localeCompare(a));
   }, [payruns]);
 
   const availableDepartments = useMemo(() => {
-    return Array.from(new Set(employees.map((e) => e.department).filter(Boolean))).sort();
+    return Array.from(
+      new Set(employees.map((e) => e.department).filter(Boolean)),
+    ).sort();
   }, [employees]);
 
   // Reset Filters
@@ -81,19 +97,24 @@ export default function ReportsPage() {
   };
 
   const isFiltered =
-    period !== "ALL" || department !== "ALL" || employeeType !== "ALL" || searchQuery.trim() !== "";
+    period !== "ALL" ||
+    department !== "ALL" ||
+    employeeType !== "ALL" ||
+    searchQuery.trim() !== "";
 
   // Filtered Employees
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
       if (department !== "ALL" && emp.department !== department) return false;
-      if (employeeType !== "ALL" && emp.employeeType !== employeeType) return false;
+      if (employeeType !== "ALL" && emp.employeeType !== employeeType)
+        return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
         const num = emp.employeeNumber.toLowerCase();
         const dept = emp.department.toLowerCase();
-        if (!fullName.includes(q) && !num.includes(q) && !dept.includes(q)) return false;
+        if (!fullName.includes(q) && !num.includes(q) && !dept.includes(q))
+          return false;
       }
       return true;
     });
@@ -137,7 +158,12 @@ export default function ReportsPage() {
       if (department !== "ALL" && emp.department !== department) return;
       if (employeeType !== "ALL" && emp.employeeType !== employeeType) return;
       if (!deptMap[emp.department]) {
-        deptMap[emp.department] = { headcount: 0, gross: 0, deductions: 0, net: 0 };
+        deptMap[emp.department] = {
+          headcount: 0,
+          gross: 0,
+          deductions: 0,
+          net: 0,
+        };
       }
       if (emp.status === "ACTIVE") {
         deptMap[emp.department].headcount += 1;
@@ -158,7 +184,8 @@ export default function ReportsPage() {
 
     const rows = Object.entries(deptMap)
       .map(([dept, vals]) => {
-        const avgNet = vals.headcount > 0 ? Math.round(vals.net / vals.headcount) : 0;
+        const avgNet =
+          vals.headcount > 0 ? Math.round(vals.net / vals.headcount) : 0;
         return {
           department: dept,
           headcount: vals.headcount,
@@ -171,7 +198,16 @@ export default function ReportsPage() {
       .filter((d) => d.headcount > 0 || d.net > 0);
 
     return rows.sort((a, b) => b.net - a.net);
-  }, [availableDepartments, department, employeeType, employees, payslips, filteredEmpIds, period, empMap]);
+  }, [
+    availableDepartments,
+    department,
+    employeeType,
+    employees,
+    payslips,
+    filteredEmpIds,
+    period,
+    empMap,
+  ]);
 
   // 3. Filtered Attendance Aggregated by Employee
   const attendanceReportData = useMemo(() => {
@@ -230,7 +266,11 @@ export default function ReportsPage() {
         if (r.employeeId !== emp.id) return false;
         if (period !== "ALL") {
           const monthPrefix = periodToMonthPrefix(period);
-          if (monthPrefix && !r.startDate.startsWith(monthPrefix) && !r.endDate.startsWith(monthPrefix)) {
+          if (
+            monthPrefix &&
+            !r.startDate.startsWith(monthPrefix) &&
+            !r.endDate.startsWith(monthPrefix)
+          ) {
             return false;
           }
         }
@@ -239,19 +279,22 @@ export default function ReportsPage() {
 
       const approvedDays = empReqs
         .filter((r) => r.status === "APPROVED")
-        .reduce((s, r) => s + (r.days || 0), 0);
+        .reduce((s, r) => s + (Number(r.days) || 0), 0);
       const pendingDays = empReqs
         .filter((r) => r.status === "PENDING")
-        .reduce((s, r) => s + (r.days || 0), 0);
+        .reduce((s, r) => s + (Number(r.days) || 0), 0);
       const refusedDays = empReqs
         .filter((r) => r.status === "REFUSED")
-        .reduce((s, r) => s + (r.days || 0), 0);
+        .reduce((s, r) => s + (Number(r.days) || 0), 0);
 
       const empAllocs = allocations.filter((a) => a.employeeId === emp.id);
-      const remainingQuota = empAllocs.reduce((s, a) => s + usableAllocationRemaining(a), 0);
+      const remainingQuota = empAllocs.reduce(
+        (s, a) => s + usableAllocationRemaining(a),
+        0,
+      );
       const totalQuota = empAllocs
         .filter((a) => a.status === "APPROVED" || a.status === "ACTIVE")
-        .reduce((s, a) => s + (a.allocatedDays || 0), 0);
+        .reduce((s, a) => s + (Number(a.allocatedDays) || 0), 0);
 
       return {
         employeeNumber: emp.employeeNumber,
@@ -270,7 +313,16 @@ export default function ReportsPage() {
   // Export CSV Handler
   const handleExportCsv = () => {
     if (activeTab === "payroll") {
-      const headers = ["Reference", "Name", "Period", "Employees", "Gross", "Deductions", "Net", "Status"];
+      const headers = [
+        "Reference",
+        "Name",
+        "Period",
+        "Employees",
+        "Gross",
+        "Deductions",
+        "Net",
+        "Status",
+      ];
       const rows = filteredPayruns.map((pr) => [
         pr.reference,
         pr.name || "",
@@ -283,7 +335,14 @@ export default function ReportsPage() {
       ]);
       downloadCsv("Payroll_Summary_Report", headers, rows);
     } else if (activeTab === "department") {
-      const headers = ["Department", "Headcount", "Gross Total", "Deductions", "Net Total", "Average Net"];
+      const headers = [
+        "Department",
+        "Headcount",
+        "Gross Total",
+        "Deductions",
+        "Net Total",
+        "Average Net",
+      ];
       const rows = departmentSalaryData.map((d) => [
         d.department,
         d.headcount,
@@ -294,7 +353,17 @@ export default function ReportsPage() {
       ]);
       downloadCsv("Department_Salary_Report", headers, rows);
     } else if (activeTab === "attendance") {
-      const headers = ["Employee ID", "Name", "Department", "Present", "Late", "Absent", "Overtime", "Missing Checkout", "Rate %"];
+      const headers = [
+        "Employee ID",
+        "Name",
+        "Department",
+        "Present",
+        "Late",
+        "Absent",
+        "Overtime",
+        "Missing Checkout",
+        "Rate %",
+      ];
       const rows = attendanceReportData.map((a) => [
         a.employeeId,
         a.name,
@@ -304,11 +373,22 @@ export default function ReportsPage() {
         a.absent,
         a.overtime,
         a.missingCheckout,
-        a.total > 0 ? `${Math.round(((a.present + a.overtime) / a.total) * 100)}%` : "N/A",
+        a.total > 0
+          ? `${Math.round(((a.present + a.overtime) / a.total) * 100)}%`
+          : "N/A",
       ]);
       downloadCsv("Attendance_Analysis_Report", headers, rows);
     } else if (activeTab === "timeoff") {
-      const headers = ["Employee ID", "Name", "Department", "Requested (d)", "Approved (d)", "Pending (d)", "Refused (d)", "Remaining Quota"];
+      const headers = [
+        "Employee ID",
+        "Name",
+        "Department",
+        "Requested (d)",
+        "Approved (d)",
+        "Pending (d)",
+        "Refused (d)",
+        "Remaining Quota",
+      ];
       const rows = timeOffReportData.map((t) => [
         t.employeeNumber,
         t.name,
@@ -332,10 +412,12 @@ export default function ReportsPage() {
         <div className="rounded-full bg-danger/10 p-4 text-danger">
           <ShieldAlert className="size-10" />
         </div>
-        <h2 className="mt-4 text-xl font-bold text-text-primary">Reports Access Restricted</h2>
+        <h2 className="mt-4 text-xl font-bold text-text-primary">
+          Reports Access Restricted
+        </h2>
         <p className="mt-2 max-w-md text-sm text-text-muted">
-          Company-wide analytical reports are restricted to authorized HR & Payroll management roles.
-          Your account role is{" "}
+          Company-wide analytical reports are restricted to authorized HR &
+          Payroll management roles. Your account role is{" "}
           <strong className="text-text-primary">{role || "EMPLOYEE"}</strong>.
         </p>
         <div className="mt-6">
@@ -356,7 +438,8 @@ export default function ReportsPage() {
             Analytical Reports
           </h1>
           <p className="mt-1 text-sm text-text-muted">
-            Cross-module payroll, department expenditure, attendance health, and leave analysis
+            Cross-module payroll, department expenditure, attendance health, and
+            leave analysis
           </p>
         </div>
 
@@ -508,7 +591,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <CardTitle>Payroll Cycle Summary</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Official payruns with employee counts, gross earnings, and net disbursements
+              Official payruns with employee counts, gross earnings, and net
+              disbursements
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -529,7 +613,10 @@ export default function ReportsPage() {
               <tbody>
                 {filteredPayruns.length === 0 ? (
                   <TableRow>
-                    <TableCell className="text-center text-text-muted" aria-colspan={9}>
+                    <TableCell
+                      className="text-center text-text-muted"
+                      aria-colspan={9}
+                    >
                       No payruns found matching the current filters.
                     </TableCell>
                   </TableRow>
@@ -537,28 +624,30 @@ export default function ReportsPage() {
                   filteredPayruns.map((pr) => (
                     <TableRow key={pr.id}>
                       <TableCell className="font-mono text-xs font-semibold text-primary">
-                        {pr.reference}
+                        {pr.reference || `PR-${String(pr.id).padStart(3, "0")}`}
                       </TableCell>
                       <TableCell className="font-medium text-text-primary">
                         {pr.name || "Regular Payroll"}
                       </TableCell>
-                      <TableCell className="text-xs text-text-secondary">{pr.period}</TableCell>
+                      <TableCell className="text-xs text-text-secondary">
+                        {pr.period || (pr.periodStart ? `${pr.periodStart} → ${pr.periodEnd}` : "Regular Cycle")}
+                      </TableCell>
                       <TableCell className="text-right">
                         <span className="rounded bg-surface-raised px-2 py-0.5 text-xs font-semibold text-text-secondary">
                           {pr.employeeCount}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs text-text-secondary">
-                        ₹{pr.grossTotal.toLocaleString("en-IN")}
+                        ₹{(Number(pr.grossTotal) || 0).toLocaleString("en-IN")}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs text-danger/80">
-                        ₹{(pr.deductionsTotal || 0).toLocaleString("en-IN")}
+                        ₹{(Number(pr.deductionsTotal) || 0).toLocaleString("en-IN")}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs font-bold text-text-primary">
-                        ₹{pr.netTotal.toLocaleString("en-IN")}
+                        ₹{(Number(pr.netTotal) || 0).toLocaleString("en-IN")}
                       </TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={pr.status.toLowerCase() as any} />
+                        <StatusBadge status={pr.status} />
                       </TableCell>
                       <TableCell className="text-right">
                         <Link
@@ -585,7 +674,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <CardTitle>Department Payroll Analysis</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Departmental breakdown of compensation costs, average wage per employee, and headcount
+              Departmental breakdown of compensation costs, average wage per
+              employee, and headcount
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -597,13 +687,18 @@ export default function ReportsPage() {
                   <th className="px-4 py-3 text-right">Gross Compensation</th>
                   <th className="px-4 py-3 text-right">Total Deductions</th>
                   <th className="px-4 py-3 text-right">Net Disbursement</th>
-                  <th className="px-4 py-3 text-right">Average Net / Employee</th>
+                  <th className="px-4 py-3 text-right">
+                    Average Net / Employee
+                  </th>
                 </tr>
               </TableHeader>
               <tbody>
                 {departmentSalaryData.length === 0 ? (
                   <TableRow>
-                    <TableCell className="text-center text-text-muted" aria-colspan={6}>
+                    <TableCell
+                      className="text-center text-text-muted"
+                      aria-colspan={6}
+                    >
                       No department data available.
                     </TableCell>
                   </TableRow>
@@ -650,7 +745,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <CardTitle>Attendance Health & Exception Report</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Individual attendance records, lateness, overtime hours, and missing checkouts
+              Individual attendance records, lateness, overtime hours, and
+              missing checkouts
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -671,7 +767,10 @@ export default function ReportsPage() {
               <tbody>
                 {attendanceReportData.length === 0 ? (
                   <TableRow>
-                    <TableCell className="text-center text-text-muted" aria-colspan={9}>
+                    <TableCell
+                      className="text-center text-text-muted"
+                      aria-colspan={9}
+                    >
                       No attendance records found.
                     </TableCell>
                   </TableRow>
@@ -679,7 +778,9 @@ export default function ReportsPage() {
                   attendanceReportData.map((att) => {
                     const health =
                       att.total > 0
-                        ? Math.round(((att.present + att.overtime) / att.total) * 100)
+                        ? Math.round(
+                            ((att.present + att.overtime) / att.total) * 100,
+                          )
                         : 100;
                     return (
                       <TableRow key={att.employeeId}>
@@ -713,8 +814,8 @@ export default function ReportsPage() {
                               health >= 90
                                 ? "bg-success/10 text-success"
                                 : health >= 75
-                                ? "bg-warning/10 text-warning"
-                                : "bg-danger/10 text-danger"
+                                  ? "bg-warning/10 text-warning"
+                                  : "bg-danger/10 text-danger"
                             }`}
                           >
                             {health}%
@@ -738,7 +839,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <CardTitle>Time Off Quota & Request Analysis</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Leaves requested, approved vs refused, and current remaining balance per employee
+              Leaves requested, approved vs refused, and current remaining
+              balance per employee
             </p>
           </CardHeader>
           <CardContent className="p-0">
@@ -758,7 +860,10 @@ export default function ReportsPage() {
               <tbody>
                 {timeOffReportData.length === 0 ? (
                   <TableRow>
-                    <TableCell className="text-center text-text-muted" aria-colspan={8}>
+                    <TableCell
+                      className="text-center text-text-muted"
+                      aria-colspan={8}
+                    >
                       No time-off records found.
                     </TableCell>
                   </TableRow>
@@ -821,15 +926,17 @@ function periodToMonthPrefix(period: string): string | null {
   return map[period] || null;
 }
 
-function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]) {
+function downloadCsv(
+  filename: string,
+  headers: string[],
+  rows: (string | number)[][],
+) {
   const csvContent =
     "data:text/csv;charset=utf-8," +
     [
       headers.join(","),
       ...rows.map((row) =>
-        row
-          .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-          .join(",")
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
       ),
     ].join("\n");
 
