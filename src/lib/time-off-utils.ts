@@ -1,4 +1,5 @@
 import type { TimeOffAllocation, TimeOffRequest, TimeOffType, TimeOffUnit } from "@/types/domain";
+import { matchesEmployee } from "@/lib/utils";
 
 export function calculateRequestDuration(startDate: string, endDate: string, unit: TimeOffUnit = "DAYS"): number {
   if (!startDate || !endDate) return 0;
@@ -34,11 +35,13 @@ export function findApplicableAllocation(
   typeIdOrName: string,
   startDate?: string
 ): TimeOffAllocation | undefined {
+  const targetType = (typeIdOrName || "").toLowerCase();
   const matches = allocations.filter(
     (alloc) =>
-      alloc.employeeId === employeeId &&
+      matchesEmployee(alloc.employeeId, employeeId) &&
       isAllocationAvailable(alloc) &&
-      (alloc.typeId === typeIdOrName || alloc.type.toLowerCase() === typeIdOrName.toLowerCase())
+      (String(alloc.typeId) === String(typeIdOrName) ||
+        (Boolean(alloc.type) && alloc.type.toLowerCase() === targetType))
   );
 
   if (matches.length === 0) return undefined;
@@ -60,7 +63,7 @@ export function canApproveTimeOffRequest(
   type?: TimeOffType
 ): { canApprove: boolean; reason?: string } {
   if (request.status !== "PENDING") {
-    return { canApprove: false, reason: `Request is already ${request.status.toLowerCase()}` };
+    return { canApprove: false, reason: `Request is already ${(request.status || "").toLowerCase()}` };
   }
 
   const requiresAllocation = type ? type.allocationRequired : Boolean(allocation);
