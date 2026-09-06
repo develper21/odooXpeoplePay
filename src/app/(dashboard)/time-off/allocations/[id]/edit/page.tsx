@@ -2,7 +2,12 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTimeOffAllocation, useUpdateAllocation, useEmployees, useTimeOffTypes } from "@/hooks/use-data";
+import {
+  useTimeOffAllocation,
+  useUpdateAllocation,
+  useEmployees,
+  useTimeOffTypes,
+} from "@/hooks/use-data";
 import { LoadingState, ErrorState } from "@/components/shared/states";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +25,8 @@ export default function EditAllocationPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   if (isLoading) return <LoadingState />;
-  if (isError || !allocation) return <ErrorState message="Allocation record was not found." />;
+  if (isError || !allocation)
+    return <ErrorState message="Allocation record was not found." />;
 
   return (
     <>
@@ -39,7 +45,10 @@ export default function EditAllocationPage() {
             submitLabel="Update Allocation"
             onCancel={() => router.push(`/time-off/allocations/${id}`)}
             onSubmit={async (values) => {
-              await mutation.mutateAsync({ id, input: values as Partial<TimeOffAllocation> });
+              await mutation.mutateAsync({
+                id,
+                input: values as Partial<TimeOffAllocation>,
+              });
               setToastMessage("Allocation updated successfully.");
               setTimeout(() => {
                 router.push(`/time-off/allocations/${id}`);
