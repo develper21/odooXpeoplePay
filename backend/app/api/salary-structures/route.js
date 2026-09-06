@@ -1,7 +1,7 @@
 // Salary structure collection API for configurable payroll rules.
 // Indian statutory components remain data-driven salary_rules, not hard-coded.
 
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -106,6 +106,7 @@ const structureFields = {
 const createSalaryStructureSchema = z.object({
   ...structureFields,
   rules: z.array(salaryRuleSchema).optional(),
+  rule_ids: z.array(z.union([z.number(), z.string()])).optional(),
 }).refine((data) => !data.effective_from || !data.effective_to || data.effective_to >= data.effective_from, {
   message: 'effective_to must be on or after effective_from.',
   path: ['effective_to'],
@@ -193,8 +194,29 @@ export async function POST(request) {
         effectiveTo: parsed.data.effective_to ?? null,
         status: parsed.data.status ?? 'active',
       }).returning(salaryStructureColumns);
-      if (parsed.data.rules?.length) {
-        await tx.insert(salaryRules).values(parsed.data.rules.map((rule) => ruleValues(rule, created.id)));
+
+      let rulesToInsert = parsed.data.rules;
+      if ((!rulesToInsert || rulesToInsert.length === 0) && parsed.data.rule_ids?.length) {
+        const numericIds = parsed.data.rule_ids.map(Number).filter(n => Number.isInteger(n) && n > 0);
+        if (numericIds.length > 0) {
+          const fetchedRules = await tx.select().from(salaryRules).where(inArray(salaryRules.id, numericIds));
+          rulesToInsert = fetchedRules.map(r => ({
+            name: r.name,
+            code: r.code,
+            type: r.type,
+            calculation_type: r.calculationType,
+            amount: r.amount ? Number(r.amount) : null,
+            percentage: r.percentage ? Number(r.percentage) : null,
+            percentage_base: r.percentageBase,
+            is_taxable: r.isTaxable,
+            computation_order: r.computationOrder,
+            is_active: r.isActive,
+          }));
+        }
+      }
+
+      if (rulesToInsert?.length) {
+        await tx.insert(salaryRules).values(rulesToInsert.map((rule) => ruleValues(rule, created.id)));
       }
       return created;
     });
