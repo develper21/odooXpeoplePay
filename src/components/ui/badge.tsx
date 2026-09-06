@@ -1,37 +1,59 @@
 import { cn } from "@/lib/utils";
 
 type Status =
-  | "active" | "paid" | "approved" | "present" | "pending" | "warning" | "processing" | "draft"
-  | "inactive" | "on_leave" | "expired" | "terminated" | "refused" | "cancelled" | "overtime"
-  | "missing_checkout" | "manual_edit" | "absent" | "error" | "late"
-  | "computed" | "validated" | "sent" | "info" | "duplicate_warning";
+  | "active"
+  | "paid"
+  | "approved"
+  | "present"
+  | "pending"
+  | "warning"
+  | "processing"
+  | "draft"
+  | "inactive"
+  | "on_leave"
+  | "expired"
+  | "terminated"
+  | "refused"
+  | "cancelled"
+  | "overtime"
+  | "missing_checkout"
+  | "manual_edit"
+  | "absent"
+  | "error"
+  | "late"
+  | "computed"
+  | "validated"
+  | "sent"
+  | "info"
+  | "duplicate_warning";
 
-const styles: Record<Status, string> = { 
-  active: "bg-green-500/10 text-green-400 border border-green-500/20", 
-  paid: "bg-green-500/10 text-green-400 border border-green-500/20", 
-  approved: "bg-green-500/10 text-green-400 border border-green-500/20", 
-  present: "bg-green-500/10 text-green-400 border border-green-500/20", 
-  pending: "bg-amber-500/10 text-amber-400 border border-amber-500/20", 
-  warning: "bg-amber-500/10 text-amber-400 border border-amber-500/20", 
-  processing: "bg-blue-500/10 text-blue-400 border border-blue-500/20", 
-  draft: "bg-slate-500/10 text-slate-400 border border-slate-500/20", 
-  inactive: "bg-slate-500/10 text-slate-400 border border-slate-500/20", 
-  on_leave: "bg-amber-500/10 text-amber-400 border border-amber-500/20", 
-  expired: "bg-red-500/10 text-red-400 border border-red-500/20", 
-  terminated: "bg-red-500/10 text-red-400 border border-red-500/20", 
-  refused: "bg-red-500/10 text-red-400 border border-red-500/20", 
-  cancelled: "bg-slate-500/10 text-slate-400 border border-slate-500/20",
-  overtime: "bg-blue-500/10 text-blue-400 border border-blue-500/20", 
-  missing_checkout: "bg-amber-500/10 text-amber-400 border border-amber-500/20", 
-  manual_edit: "bg-blue-500/10 text-blue-400 border border-blue-500/20", 
-  absent: "bg-red-500/10 text-red-400 border border-red-500/20", 
-  error: "bg-red-500/10 text-red-400 border border-red-500/20",
-  late: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-  computed: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
-  validated: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
-  sent: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-  info: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-  duplicate_warning: "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+const styles: Record<Status, string> = {
+  active: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+  paid: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+  approved: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+  present: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+  pending: "bg-amber-50 text-amber-800 border border-amber-200/80",
+  warning: "bg-amber-50 text-amber-800 border border-amber-200/80",
+  processing: "bg-purple-50 text-purple-700 border border-purple-200/80",
+  draft: "bg-stone-100 text-stone-600 border border-stone-200",
+  inactive: "bg-stone-100 text-stone-600 border border-stone-200",
+  on_leave: "bg-amber-50 text-amber-800 border border-amber-200/80",
+  expired: "bg-rose-50 text-rose-700 border border-rose-200/80",
+  terminated: "bg-rose-50 text-rose-700 border border-rose-200/80",
+  refused: "bg-rose-50 text-rose-700 border border-rose-200/80",
+  cancelled: "bg-stone-100 text-stone-600 border border-stone-200",
+  overtime: "bg-blue-50 text-blue-700 border border-blue-200/80",
+  missing_checkout: "bg-amber-50 text-amber-800 border border-amber-200/80",
+  manual_edit: "bg-purple-50 text-purple-700 border border-purple-200/80",
+  absent: "bg-rose-50 text-rose-700 border border-rose-200/80",
+  error: "bg-rose-50 text-rose-700 border border-rose-200/80",
+  late: "bg-amber-50 text-amber-800 border border-amber-200/80",
+  computed: "bg-purple-50 text-purple-700 border border-purple-200/80",
+  validated: "bg-teal-50 text-teal-700 border border-teal-200/80",
+  sent: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+  info: "bg-blue-50 text-blue-700 border border-blue-200/80",
+  duplicate_warning:
+    "bg-amber-50 text-amber-800 border border-amber-200/80",
 };
 
 const labelMap: Partial<Record<Status, string>> = {
@@ -40,7 +62,19 @@ const labelMap: Partial<Record<Status, string>> = {
   manual_edit: "Manual Edit",
 };
 
-export function StatusBadge({ status }: { status: Status }) { 
-  const displayLabel = labelMap[status] || status.replace(/_/g, " ");
-  return <span className={cn("inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider", styles[status] || "bg-slate-500/10 text-slate-400")}>{displayLabel}</span>; 
+export function StatusBadge({ status }: { status?: string | null }) {
+  const normalized = (status ? String(status).toLowerCase().replace(/-/g, "_") : "active") as Status;
+  const displayLabel = status
+    ? labelMap[normalized] || String(status).replace(/_/g, " ")
+    : "Active";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+        styles[normalized] || "bg-stone-100 text-stone-600 border border-stone-200",
+      )}
+    >
+      {displayLabel}
+    </span>
+  );
 }
