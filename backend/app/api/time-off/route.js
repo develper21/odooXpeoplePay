@@ -159,7 +159,7 @@ async function validateAllocation(allocationId, employeeId, companyId) {
   return null;
 }
 
-export async function GET() {
+export async function GET(request) {
   const { error } = await requirePermission('time_off:read');
   if (error) return error;
 
@@ -167,10 +167,25 @@ export async function GET() {
     const companyId = await getCompanyId();
     if (companyId === null) return NextResponse.json({ time_off_requests: [] });
 
+    const searchParams = request ? new URL(request.url).searchParams : null;
+    const employeeId = searchParams ? (searchParams.get('employee_id') || searchParams.get('employeeId')) : null;
+
+    const filters = [eq(timeOffRequests.companyId, companyId)];
+    if (employeeId) {
+      const numPart = Number(String(employeeId).replace(/\D/g, ''));
+      if (Number.isInteger(numPart) && numPart > 0) {
+        filters.push(eq(timeOffRequests.employeeId, numPart));
+      }
+    }
+
     const rows = await db
-      .select(timeOffRequestColumns)
+      .select({
+        ...timeOffRequestColumns,
+        type: timeOffTypes.name,
+      })
       .from(timeOffRequests)
-      .where(eq(timeOffRequests.companyId, companyId))
+      .leftJoin(timeOffTypes, eq(timeOffRequests.timeOffTypeId, timeOffTypes.id))
+      .where(and(...filters))
       .orderBy(asc(timeOffRequests.startDate), asc(timeOffRequests.id));
 
     return NextResponse.json({ time_off_requests: rows });
