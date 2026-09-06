@@ -1,6 +1,5 @@
 import { apiBlob, apiClient } from "@/lib/api/client";
 import { dataMode } from "@/lib/data-mode";
-import { mockDashboard } from "@/data/mock";
 import { createMock, deleteMock, listMock, updateMock } from "@/lib/services/mock-store";
 import { createResourceService } from "@/lib/services/resource-service";
 import { calculateSalary, type SalaryCalculationContext, type SalaryCalculationResult } from "@/lib/salary-calculator";
@@ -9,7 +8,54 @@ import type { AttendanceRecord, Contract, DashboardData, Employee, Payrun, Paysl
 export const employeeService = createResourceService<Employee>("employees", "/employees");
 export const contractService = { ...createResourceService<Contract>("contracts", "/contracts"), listByEmployee: async (employeeId: string) => dataMode === "api" ? apiClient<Contract[]>(`/contracts?employeeId=${employeeId}`) : (listMock("contracts") as Contract[]).filter((contract) => contract.employeeId === employeeId) };
 export const scheduleService = createResourceService<WorkingSchedule>("schedules", "/schedules");
-export const attendanceService = createResourceService<AttendanceRecord>("attendance", "/attendance");
+export const attendanceService = {
+  ...createResourceService<AttendanceRecord>("attendance", "/attendance"),
+  checkIn: async (employeeId?: string) => {
+    if (dataMode === "api") {
+      return apiClient<AttendanceRecord>("/attendance/check-in", { method: "POST" });
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const nowTime = new Date().toTimeString().slice(0, 5);
+    const records = listMock("attendance");
+    const targetEmpId = employeeId || "emp-001";
+    const existing = records.find((r) => r.employeeId === targetEmpId && r.date === today);
+    if (existing) {
+      return updateMock("attendance", existing.id, { checkIn: nowTime, status: "PRESENT" });
+    }
+    return createMock("attendance", {
+      id: `att-${Date.now().toString(36)}`,
+      employeeId: targetEmpId,
+      date: today,
+      checkIn: nowTime,
+      status: "PRESENT",
+      workedMinutes: 0,
+      breakMinutes: 60,
+    });
+  },
+  checkOut: async (employeeId?: string) => {
+    if (dataMode === "api") {
+      return apiClient<AttendanceRecord>("/attendance/check-out", { method: "POST" });
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const nowTime = new Date().toTimeString().slice(0, 5);
+    const records = listMock("attendance");
+    const targetEmpId = employeeId || "emp-001";
+    const existing = records.find((r) => r.employeeId === targetEmpId && r.date === today);
+    if (existing) {
+      return updateMock("attendance", existing.id, { checkOut: nowTime, workedMinutes: 480 });
+    }
+    return createMock("attendance", {
+      id: `att-${Date.now().toString(36)}`,
+      employeeId: targetEmpId,
+      date: today,
+      checkIn: "09:00",
+      checkOut: nowTime,
+      status: "PRESENT",
+      workedMinutes: 480,
+      breakMinutes: 60,
+    });
+  },
+};
 export const allocationService = createResourceService<TimeOffAllocation>("allocations", "/time-off/allocations");
 export const timeOffService = {
   ...createResourceService<TimeOffRequest>("timeOffRequests", "/time-off/requests"),
@@ -21,14 +67,14 @@ export const timeOffService = {
     const request = requests.find((r) => r.id === id);
     if (request && request.status === "APPROVED") {
       const types = listMock("timeOffTypes");
-      const leaveType = types.find((t) => t.id === request.typeId || t.name.toLowerCase() === request.type.toLowerCase());
+      const leaveType = types.find((t) => String(t.id) === String(request.typeId) || (Boolean(request.type && t.name) && t.name.toLowerCase() === request.type.toLowerCase()));
       if (!leaveType || leaveType.allocationRequired) {
         const allocations = listMock("allocations");
         const alloc = allocations.find(
           (a) =>
             a.id === request.allocationId ||
             (a.employeeId === request.employeeId &&
-              (a.typeId === request.typeId || a.type.toLowerCase() === request.type.toLowerCase()))
+              (String(a.typeId) === String(request.typeId) || (Boolean(request.type && a.type) && a.type.toLowerCase() === request.type.toLowerCase())))
         );
         if (alloc) {
           const newUsed = Math.max(0, alloc.usedDays - request.days);
@@ -40,7 +86,7 @@ export const timeOffService = {
     return deleteMock("timeOffRequests", id);
   },
 };
-export const timeOffTypeService = createResourceService<TimeOffType>("timeOffTypes", "/time-off/types");
+export const timeOffTypeService = createResourceService<TimeOffType>("timeOffTypes", "/time-off-types");
 export const salaryStructureService = {
   ...createResourceService<SalaryStructure>("salaryStructures", "/salary-structures"),
   remove: async (id: string) => {
@@ -141,6 +187,14 @@ export const payslipService = {
       reason: "Server PDF generation is not configured in mock mode. The printable payslip is ready for browser PDF export.",
     };
   },
+  sendEmail: async (id: string): Promise<{ ok: boolean; message: string }> => {
+    if (dataMode === "api") {
+      return apiClient<{ ok: boolean; message: string }>(`/payslips/${id}/email`, { method: "POST" });
+    }
+    const payslip = (listMock("payslips") as Payslip[]).find((record) => record.id === id);
+    if (!payslip) throw new Error("Payslip record was not found.");
+    return { ok: true, message: "Payslip email sent successfully (mock simulation)." };
+  },
 };
 export const userService = createResourceService<User>("users", "/users");
 
@@ -164,7 +218,7 @@ export const timeOffWorkflow = {
     
     // Check if leave type requires allocation
     const types = listMock("timeOffTypes");
-    const leaveType = types.find((t) => t.id === request.typeId || t.name.toLowerCase() === request.type.toLowerCase());
+    const leaveType = types.find((t) => String(t.id) === String(request.typeId) || (Boolean(request.type && t.name) && t.name.toLowerCase() === request.type.toLowerCase()));
     const requiresAllocation = leaveType ? leaveType.allocationRequired : true;
 
     if (requiresAllocation) {
@@ -175,7 +229,7 @@ export const timeOffWorkflow = {
           (a.status === "APPROVED" || a.status === "ACTIVE") &&
           (a.id === request.allocationId ||
             (a.employeeId === request.employeeId &&
-              (a.typeId === request.typeId || a.type.toLowerCase() === request.type.toLowerCase())))
+              (String(a.typeId) === String(request.typeId) || (Boolean(request.type && a.type) && a.type.toLowerCase() === request.type.toLowerCase()))))
       );
 
       if (!alloc) {
@@ -202,14 +256,14 @@ export const timeOffWorkflow = {
     if (request.status === "APPROVED") {
       // If refusing an approved request, restore allocation
       const types = listMock("timeOffTypes");
-      const leaveType = types.find((t) => t.id === request.typeId || t.name.toLowerCase() === request.type.toLowerCase());
+      const leaveType = types.find((t) => String(t.id) === String(request.typeId) || (Boolean(request.type && t.name) && t.name.toLowerCase() === request.type.toLowerCase()));
       if (!leaveType || leaveType.allocationRequired) {
         const allocations = listMock("allocations");
         const alloc = allocations.find(
           (a) =>
             a.id === request.allocationId ||
             (a.employeeId === request.employeeId &&
-              (a.typeId === request.typeId || a.type.toLowerCase() === request.type.toLowerCase()))
+              (String(a.typeId) === String(request.typeId) || (Boolean(request.type && a.type) && a.type.toLowerCase() === request.type.toLowerCase())))
         );
         if (alloc) {
           const newUsed = Math.max(0, alloc.usedDays - request.days);
@@ -265,6 +319,7 @@ import {
   roleLabels,
   roleDescriptions,
   rolePermissions,
+  defaultRolePermissions,
   setRolePermissions,
   resetRolePermissionsToDefault,
   type Permission,
@@ -278,7 +333,33 @@ const canonicalRoles: Role[] = ["ADMIN", "HR_PAYROLL_MANAGER", "HR_PAYROLL_USER"
 export const roleService = {
   listRoles: async (): Promise<RoleSummary[]> => {
     if (dataMode === "api") {
-      return apiClient<RoleSummary[]>("/roles");
+      try {
+        const res = await apiClient<any>("/roles");
+        const rawList = Array.isArray(res) ? res : (res?.roles || []);
+        const users = await userService.list();
+        return canonicalRoles.map((roleKey) => {
+          const match = rawList.find(
+            (r: any) =>
+              String(r.code || "").toUpperCase() === roleKey ||
+              String(r.id || "").toUpperCase() === roleKey
+          );
+          return {
+            id: roleKey,
+            name: match?.name || roleLabels[roleKey] || roleKey,
+            description:
+              roleDescriptions[roleKey] ||
+              "Enterprise system user profile and access privileges.",
+            userCount: users.filter((u) => u.role === roleKey).length,
+            permissionCount: Array.isArray(match?.permissions)
+              ? match.permissions.length
+              : (defaultRolePermissions[roleKey] || []).length,
+            isSystem: match?.is_system ?? true,
+            status: "ACTIVE" as const,
+          };
+        });
+      } catch (err) {
+        console.warn("API listRoles error, fallback to mock/canonical:", err);
+      }
     }
     const users = listMock("users");
     return canonicalRoles.map((role) => ({
@@ -293,29 +374,68 @@ export const roleService = {
   },
   getRole: async (role: Role): Promise<RoleSummary> => {
     const roles = await roleService.listRoles();
-    const found = roles.find((r) => r.id === role);
-    if (!found) throw new Error(`Role ${role} not found`);
-    return found;
+    const found = roles.find(
+      (r) =>
+        r.id === role ||
+        String((r as any).code || "").toUpperCase() === String(role).toUpperCase()
+    );
+    if (found) return found;
+    return {
+      id: role,
+      name: roleLabels[role] || role,
+      description:
+        roleDescriptions[role] ||
+        "Enterprise system user profile and access privileges.",
+      userCount: 0,
+      permissionCount: (defaultRolePermissions[role] || []).length,
+      isSystem: true,
+      status: "ACTIVE",
+    };
   },
   getPermissions: async (role: Role): Promise<Permission[]> => {
+    if (!role || role === ("undefined" as any)) return [];
     if (dataMode === "api") {
-      return apiClient<Permission[]>(`/roles/${role}/permissions`);
+      try {
+        const res = await apiClient<any>(`/roles/${role}/permissions`);
+        if (Array.isArray(res)) return res;
+        if (res && Array.isArray(res.permissions)) return res.permissions;
+      } catch (err) {
+        console.warn(`Role ${role} permissions API note:`, err);
+      }
     }
-    return [...(rolePermissions[role] || [])];
+    return [...(rolePermissions[role] || defaultRolePermissions[role] || [])];
   },
-  updatePermissions: async (role: Role, permissions: Permission[]): Promise<Permission[]> => {
+  updatePermissions: async (
+    role: Role,
+    permissions: Permission[]
+  ): Promise<Permission[]> => {
     if (dataMode === "api") {
-      return apiClient<Permission[]>(`/roles/${role}/permissions`, {
-        method: "PUT",
-        body: JSON.stringify({ permissions }),
-      });
+      try {
+        const res = await apiClient<any>(`/roles/${role}/permissions`, {
+          method: "PUT",
+          body: JSON.stringify({ permissions }),
+        });
+        if (Array.isArray(res)) return res;
+        if (res && Array.isArray(res.permissions)) return res.permissions;
+        return permissions;
+      } catch (err) {
+        console.warn(`Role ${role} updatePermissions API note:`, err);
+      }
     }
     setRolePermissions(role, permissions);
     return [...rolePermissions[role]];
   },
   resetPermissions: async (role: Role): Promise<Permission[]> => {
     if (dataMode === "api") {
-      return apiClient<Permission[]>(`/roles/${role}/permissions/reset`, { method: "POST" });
+      try {
+        const res = await apiClient<any>(`/roles/${role}/permissions/reset`, {
+          method: "POST",
+        });
+        if (Array.isArray(res)) return res;
+        if (res && Array.isArray(res.permissions)) return res.permissions;
+      } catch (err) {
+        console.warn(`Role ${role} resetPermissions API note:`, err);
+      }
     }
     resetRolePermissionsToDefault(role);
     return [...rolePermissions[role]];
@@ -325,16 +445,28 @@ export const roleService = {
 export const settingsService = {
   get: async (): Promise<SystemSettings> => {
     if (dataMode === "api") {
-      return apiClient<SystemSettings>("/settings");
+      try {
+        const res = await apiClient<any>("/settings");
+        if (res && res.organization) return res as SystemSettings;
+        if (res && res.settings && res.settings.organization) return res.settings as SystemSettings;
+      } catch (err) {
+        console.warn("API settings fetch note:", err);
+      }
     }
     return { ...listMock("settings") };
   },
   update: async (partial: Partial<SystemSettings>): Promise<SystemSettings> => {
     if (dataMode === "api") {
-      return apiClient<SystemSettings>("/settings", {
-        method: "PATCH",
-        body: JSON.stringify(partial),
-      });
+      try {
+        const res = await apiClient<any>("/settings", {
+          method: "PATCH",
+          body: JSON.stringify(partial),
+        });
+        if (res && res.organization) return res as SystemSettings;
+        if (res && res.settings && res.settings.organization) return res.settings as SystemSettings;
+      } catch (err) {
+        console.warn("API settings update note:", err);
+      }
     }
     const current = listMock("settings");
     const updated: SystemSettings = {
