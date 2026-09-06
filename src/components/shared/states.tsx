@@ -1,5 +1,38 @@
 import { AlertCircle, Inbox, LoaderCircle } from "lucide-react";
 
-export function LoadingState() { return <div className="flex min-h-40 items-center justify-center text-text-muted"><LoaderCircle className="mr-2 size-4 animate-spin" />Loading...</div>; }
-export function EmptyState({ title = "Nothing here yet", message = "Records will appear here when they are available." }: { title?: string; message?: string }) { return <div className="flex min-h-40 flex-col items-center justify-center text-center"><Inbox className="mb-3 size-8 text-text-muted" /><p className="text-sm font-medium">{title}</p><p className="mt-1 max-w-xs text-xs text-text-muted">{message}</p></div>; }
-export function ErrorState({ message = "Something went wrong. Please try again." }: { message?: string }) { return <div className="flex min-h-40 flex-col items-center justify-center text-center"><AlertCircle className="mb-3 size-8 text-danger" /><p className="text-sm font-medium">Unable to load this view</p><p className="mt-1 text-xs text-text-muted">{message}</p></div>; }
+export function LoadingState() {
+  return (
+    <div className="flex min-h-40 items-center justify-center text-text-muted">
+      <LoaderCircle className="mr-2 size-4 animate-spin" />
+      Loading...
+    </div>
+  );
+}
+export function EmptyState({
+  title = "Nothing here yet",
+  message = "Records will appear here when they are available.",
+}: {
+  title?: string;
+  message?: string;
+}) {
+  return (
+    <div className="flex min-h-40 flex-col items-center justify-center text-center">
+      <Inbox className="mb-3 size-8 text-text-muted" />
+      <p className="text-sm font-medium">{title}</p>
+      <p className="mt-1 max-w-xs text-xs text-text-muted">{message}</p>
+    </div>
+  );
+}
+export function ErrorState({
+  message = "Something went wrong. Please try again.",
+}: {
+  message?: string;
+}) {
+  return (
+    <div className="flex min-h-40 flex-col items-center justify-center text-center">
+      <AlertCircle className="mb-3 size-8 text-danger" />
+      <p className="text-sm font-medium">Unable to load this view</p>
+      <p className="mt-1 text-xs text-text-muted">{message}</p>
+    </div>
+  );
+}
