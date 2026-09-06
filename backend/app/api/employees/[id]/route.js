@@ -60,10 +60,29 @@ async function getCompanyId() {
   return company?.id ?? null;
 }
 
-async function findEmployee(id, companyId) {
-  return db.query.employees.findFirst({
-    where: (e, { eq, and }) => and(eq(e.id, id), eq(e.companyId, companyId)),
-  });
+async function findEmployee(idOrCode, companyId) {
+  const numId = Number(idOrCode);
+  const condition =
+    Number.isInteger(numId) && numId > 0
+      ? and(eq(employees.id, numId), eq(employees.companyId, companyId))
+      : and(
+          eq(employees.employeeCode, String(idOrCode).toUpperCase()),
+          eq(employees.companyId, companyId),
+        );
+
+  const [row] = await db
+    .select({
+      ...employeeColumns,
+      department: departments.name,
+      position: jobPositions.title,
+    })
+    .from(employees)
+    .leftJoin(departments, eq(employees.departmentId, departments.id))
+    .leftJoin(jobPositions, eq(employees.jobPositionId, jobPositions.id))
+    .where(condition)
+    .limit(1);
+
+  return row || null;
 }
 
 async function validateReference(table, id, companyId, label) {
@@ -142,8 +161,9 @@ export async function GET(_request, { params }) {
   const { error } = await requirePermission('employees:read');
   if (error) return error;
 
-  const id = Number(params?.id);
-  if (!Number.isInteger(id) || id <= 0) {
+  const resolvedParams = await params;
+  const rawId = resolvedParams?.id;
+  if (!rawId) {
     return NextResponse.json({ error: 'Invalid employee id.' }, { status: 400 });
   }
 
@@ -153,9 +173,9 @@ export async function GET(_request, { params }) {
       return NextResponse.json({ error: 'Employee not found.' }, { status: 404 });
     }
 
-    const employee = await findEmployee(id, companyId);
+    const employee = await findEmployee(rawId, companyId);
     if (!employee) {
-      return NextResponse.json({ error: `Employee ${id} not found.` }, { status: 404 });
+      return NextResponse.json({ error: `Employee ${rawId} not found.` }, { status: 404 });
     }
 
     return NextResponse.json({ employee });
@@ -170,7 +190,8 @@ export async function PATCH(request, { params }) {
   const { error } = await requirePermission('employees:write');
   if (error) return error;
 
-  const id = Number(params?.id);
+  const resolvedParams = await params;
+  const id = Number(resolvedParams?.id);
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid employee id.' }, { status: 400 });
   }
@@ -305,7 +326,8 @@ export async function DELETE(_request, { params }) {
   const { error } = await requirePermission('employees:write');
   if (error) return error;
 
-  const id = Number(params?.id);
+  const resolvedParams = await params;
+  const id = Number(resolvedParams?.id);
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid employee id.' }, { status: 400 });
   }
