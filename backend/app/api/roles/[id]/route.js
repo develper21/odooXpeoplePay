@@ -30,12 +30,16 @@ export async function GET(request, { params }) {
 
   // params is a Promise in the Next.js App Router.
   const { id } = await params;
-  const roleId = Number(id);
-  if (!Number.isInteger(roleId) || roleId <= 0) {
+  if (!id) {
     return NextResponse.json({ error: 'Invalid role id.' }, { status: 400 });
   }
 
   try {
+    const roleId = Number(id);
+    const filter = Number.isInteger(roleId)
+      ? eq(roles.id, roleId)
+      : eq(roles.code, String(id).toUpperCase());
+
     const [role] = await db
       .select({
         id: roles.id,
@@ -45,11 +49,11 @@ export async function GET(request, { params }) {
         is_system: roles.isSystem,
       })
       .from(roles)
-      .where(eq(roles.id, roleId))
+      .where(filter)
       .limit(1);
 
     if (!role) {
-      return NextResponse.json({ error: `Role ${roleId} not found.` }, { status: 404 });
+      return NextResponse.json({ error: `Role ${id} not found.` }, { status: 404 });
     }
 
     return NextResponse.json({ role });
