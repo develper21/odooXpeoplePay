@@ -1,12 +1,12 @@
 // POST /api/time-off/:id/approve
 // Approves a pending, company-scoped time-off request.
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/lib/auth-guard';
 import { db } from '@/lib/db';
-import { employees, timeOffRequests } from '@/lib/schema';
+import { allocations, employees, timeOffRequests } from '@/lib/schema';
 
 const timeOffRequestColumns = {
   id: timeOffRequests.id,
@@ -77,10 +77,57 @@ export async function POST(_request, { params }) {
       .where(and(eq(employees.userId, user.id), eq(employees.companyId, companyId)))
       .limit(1);
 
+    // Find applicable active allocation for this employee and leave type
+    let allocation = null;
+    if (existing.allocation_id) {
+      const [alloc] = await db
+        .select()
+        .from(allocations)
+        .where(and(eq(allocations.id, existing.allocation_id), eq(allocations.companyId, companyId)))
+        .limit(1);
+      allocation = alloc;
+    } else {
+      const [alloc] = await db
+        .select()
+        .from(allocations)
+        .where(and(
+          eq(allocations.employeeId, existing.employee_id),
+          eq(allocations.timeOffTypeId, existing.time_off_type_id),
+          eq(allocations.companyId, companyId),
+          eq(allocations.status, 'active')
+        ))
+        .orderBy(desc(allocations.periodYear))
+        .limit(1);
+      allocation = alloc;
+    }
+
+    if (allocation) {
+      const currentRemaining = Number(allocation.remainingDays);
+      const requested = Number(existing.days_requested);
+      if (currentRemaining < requested) {
+        return NextResponse.json(
+          { error: `Insufficient leave balance. Available: ${currentRemaining} days, requested: ${requested} days.` },
+          { status: 422 }
+        );
+      }
+
+      const newUsed = Number(allocation.usedDays) + requested;
+      const newRemaining = Math.max(0, Number(allocation.allocatedDays) - newUsed);
+
+      await db
+        .update(allocations)
+        .set({
+          usedDays: String(newUsed),
+          remainingDays: String(newRemaining),
+        })
+        .where(eq(allocations.id, allocation.id));
+    }
+
     const [timeOffRequest] = await db
       .update(timeOffRequests)
       .set({
         status: 'approved',
+        allocationId: allocation ? allocation.id : existing.allocation_id,
         approvedById: approver?.id ?? null,
         approvedAt: sql`CURRENT_TIMESTAMP`,
       })
