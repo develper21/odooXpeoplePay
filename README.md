@@ -1,262 +1,172 @@
 # PeoplePay360
 
-PeoplePay360 is a full HR and payroll operations workspace for managing employees, contracts, schedules, attendance, time off, compensation configuration, payroll processing, payslips, reports, and administration.
+PeoplePay360 is a full-stack HR and payroll management system built with Next.js. The project includes a frontend application for employee, attendance, compensation, payroll, and admin workflows, along with a separate backend API for persistence, authentication, email, and payslip generation.
 
-It is implemented as a responsive Next.js App Router application with a PeoplePay360 Midnight enterprise interface. The frontend is designed around replaceable data services so mock mode can support demos while API mode can connect to a backend without rewriting page components.
+## Project overview
 
-## Project Status
+This repository is organized as a monorepo with two main parts:
 
-The planned frontend sprints are complete through Sprint 10:
+- Frontend: root Next.js app under `src/`
+- Backend: API + database layer under `backend/`
 
-- HR master data: employees, contracts, schedules, and attendance
-- Time off: types, allocations, requests, approval, refusal, and balance consumption
-- Compensation: salary structures, salary rules, safe calculations, and previews
-- Payroll: payrun creation, employee selection, computation, warnings, validation, payment, and delivery
-- Payslips: list, detail, salary breakdown, printable layout, PDF service boundary, and delivery state
-- Analytics: dynamic payroll, attendance, time-off, and department reports
-- Administration: users, roles, permissions, settings, and RBAC-aware navigation
-- Final integration review: loading, empty, error, mock/API, data relationship, and workflow audits
+The UI is built for an HR/payroll workflow and supports mock data mode as well as real API integration. The project is designed to manage employee master data, payroll processing, payslips, schedules, approvals, and admin permissions.
 
-The application is frontend-complete for the current scope. Backend authorization, persistence, email delivery, and server-generated PDF rendering must be supplied by the production backend.
+## Tech stack
 
-## Technology Stack
-
-### Application
-
-- Next.js 16 App Router
-- React
+### Frontend
+- Next.js 16
+- React 19
 - TypeScript
-- Tailwind CSS v4
-- Webpack development and production builds
-- `next/font` and local design tokens
+- Tailwind CSS
+- App Router structure
+- TanStack React Query
+- React Hook Form
+- Zod validation
+- Recharts for dashboard/reporting
+- Lucide icons
 
-### UI and interaction
+### Backend
+- Next.js app in `backend/`
+- Drizzle ORM
+- PostgreSQL
+- JWT/session-style auth via cookies
+- Nodemailer for email delivery
+- PDFKit for payslip PDF generation
+- Server-side validation and payroll logic
 
-- shadcn/ui-compatible local primitives
-- Lucide React icons
-- Recharts for dashboard and report charts
-- Responsive CSS layouts for desktop, tablet, and mobile
-- PeoplePay360 Midnight design tokens for backgrounds, surfaces, borders, text, primary actions, success, warning, and danger states
+## Repository structure
 
-### Data and forms
+```text
+odooXpeoplePay/
+├── src/                  # Frontend application
+│   ├── app/              # App Router pages and route groups
+│   ├── components/       # Reusable UI and domain components
+│   ├── hooks/            # Auth, data, and permission hooks
+│   ├── lib/              # Utilities and service layer
+│   ├── data/             # Mock data and demo records
+│   └── types/            # Shared TypeScript types
+├── backend/              # Backend API and DB layer
+│   ├── app/              # Backend Next.js routes
+│   ├── db/               # Migrations and seed scripts
+│   ├── drizzle/          # SQL migrations metadata
+│   ├── lib/              # Auth, DB, payroll, PDF utilities
+│   └── package.json      # Backend dependencies/scripts
+├── Docs/                 # Project documentation
+├── postman/              # API testing docs
+├── public/               # Static assets
+├── package.json          # Frontend package config
+├── next.config.mjs       # Next.js config
+├── components.json       # UI component config
+├── README.md             # Project overview
+├── .env.example          # Frontend env example
+└── .gitignore
+```
 
-- TanStack React Query for queries, mutations, cache invalidation, and loading states
-- React Hook Form for form state
-- Zod for form validation
-- Centralized TypeScript domain models
-- Service abstraction supporting mock and API implementations
+## Core modules
 
-### Development tools
+The application currently covers:
 
-- Node.js and npm
-- TypeScript compiler
-- Next.js production build
-- Playwright-compatible browser testing when a local browser runtime is available
+- Dashboard and KPI reporting
+- Employees and contracts
+- Attendance and schedules
+- Time-off management
+- Salary structures and salary rules
+- Payroll runs and validation
+- Payslips and payment workflow
+- Roles, users, permissions, and settings
+- Admin operations and RBAC-aware navigation
 
-## Requirements
+## Prerequisites
 
-- Node.js compatible with the installed Next.js version
+- Node.js 18+
 - npm
-- Optional: a backend API for API mode
-- Optional: Google Chrome, Microsoft Edge, or Playwright Chromium for browser testing
+- PostgreSQL for the backend database
+- Optional: browser for manual UI testing
 
-## Getting Started
+## Frontend setup
 
-Install dependencies and start the development server:
+From the project root:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Then open:
 
-The development server uses Webpack through the project scripts. The local environment may warn that the native Windows SWC binary cannot be loaded; Next.js falls back to WASM/Webpack compilation and the application still builds successfully.
+```text
+http://localhost:3000
+```
 
-## Environment Configuration
-
-The default `.env.local` configuration uses the in-memory mock data source:
+Frontend env configuration is defined in `.env.example`:
 
 ```env
 NEXT_PUBLIC_DATA_MODE=mock
-```
-
-For a backend-connected environment:
-
-```env
-NEXT_PUBLIC_DATA_MODE=api
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 ```
 
-The API client defaults to `http://localhost:8000/api` when `NEXT_PUBLIC_API_BASE_URL` is not set.
+Set `NEXT_PUBLIC_DATA_MODE=api` when you want the frontend to connect to the backend instead of the mock data layer.
 
-### Data flow
+## Backend setup
 
-```text
-Page or component
-	-> TanStack Query hook
-	-> domain service
-	-> mock store or API client
+Navigate to the backend folder:
+
+```bash
+cd backend
+npm install
 ```
 
-Pages and components should use hooks and services rather than importing raw mock records. Mock records are isolated under `src/data/mock`; service and workflow boundaries live under `src/lib/services`.
+Create your local environment file for the backend (based on your project configuration), then run:
 
-## Product Modules
-
-### Dashboard
-
-`/dashboard` provides role-aware workspaces:
-
-- Company dashboard for HR and payroll roles
-- Personal employee workspace for `EMPLOYEE`
-- Payroll KPIs and net salary totals
-- Payslip generation metrics
-- Average salary
-- Approved time off
-- Attendance health
-- Salary cost by department
-- Monthly salary trend
-- Payroll warnings and operational alerts
-- Attendance overview
-- Time-off overview
-- Department breakdown
-
-Dashboard values are derived from current service records rather than random or static display values. Period, department, and employee-type filters are applied across the dashboard widgets.
-
-### Employees and contracts
-
-- Employee list and kanban views
-- Search, status, department, and employee-type filters
-- Employee create, edit, detail, and delete flows
-- Employee hub smart links to contracts, attendance, time off, and allocations
-- Dynamic related-record counts
-- Active contract highlighting
-- Historical contract access
-- Contract period and status validation
-- Salary structure links from contracts
-
-### Working schedules and attendance
-
-- Schedule CRUD and detail views
-- Schedule types, status, timezone, weekly hours, and working days
-- Employee schedule relationships
-- Attendance list, create, edit, and detail views
-- Check-in, check-out, worked minutes, status, notes, and manual-edit indicators
-- Missing checkout state without fabricated checkout values
-- Attendance overview and reporting
-
-### Time off
-
-- Time-off type configuration
-- Allocation CRUD and employee-scoped views
-- Request CRUD and employee-scoped views
-- Duration calculation for days and hours
-- Allocation validity windows
-- Allocation lifecycle: `PENDING`, `APPROVED`, `REFUSED`, `ACTIVE`, and `EXPIRED` where applicable
-- Approval and refusal confirmation flows
-- Approved-only usable balance
-- Request approval consumes approved allocation balance
-- Refused requests and refused allocations do not consume or expose usable balance
-- Duplicate approval protection
-- Approved request deletion restores consumed balance in mock mode
-
-### Salary structures and rules
-
-- Salary structure CRUD
-- Salary rule CRUD
-- Rule categories: `BASIC`, `ALLOWANCE`, `GROSS`, `DEDUCTION`, and `NET`
-- Computation types: `FIXED`, `PERCENTAGE`, and `FORMULA`
-- Deterministic rule sequencing
-- Dependency and cycle validation
-- Safe arithmetic formula parsing without `eval` or `new Function`
-- Live salary calculation preview
-- Structure-to-rule and contract-to-structure relationships
-- Deletion protection for referenced structures and rules
-- Read-only salary access for `HR_PAYROLL_USER`
-
-### Payroll and payslips
-
-Payrun workflow:
-
-```text
-DRAFT
-	-> COMPUTED
-	-> VALIDATED
-	-> PAID
-	-> payslip delivery
+```bash
+npm run dev
 ```
 
-Payrun features include:
+The backend is configured to run on port `3100` by default.
 
-- Payrun creation wizard
-- Period and salary structure selection
-- Employee selection
-- Applicable contract resolution for the payroll period
-- Attendance-based worked-day calculation
-- Salary structure and rule calculation
-- Payslip generation
-- Duplicate payslip warnings
-- Missing contract and invalid-period warnings
-- Missing bank detail warnings
-- Blocking validation errors
-- Mark paid confirmation
-- Delivery summary with success and failure results
+## Database commands
 
-Payslips include:
+From `backend/`:
 
-- Employee
-- Pay period
-- Contract
-- Salary structure
-- Payrun reference
-- Worked days
-- Basic salary
-- Allowances
-- Gross salary
-- Deductions
-- Net salary
-- Rule-level calculation lines
-- Financial status
-- Separate delivery status
-
-### PDF behavior
-
-The UI calls the service boundary:
-
-```ts
-payslipService.generatePdf(payslipId)
+```bash
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+npm run db:studio
 ```
 
-In API mode, the service requests:
+These commands are used for schema generation, migration execution, and local seed data setup.
 
-```text
-GET /payslips/:id/pdf
+## Useful scripts
+
+At the frontend root:
+
+```bash
+npm run build
+npm run start
+npm run lint
+npm run typecheck
 ```
 
-The returned PDF blob opens in a new browser tab. In mock mode, the service validates that the payslip exists and returns an explicit browser-print fallback. The payslip page then calls `window.print()` so the user can export the print layout to PDF.
+At the backend root:
 
-The printable layout includes PeoplePay360 branding, employee information, pay period, contract, salary structure, earnings, deductions, gross, and net values. Navigation and interactive controls are hidden by print styles.
-
-### Payslip delivery
-
-The UI calls the service boundary:
-
-```ts
-payrunService.sendPayslips(payrunId)
+```bash
+npm run build
+npm run lint
+npm run db:migrate
+npm run db:seed
 ```
 
-In API mode, the service requests:
+## Development notes
 
-```text
-POST /payruns/:id/send-payslips
-```
+- The frontend supports a mock data mode for demos and local development.
+- The backend handles API and persistence logic for production-style workflows.
+- The project uses separate UI and API concerns so pages can work with either mock or live backend data depending on configuration.
+- Postman samples and developer docs are available under `postman/` and `Docs/`.
 
-In mock mode, delivery is explicitly simulated. Valid employee email addresses are counted as successful. Missing or invalid email addresses are reported as failures and do not receive a sent state.
+## License
 
-Delivery status is separate from the financial payslip status:
-
-- Financial status: `DRAFT`, `COMPUTED`, `VALIDATED`, `PAID`, or `DUPLICATE_WARNING`
-- Delivery status: `PENDING`, `SENT`, or `FAILED`
+This project is licensed under the MIT License. See `LICENSE` for details.
 
 Payslips can only be sent after the payrun is marked `PAID`.
 
