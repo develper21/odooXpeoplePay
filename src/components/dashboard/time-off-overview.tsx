@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calendar, CheckCircle2, Clock3, Layers } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  Layers,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TimeOffOverview as TimeOffOverviewType } from "@/types/domain";
 
@@ -10,11 +16,23 @@ interface TimeOffOverviewProps {
 }
 
 export function TimeOffOverview({ overview }: TimeOffOverviewProps) {
-  const usedDays = Math.max(0, overview.totalAllocatedDays - overview.totalRemainingDays);
+  const safeOverview = overview || {
+    approvedDays: 0,
+    pendingRequests: 0,
+    totalAllocatedDays: 0,
+    totalRemainingDays: 0,
+    byType: [],
+  };
+
+  const totalAllocated = safeOverview.totalAllocatedDays ?? 0;
+  const totalRemaining = safeOverview.totalRemainingDays ?? 0;
+  const approvedDays = safeOverview.approvedDays ?? 0;
+  const pendingRequests = safeOverview.pendingRequests ?? 0;
+  const byType = safeOverview.byType || [];
+
+  const usedDays = Math.max(0, totalAllocated - totalRemaining);
   const utilizationRate =
-    overview.totalAllocatedDays > 0
-      ? Math.round((usedDays / overview.totalAllocatedDays) * 100)
-      : 0;
+    totalAllocated > 0 ? Math.round((usedDays / totalAllocated) * 100) : 0;
 
   return (
     <Card>
@@ -41,7 +59,8 @@ export function TimeOffOverview({ overview }: TimeOffOverviewProps) {
               <span className="text-xs text-text-muted">Approved Leaves</span>
             </div>
             <p className="mt-2 text-xl font-bold text-text-primary">
-              {overview.approvedDays} <span className="text-xs font-normal text-text-muted">days</span>
+              {approvedDays}{" "}
+              <span className="text-xs font-normal text-text-muted">days</span>
             </p>
           </div>
 
@@ -51,8 +70,10 @@ export function TimeOffOverview({ overview }: TimeOffOverviewProps) {
               <span className="text-xs text-text-muted">Pending Requests</span>
             </div>
             <p className="mt-2 text-xl font-bold text-text-primary">
-              {overview.pendingRequests}{" "}
-              <span className="text-xs font-normal text-text-muted">awaiting</span>
+              {pendingRequests}{" "}
+              <span className="text-xs font-normal text-text-muted">
+                awaiting
+              </span>
             </p>
           </div>
 
@@ -62,9 +83,9 @@ export function TimeOffOverview({ overview }: TimeOffOverviewProps) {
               <span className="text-xs text-text-muted">Remaining Balance</span>
             </div>
             <p className="mt-2 text-xl font-bold text-text-primary">
-              {overview.totalRemainingDays}{" "}
+              {totalRemaining}{" "}
               <span className="text-xs font-normal text-text-muted">
-                / {overview.totalAllocatedDays} days
+                / {totalAllocated} days
               </span>
             </p>
           </div>
@@ -73,8 +94,12 @@ export function TimeOffOverview({ overview }: TimeOffOverviewProps) {
         {/* Quota Utilization Bar */}
         <div className="rounded-lg border border-border-subtle bg-surface-raised/40 p-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-text-secondary">Quota Utilization</span>
-            <span className="font-bold text-text-primary">{utilizationRate}% consumed</span>
+            <span className="font-medium text-text-secondary">
+              Quota Utilization
+            </span>
+            <span className="font-bold text-text-primary">
+              {utilizationRate}% consumed
+            </span>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-raised">
             <div
@@ -85,19 +110,21 @@ export function TimeOffOverview({ overview }: TimeOffOverviewProps) {
         </div>
 
         {/* Breakdown by Type */}
-        {overview.byType.length > 0 && (
+        {byType.length > 0 && (
           <div>
             <p className="mb-2 text-xs font-medium text-text-secondary">
               Approved Days by Leave Type
             </p>
             <div className="flex flex-wrap gap-2">
-              {overview.byType.map((item) => (
+              {byType.map((item) => (
                 <div
                   key={item.type}
                   className="flex items-center gap-2 rounded-md border border-border-subtle bg-surface px-2.5 py-1.5 text-xs"
                 >
                   <Calendar className="size-3 text-text-muted" />
-                  <span className="font-medium text-text-primary">{item.type}:</span>
+                  <span className="font-medium text-text-primary">
+                    {item.type}:
+                  </span>
                   <span className="font-bold text-primary">{item.days} d</span>
                 </div>
               ))}
