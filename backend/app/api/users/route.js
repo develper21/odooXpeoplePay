@@ -61,6 +61,37 @@ const createUserSchema = z.object({
     .positive('role_id must be a positive integer.'),
 });
 
+export async function GET() {
+  const { error: authError } = await requirePermission('users:read');
+  if (authError) return authError;
+
+  try {
+    const rows = await db
+      .select({
+        id: users.id,
+        role_id: users.roleId,
+        role_code: roles.code,
+        role_name: roles.name,
+        email: users.email,
+        first_name: users.firstName,
+        last_name: users.lastName,
+        phone: users.phone,
+        is_active: users.isActive,
+        last_login_at: users.lastLoginAt,
+        created_at: users.createdAt,
+        updated_at: users.updatedAt,
+      })
+      .from(users)
+      .leftJoin(roles, eq(users.roleId, roles.id))
+      .orderBy(users.id);
+
+    return NextResponse.json({ users: rows });
+  } catch (err) {
+    console.error('GET /api/users failed:', err);
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+  }
+}
+
 export async function POST(request) {
   // ADMIN-level gate first: never process unauthenticated payloads.
   const { error: authError } = await requirePermission('users:create');
