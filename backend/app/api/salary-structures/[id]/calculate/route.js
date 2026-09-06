@@ -19,10 +19,8 @@ function evaluateFormula(formula, scope) {
       const val = scope[match];
       return val !== undefined ? String(val) : '0';
     });
-    // Safe evaluation of simple math without arbitrary JS
     if (/^[0-9+\-*/().\s]+$/.test(sanitized)) {
-      // eslint-disable-next-line no-new-func
-      const result = Function(`'use strict'; return (${sanitized})`)();
+      const result = new Function(`'use strict'; return (${sanitized})`)();
       return Number.isFinite(result) ? roundMoney(result) : 0;
     }
   } catch {

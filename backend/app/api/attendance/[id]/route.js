@@ -67,12 +67,28 @@ const decimalHours = z
   .refine((value) => value <= 999.99, 'Must be 999.99 or less.')
   .nullable()
   .optional();
-const timestampField = z.string().datetime({ offset: true }).nullable().optional();
+const timestampField = z
+  .union([
+    z.string().refine((val) => !isNaN(Date.parse(val)), 'Must be a valid datetime string.'),
+    z.null(),
+    z.literal(''),
+  ])
+  .transform((val) => {
+    if (!val) return null;
+    return new Date(val).toISOString();
+  })
+  .nullable()
+  .optional();
+
+const dateField = z
+  .string()
+  .refine((val) => /^\d{4}-\d{2}-\d{2}/.test(val), 'Must be YYYY-MM-DD format.')
+  .transform((val) => val.slice(0, 10));
 
 const updateAttendanceSchema = z.object({
   employee_id: z.number().int().positive().optional(),
   working_schedule_id: z.number().int().positive().nullable().optional(),
-  attendance_date: z.string().date().optional(),
+  attendance_date: dateField.optional(),
   clock_in: timestampField,
   clock_out: timestampField,
   breaks_duration_minutes: z.number().int().nonnegative().optional(),
@@ -199,7 +215,29 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: 'At least one field is required.' }, { status: 400 });
   }
 
-  const parsed = updateAttendanceSchema.safeParse(body);
+  const rawBody = body;
+  const normalizedBody = {
+    ...rawBody,
+    attendance_date: rawBody.attendance_date || rawBody.date,
+    clock_in: rawBody.clock_in !== undefined ? rawBody.clock_in : rawBody.check_in,
+    clock_out: rawBody.clock_out !== undefined ? rawBody.clock_out : rawBody.check_out,
+    breaks_duration_minutes:
+      rawBody.breaks_duration_minutes !== undefined ? rawBody.breaks_duration_minutes : rawBody.break_minutes,
+    work_hours:
+      rawBody.work_hours !== undefined
+        ? rawBody.work_hours
+        : rawBody.worked_minutes
+          ? Number((rawBody.worked_minutes / 60).toFixed(2))
+          : undefined,
+    status:
+      rawBody.status && ['manual_edit', 'overtime', 'missing_checkout'].includes(String(rawBody.status).toLowerCase())
+        ? 'present'
+        : rawBody.status
+          ? String(rawBody.status).toLowerCase()
+          : undefined,
+  };
+
+  const parsed = updateAttendanceSchema.safeParse(normalizedBody);
   if (!parsed.success) {
     return NextResponse.json(
       {
