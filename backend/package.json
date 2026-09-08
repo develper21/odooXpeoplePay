@@ -11,6 +11,7 @@
     "db:migrate": "node db/migrate.mjs",
     "db:push": "drizzle-kit push",
     "db:seed": "node db/seed.mjs",
+    "db:setup": "node db/migrate.mjs && node db/seed.mjs",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
