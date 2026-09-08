@@ -24,10 +24,13 @@ export const AUTH_COOKIE_PATH = '/';
 //                               same-site requests. Switch to 'lax' later if
 //                               cross-site top-level navigation needs it.
 export function authCookieBaseAttributes() {
+  const envSameSite = (process.env.COOKIE_SAMESITE || 'lax').toLowerCase();
+  const sameSite = ['lax', 'strict', 'none'].includes(envSameSite) ? envSameSite : 'lax';
+
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production' || sameSite === 'none',
+    sameSite,
     path: AUTH_COOKIE_PATH,
   };
 }
