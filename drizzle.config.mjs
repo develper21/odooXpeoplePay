@@ -1,10 +1,11 @@
 import { defineConfig } from 'drizzle-kit';
 
+const envFileName = process.env.ENV_FILE || '.env.local';
 if (!process.env.DATABASE_URL && typeof process.loadEnvFile === 'function') {
   try {
-    process.loadEnvFile('.env.local');
+    process.loadEnvFile(envFileName);
   } catch {
-    // If .env.local does not exist, fallback to environment
+    // If env file does not exist, fallback to environment
   }
 }
 

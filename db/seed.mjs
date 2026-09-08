@@ -20,10 +20,17 @@ import * as s from '../src/server/schema.js';
 
 // --- environment ------------------------------------------------------------
 const here = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(here, '../.env.local');
-if (fs.existsSync(envPath)) loadEnvFile(envPath);
+const envFileName = process.env.ENV_FILE || '.env.local';
+const envPath = path.resolve(here, '..', envFileName);
+
+if (!process.env.DATABASE_URL && fs.existsSync(envPath)) {
+  loadEnvFile(envPath);
+} else if (process.env.ENV_FILE && fs.existsSync(envPath)) {
+  loadEnvFile(envPath);
+}
+
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is not set (expected in .env.local).');
+  console.error(`DATABASE_URL is not set (checked ${envFileName} and environment).`);
   process.exit(1);
 }
 

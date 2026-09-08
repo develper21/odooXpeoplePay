@@ -10,10 +10,14 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node db/migrate.mjs",
+    "db:migrate:prod": "ENV_FILE=.env.prod node db/migrate.mjs",
     "db:push": "drizzle-kit push",
     "db:seed": "node db/seed.mjs",
+    "db:seed:prod": "ENV_FILE=.env.prod node db/seed.mjs",
     "db:setup": "node db/migrate.mjs && node db/seed.mjs",
-    "db:studio": "drizzle-kit studio"
+    "db:setup:prod": "ENV_FILE=.env.prod node db/migrate.mjs && ENV_FILE=.env.prod node db/seed.mjs",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:prod": "ENV_FILE=.env.prod drizzle-kit studio"
   },
   "dependencies": {
     "@tanstack/react-query": "latest",

@@ -25,11 +25,13 @@ function getDb() {
     );
   }
 
-  // PostgreSQL client for local PostgreSQL / pgAdmin
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // PostgreSQL client for local PostgreSQL or Cloud Neon (pooled)
   const client = postgres(process.env.DATABASE_URL, {
-    max: 10,
+    max: isProduction ? 1 : 10,
     idle_timeout: 20,
-    connect_timeout: 10,
+    connect_timeout: 15,
   });
 
   // Drizzle client bound to postgres-js
