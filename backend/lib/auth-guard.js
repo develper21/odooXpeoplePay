@@ -18,7 +18,7 @@
 import 'server-only';
 
 import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import { verifyAuthToken } from '@/lib/auth';
@@ -38,9 +38,18 @@ import { roles, users } from '@/lib/schema';
  *   safe fields (id, email, name, role code/name, permissions, ...).
  */
 export async function requireUser() {
-  // 1. The session travels only in the httpOnly cookie; no cookie → 401.
+  // 1. Resolve token from httpOnly cookie or Authorization Bearer header
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  let token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+
+  if (!token) {
+    const headerStore = await headers();
+    const authHeader = headerStore.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7).trim();
+    }
+  }
+
   if (!token) {
     return {
       user: null,
