@@ -1,0 +1,8 @@
+# Vercel Deployment Ignore
+backend/
+Docs/
+postman/
+*.tsbuildinfo
+.git/
+README.md
+LICENSE
