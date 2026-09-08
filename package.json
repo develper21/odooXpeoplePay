@@ -7,27 +7,45 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node db/migrate.mjs",
+    "db:push": "drizzle-kit push",
+    "db:seed": "node db/seed.mjs",
+    "db:setup": "node db/migrate.mjs && node db/seed.mjs",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@tanstack/react-query": "latest",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "latest",
     "clsx": "latest",
+    "drizzle-orm": "^0.45.2",
+    "jose": "^6.2.11",
     "lucide-react": "latest",
     "next": "latest",
+    "nodemailer": "^10.0.0",
+    "pdfkit": "^0.20.2",
+    "postgres": "^3.4.9",
     "react": "latest",
     "react-dom": "latest",
     "react-hook-form": "latest",
     "recharts": "latest",
+    "server-only": "^0.0.1",
     "tailwind-merge": "latest",
     "zod": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "latest",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "latest",
+    "@types/nodemailer": "^6.4.17",
+    "@types/pdfkit": "^0.13.9",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "drizzle-kit": "^0.31.10",
     "tailwindcss": "latest",
     "typescript": "latest"
   }
 }
+

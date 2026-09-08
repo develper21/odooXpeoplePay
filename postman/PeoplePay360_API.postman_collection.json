@@ -2,13 +2,13 @@
   "info": {
     "_postman_id": "cf93e9d4-peoplepay360-api-v1",
     "name": "PeoplePay360 HRMS API (Full Coverage)",
-    "description": "Complete Postman & Bruno compatible API collection for PeoplePay360. Supports direct Backend testing (http://localhost:3100 or Render) and Frontend Reverse Proxy testing (http://localhost:3000 or Vercel).",
+    "description": "Complete Postman & Bruno compatible API collection for PeoplePay360 unified Next.js full-stack application (Local: http://localhost:3000, Production: Vercel).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3100",
+      "value": "http://localhost:3000",
       "type": "string"
     }
   ],

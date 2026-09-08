@@ -1,140 +1,88 @@
-# 🚀 Production Deployment Guide: Vercel (Frontend) + Render (Backend)
+# 🚀 Production Deployment Guide: Unified Next.js on Vercel
 
-This guide provides complete step-by-step instructions for deploying the **PeoplePay360** HRMS application to **Render** (Backend API & PostgreSQL Database) and **Vercel** (Frontend Web Application).
+This guide provides complete instructions for deploying the **PeoplePay360** Full-Stack HRMS application (Frontend UI + Backend API Route Handlers + PostgreSQL ORM) to **Vercel**.
 
 ---
 
 ## 🏗️ Architecture Overview
 
 ```
-[ Web Browser ] ───( HTTPS /api/* )───> [ Vercel: Next.js Frontend ]
-                                                 │ (Next.js Rewrites Reverse Proxy)
-                                                 ▼
-                                        [ Render: Backend API Server ]
-                                                 │
-                                                 ▼
-                                        [ PostgreSQL Database ]
+[ Web Browser ] ───( HTTPS )───> [ Vercel: Unified Next.js App ]
+                                          ├── React 19 Frontend (UI Pages)
+                                          └── App Router Route Handlers (/api/*)
+                                                      │
+                                                      ▼
+                                          [ Cloud PostgreSQL Database ]
+                                          (Neon.tech / Supabase / Render Postgres)
 ```
 
-### Why Use the Reverse Proxy Approach?
-- **Zero CORS Issues**: The browser communicates only with your frontend domain (`https://your-app.vercel.app/api/*`). Vercel proxies these requests server-to-server to Render.
-- **First-Party Cookies**: Session cookies (`hrms_token`) remain first-party to your Vercel domain, avoiding third-party cookie blocking in modern browsers (Safari ITP, Chrome Privacy Sandbox, Firefox).
-- **Direct Cross-Origin Fallback**: The backend also includes native CORS headers and preflight (OPTIONS) support if you choose to point directly to Render.
+### Key Advantages:
+- **Single Deployment**: Frontend and Backend deploy together in 1 click from your GitHub repository.
+- **Zero CORS / Same-Origin**: Browser talks directly to `/api/*` on the same domain without needing any proxy, CORS headers, or port routing.
+- **First-Party Cookies**: Session cookies (`hrms_token`) remain native first-party cookies with maximum browser security (`httpOnly`, `sameSite=lax`, `secure`).
+- **Serverless Autoscaling**: Route handlers scale automatically as Vercel Serverless Functions.
 
 ---
 
-## 🗄️ STEP 1: Set Up the PostgreSQL Database
+## 🗄️ STEP 1: Set Up Cloud PostgreSQL Database
 
-You can use any cloud PostgreSQL provider:
-- **Render PostgreSQL** (Integrated on Render)
-- **Neon.tech** (Serverless PostgreSQL, high performance, free tier)
-- **Supabase** (Managed PostgreSQL)
+You can use any cloud PostgreSQL provider. For Vercel serverless functions, **Neon.tech** or **Supabase** (with connection pooling) is recommended:
 
-### Using Render PostgreSQL:
-1. Log in to [Render Dashboard](https://dashboard.render.com/).
-2. Click **New +** -> **PostgreSQL**.
-3. Configure the database:
-   - **Name**: `peoplepay360-db`
-   - **Database**: `odoopeoplepay`
-   - **Plan**: `Free`
-4. Click **Create Database**.
-5. Once provisioned, copy the connection URL:
-   - **Internal Database URL** (for services running inside Render)
-   - **External Database URL** (for running migrations from your local machine)
+### Option A: Neon.tech (Recommended - Free Tier & Instant Provisioning)
+1. Sign up at [Neon.tech](https://neon.tech/).
+2. Create a new project (e.g. `peoplepay360-db`).
+3. Copy the **Pooled Connection String** (format: `postgresql://user:pass@ep-xyz-pooler.region.aws.neon.tech/neondb?sslmode=require`).
+
+### Option B: Supabase
+1. Create a project at [Supabase](https://supabase.com/).
+2. Go to **Project Settings** -> **Database** -> **Connection String**.
+3. Copy the **Transaction Mode (PgBouncer)** URI on port `6543`.
 
 ---
 
-## ⚙️ STEP 2: Deploy Backend to Render
+## 🚀 STEP 2: Run Migrations & Seed Data
 
-### Method A: Manual Web Service Setup (Recommended)
-1. Go to [Render Dashboard](https://dashboard.render.com/) -> **New +** -> **Web Service**.
-2. Connect your GitHub repository (`odooXpeoplePay`).
-3. Configure the service settings:
-   - **Name**: `peoplepay360-backend`
-   - **Region**: Singapore / Frankfurt / Oregon (select region closest to your database)
-   - **Branch**: `main`
-   - **Root Directory**: `backend` ⚠️ *(Critical: Backend code is located in the `backend/` directory)*
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm run start`
-   - **Plan**: `Free`
+Run migrations and seed the initial company, roles, and employee data from your local machine to your cloud database:
 
-4. Add the following **Environment Variables**:
-   | Variable Key | Suggested Value | Description |
-   |---|---|---|
-   | `NODE_ENV` | `production` | Production environment flag |
-   | `DATABASE_URL` | `postgresql://...` | Connection string from Step 1 |
-   | `JWT_SECRET` | *(Random 32+ character string)* | Secret key for signing auth tokens |
-   | `JWT_EXPIRES_IN` | `7d` | Token validity period |
-   | `ALLOWED_ORIGINS` | `https://your-app.vercel.app` | Vercel domain for CORS (update once Vercel deploys) |
-   | `COOKIE_SAMESITE` | `lax` | Cookie SameSite security attribute |
-
-5. Click **Deploy Web Service**.
-6. Once deployed, note your service URL (e.g. `https://peoplepay360-backend.onrender.com`).
-
----
-
-## 📦 STEP 3: Run Database Migrations & Seed Data
-
-Initialize all 17+ tables and load the Northstar Technologies sample dataset into your cloud database.
-
-### From your local terminal:
 ```bash
-cd backend
+# 1. Set your cloud DATABASE_URL in .env.local
+DATABASE_URL=postgresql://user:pass@ep-xyz-pooler.region.aws.neon.tech/neondb?sslmode=require
 
-# Execute setup with your remote DATABASE_URL:
-DATABASE_URL="your-remote-postgres-url" npm run db:setup
+# 2. Run schema setup and data seeding
+npm run db:setup
 ```
 
-What `npm run db:setup` performs:
-1. `npm run db:migrate` -> Executes Drizzle SQL migrations and creates all tables.
-2. `npm run db:seed` -> Populates departments, job positions, schedules, 16 employees, contracts, salary rules, allocations, and user accounts.
-
-*(Alternative: You can open the **Shell** tab in the Render Web Service dashboard and execute `npm run db:setup` directly).*
-
 ---
 
-## 🌐 STEP 4: Deploy Frontend to Vercel
+## ⚡ STEP 3: Deploy to Vercel
 
-1. Log in to [Vercel Dashboard](https://vercel.com/dashboard).
-2. Click **Add New...** -> **Project** and select your GitHub repository (`odooXpeoplePay`).
-3. Project Configuration:
+1. Push your code to your GitHub repository:
+   ```bash
+   git add .
+   git commit -m "feat: unified Next.js fullstack for single Vercel deployment"
+   git push origin main
+   ```
+2. Go to [Vercel Dashboard](https://vercel.com/dashboard) and click **Add New...** -> **Project**.
+3. Import your GitHub repository (`odooXpeoplePay`).
+4. Keep the default settings:
    - **Framework Preset**: `Next.js`
-   - **Root Directory**: `./` (Default root where `package.json` is located)
-   - **Build Command**: `npm run build` (Default)
-   - **Output Directory**: `.next` (Default)
-
-4. Add the following **Environment Variables**:
-   | Variable Key | Value | Description |
+   - **Root Directory**: `./`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `.next`
+5. Expand **Environment Variables** and add:
+   | Variable | Value | Notes |
    |---|---|---|
-   | `NEXT_PUBLIC_DATA_MODE` | `api` | Disables mock mode and routes data to the live backend |
-   | `BACKEND_PROXY_URL` | `https://peoplepay360-backend.onrender.com/api` | Your Render backend URL (+ `/api`) |
-   | `NEXT_PUBLIC_API_BASE_URL` | `/api` | Relative API path forwarded by Next.js rewrites |
+   | `NEXT_PUBLIC_DATA_MODE` | `api` | Connects UI to database API routes |
+   | `NEXT_PUBLIC_API_BASE_URL` | `/api` | Same-origin native routing |
+   | `DATABASE_URL` | `postgresql://...` | Your pooled PostgreSQL connection string |
+   | `JWT_SECRET` | `your-secret-key-min-32-characters` | Random 32+ character string |
+   | `JWT_EXPIRES_IN` | `7d` | Token lifetime |
+   | `COOKIE_SAMESITE` | `lax` | Browser cookie policy |
+   | `SMTP_HOST` | `smtp.gmail.com` | *(Optional) For payslip email delivery* |
+   | `SMTP_PORT` | `587` | *(Optional)* |
+   | `SMTP_USER` | `your-email@gmail.com` | *(Optional)* |
+   | `SMTP_PASSWORD` | `your-app-password` | *(Optional)* |
+   | `SMTP_FROM` | `"PeoplePay360 <noreply@...>` | *(Optional)* |
+6. Click **Deploy**.
 
-5. Click **Deploy**! 🚀
-
----
-
-## 🔑 STEP 5: Live Verification & Demo Credentials
-
-When deployment finishes, open your Vercel URL and test authentication using any of the seeded user accounts:
-
-| Role | Email | Password |
-|---|---|---|
-| **Admin (COO)** | `arjun.mehta@northstar.io` | `Password123!` |
-| **HR Manager** | `priya.shah@northstar.io` | `Password123!` |
-| **Payroll Manager** | `neha.jain@northstar.io` | `Password123!` |
-| **Employee** | `rahul.sharma@northstar.io` | `Password123!` |
-| **System Admin** | `admin@northstar.io` | `Password123!` |
-
----
-
-## ⚠️ Notes & Troubleshooting
-
-1. **Render Free Tier Spin-Down (Cold Start):**
-   - Free Web Services on Render sleep after 15 minutes of inactivity.
-   - The first request after a period of dormancy may take 30–50 seconds while the container boots up. Subsequent requests respond immediately.
-2. **Rewrites URL Normalization:**
-   - Root `next.config.mjs` automatically normalizes `BACKEND_PROXY_URL`. Whether you specify the URL with or without `/api`, it will correctly proxy to the backend API.
-3. **CORS & Cookies:**
-   - Backend `proxy.js` includes automated preflight `OPTIONS` resolution and reflects allowed origins with `Access-Control-Allow-Credentials: true`.
+Within 1-2 minutes, your full-stack app will be live at `https://your-project.vercel.app`!

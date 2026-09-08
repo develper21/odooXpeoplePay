@@ -1,19 +1,16 @@
-# HRMS API — Postman Testing Guide (Complete)
-
-> Real database: **Neon PostgreSQL** | Server: **http://localhost:3100**
+> Real database: **PostgreSQL** | Server: **http://localhost:3000** (Local) | Production: **https://your-project.vercel.app**
 > Auth: **httpOnly Cookie (hrms_token)** — Postman ka cookie jar automatic handle karega.
 
 ---
 
 ## 1. Setup (First Time)
 
-1. Postman kholo → **New** → **HTTP Request**
-2. Left side **Collections** tab → **New Collection** → naam do: `HRMS API Tests`
-3. Collection ke **3-dot menu** → **Edit** → **Variables** tab:
-   | Variable | Initial Value | Current Value |
-   |---|---|---|
-   | `base_url` | `http://localhost:3100` | `http://localhost:3100` |
-4. URLs mein hamesha `{{base_url}}/api/...` use karo.
+1. Postman kholo → **Import** → `postman/PeoplePay360_API.postman_collection.json` select karo.
+2. Environment bhi import karo:
+   - Local testing ke liye: `postman/PeoplePay360_Local.postman_environment.json`
+   - Production testing ke liye: `postman/PeoplePay360_Production.postman_environment.json`
+3. Active Environment mein `PeoplePay360 - Local` select karo (`baseUrl` = `http://localhost:3000`).
+4. URLs mein hamesha `{{baseUrl}}/api/...` use hota hai.
 
 ### Cookie Jar (Important)
 
@@ -286,8 +283,8 @@ Cookie jar **empty** rakhke inhe hit karo:
 
 ### S3. Expired JWT → 401
 
-1. `backend/.env.local` mein `JWT_EXPIRES_IN="5s"` karo
-2. Server restart: `cd backend && npx next build && set PORT=3100 && npx next start`
+1. `.env.local` mein `JWT_EXPIRES_IN="5s"` karo
+2. Server restart karo: `npm run dev`
 3. Login karo → 5 sec ke andar `GET /api/auth/me` → **200**
 4. 5 sec ruko → wahi request → **401**
 5. `JWT_EXPIRES_IN="7d"` waapas set karo + restart
