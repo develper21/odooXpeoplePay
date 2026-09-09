@@ -159,6 +159,21 @@ export async function POST(request) {
     return response;
   } catch (error) {
     console.error('POST /api/auth/login failed:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    const message =
+      !process.env.DATABASE_URL
+        ? 'Database configuration error: DATABASE_URL is not set on server.'
+        : !process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32
+        ? 'Security configuration error: JWT_SECRET is not set or is less than 32 characters on server.'
+        : error?.message?.includes('connect') || error?.message?.includes('socket')
+        ? 'Unable to connect to database server.'
+        : 'Internal server error.';
+
+    return NextResponse.json(
+      {
+        error: message,
+        details: process.env.NODE_ENV !== 'production' ? error?.message : undefined,
+      },
+      { status: 500 },
+    );
   }
 }
